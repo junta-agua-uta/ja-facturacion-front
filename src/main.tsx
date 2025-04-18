@@ -3,12 +3,17 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import Layout from './components/Layout'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import Login  from './components/auth/Login.tsx'
+import { createBrowserRouter, RouterProvider, Navigate} from 'react-router-dom'
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />
+    element: <Navigate to="/login" replace />
+  },
+  {
+    path: '/login',
+    element: <Login />
   },
   {
     path: '/junta',
