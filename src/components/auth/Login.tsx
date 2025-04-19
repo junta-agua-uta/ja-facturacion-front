@@ -12,7 +12,7 @@ const Login = () => {
 
         // Validación básica
         if (!cedula.trim() || !contrasena.trim()) {
-            setError('Por favor, complete todos los campos');
+            setError('Por Favor, Complete Todos los Campos');
             return;
         }
 
@@ -28,7 +28,7 @@ const Login = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="flex items-center justify-center min-h-screen bg-gray-200">
             <div className="w-full max-w-md p-6 bg-white rounded shadow-md">
                 <div className="flex flex-col items-center mb-2">
                     {/* Logo */}
@@ -77,14 +77,14 @@ const Login = () => {
                     </div>
 
                     {error && (
-                        <div className="mb-4 p-2 text-sm text-red-700 bg-red-100 rounded-md">
+                        <div className="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded-md text-center ">
                             {error}
                         </div>
                     )}
                     <div  className="flex justify-center">
                         <button
                             type="submit"
-                            className="w-2/3 px-4 py-2 text-white bg-blue-900 rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-2/3 px-4 py-2 cursor-pointer text-white bg-blue-900 rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             Iniciar Sesión
                         </button>
