@@ -7,7 +7,8 @@ function App() {
     <h1>Hola Mundo</h1>
     <img src="/iconos_layout/autorizaciones.svg" alt="icono de autorizaciones" />
     <Link to="/junta/facturas">Ingresar</Link>
-    </>
+    <Link to="/junta/sucursales">Sucursales</Link>
+   </>
   )
 }
 
