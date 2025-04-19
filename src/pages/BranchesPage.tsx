@@ -4,6 +4,8 @@ import BranchFilters from '../features/sucursales/components/BranchFilters';
 import BranchTable from '../features/sucursales/components/BranchTable';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import EditModal from '../components/modals/EditModal';
+import AddBranchModal from '../components/modals/AddBranchModal';
+
 
 const mockBranches: Branch[] = [
   {
@@ -81,6 +83,14 @@ export default function BranchesPage() {
   const [branchToEdit, setBranchToEdit] = useState<Branch | null>(null);
   const [editForm, setEditForm] = useState<Branch | null>(null);
 
+  const [newBranch, setNewBranch] = useState<Branch>({
+    id: '',
+    name: '',
+    address: '',
+    code: 0,
+  });
+
+
   const filteredBranches = branches.filter(branch =>
     filters.name ? branch.name.toLowerCase().includes(filters.name.toLowerCase()) : true
   );
@@ -95,6 +105,18 @@ export default function BranchesPage() {
     setFilters({});
     setCurrentPage(1);
   };
+
+  const handleAddBranch = () => {
+    if (newBranch.name && newBranch.address && newBranch.code) {
+      setBranches(prev => [
+        ...prev,
+        { ...newBranch, id: (prev.length + 1).toString() },
+      ]);
+      setNewBranch({ id: '', name: '', address: '', code: 0 });
+      (document.getElementById('add_modal') as HTMLDialogElement)?.close();
+    }
+  };
+
 
   const handleDelete = () => {
     if (branchToDelete) {
@@ -121,7 +143,7 @@ export default function BranchesPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-    
+
   }, [filters]);
 
   useEffect(() => {
@@ -140,6 +162,18 @@ export default function BranchesPage() {
       </div>
 
       <div className="card bg-base-100 shadow-lg p-6">
+        <div className="flex justify-end mb-4">
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              const dialog = document.getElementById('add_modal') as HTMLDialogElement;
+              dialog?.showModal();
+            }}
+          >
+            Añadir sucursal
+          </button>
+        </div>
+
         <BranchTable
           data={paginatedBranches}
           pagination={{
@@ -161,7 +195,6 @@ export default function BranchesPage() {
         />
       </div>
 
-      {/* Modal genérico para eliminación */}
       <ConfirmModal
         id="delete_modal"
         title="Confirmar eliminación"
@@ -170,7 +203,6 @@ export default function BranchesPage() {
         onCancel={() => setBranchToDelete(null)}
       />
 
-      {/* Modal genérico para edición */}
       <EditModal
         id="edit_modal"
         title="Editar sucursal"
@@ -179,6 +211,15 @@ export default function BranchesPage() {
         onCancel={handleCancelEdit}
         onSave={handleEdit}
       />
+
+      <AddBranchModal
+        id="add_modal"
+        branch={newBranch}
+        onChange={setNewBranch}
+        onCancel={() => setNewBranch({ id: '', name: '', address: '', code: 0 })}
+        onSave={handleAddBranch}
+      />
+
     </div>
   );
 }
