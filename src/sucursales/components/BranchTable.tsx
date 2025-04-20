@@ -1,5 +1,6 @@
-import { BranchTableProps } from '../types/sucursal';
+import { Branch} from '../types/sucursal';
 import Table from '../../shared/components/Table';
+import { TableProps } from '../../shared/utils/types';
 
 export default function BranchTable({
   data,
@@ -7,7 +8,7 @@ export default function BranchTable({
   onEdit,
   onDelete,
   onPageChange
-}: BranchTableProps) {
+}: TableProps<Branch>) {
   const columns = [
     {
       header: 'Nombre',
