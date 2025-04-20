@@ -15,7 +15,7 @@ interface NavItemProps {
 const NavItem = ({ to, isActive, icon, label, children }: NavItemProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const commonClasses = `w-full flex items-center px-6 py-2 rounded-2xl ${
+  const commonClasses = `w-full flex items-center px-6 py-2 rounded-2xl  cursor-pointer ${
     isActive
       ? 'bg-blue-900 text-white'
       : 'text-gray-700 hover:bg-gray-50'
@@ -47,7 +47,7 @@ const NavItem = ({ to, isActive, icon, label, children }: NavItemProps) => {
           </button>
           
           <div 
-            className={`transform transition-all duration-200 ease-in-out origin-top ${
+            className={`transform transition-all duration-200 ease-in-out origin-top cursor-pointer ${
               isOpen 
                 ? 'h-auto opacity-100 scale-y-100' 
                 : 'h-0 opacity-0 scale-y-0'

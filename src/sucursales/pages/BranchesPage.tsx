@@ -5,7 +5,7 @@ import BranchTable from './components/BranchTable';
 import ConfirmModal from '../modals/ConfirmModal';
 import EditModal from '../modals/EditModal';
 import AddBranchModal from '../modals/AddBranchModal';
-
+import Title from '../../shared/components/Title';
 
 const mockBranches: Branch[] = [
   {
@@ -153,9 +153,8 @@ export default function BranchesPage() {
   }, [editForm]);
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-primary">Sucursales</h1>
-
+    <>
+      <Title title="Sucursales" />
       <div className="card bg-base-100 shadow-lg p-6">
         <h2 className="text-xl font-bold text-secondary">Filtros de búsqueda</h2>
         <BranchFilters filters={filters} onChange={setFilters} onClear={handleClearFilters} />
@@ -219,7 +218,6 @@ export default function BranchesPage() {
         onCancel={() => setNewBranch({ id: '', name: '', address: '', code: 0 })}
         onSave={handleAddBranch}
       />
-
-    </div>
+    </>
   );
 }

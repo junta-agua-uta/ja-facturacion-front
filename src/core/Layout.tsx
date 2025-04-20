@@ -97,7 +97,7 @@ const Layout = () => {
         </button>
       </aside>
 
-      <main className="flex-1 overflow-hidden max-w-7xl mx-auto mt-10">
+      <main className="flex-1 overflow-hidden max-w-7xl mx-auto mt-10 p-6 space-y-6">
         <Outlet />
       </main>
     </div>
