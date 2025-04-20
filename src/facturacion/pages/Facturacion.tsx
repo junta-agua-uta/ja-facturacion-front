@@ -1,11 +1,12 @@
 import { useState } from "react";
 import Title from "../../shared/components/Title";
-import { Factura, FacturacionCedula } from "../types/factura";
+import { Factura, FacturacionCedula, FacturacionFechaEmisionFilter } from "../types/factura";
 import { PAGE_SIZE } from "../../shared/utils/constants";
 import CardSlot from "../../shared/components/slots/CardSlot";
 import FacturacionTable from "../components/FacturacionTable";
 import SubTitle from "../../shared/components/SubTitle";
 import FacturacionCedulaFilter from "../components/FacturacionCedulaFilter";
+import FacturacionFechaFilter from "../components/FacturacionFechaFilter";
 import EndSlot from "../../shared/components/slots/EndSlot";
 import { Link } from "react-router-dom";
 
@@ -108,10 +109,15 @@ export default function Facturacion() {
   const [facturas, setFacturas] = useState<Factura[]>(mockFacturas);
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<FacturacionCedula>({});
-
+  const [dateFilters, setDateFilters] = useState<FacturacionFechaEmisionFilter>({
+    FechaEmisionDesde: new Date('2025-01-01'),
+    FechaEmisionHasta: new Date('2025-12-31')
+  });
 
   const filteredFacturas = facturas.filter(factura =>
-    filters.Cedula ? factura.Cedula.includes(filters.Cedula) : true
+    (filters.Cedula ? factura.Cedula.includes(filters.Cedula) : true) &&
+    (dateFilters.FechaEmisionDesde <= factura.FechaEmision && 
+     factura.FechaEmision <= dateFilters.FechaEmisionHasta)
   );
 
   const totalPages = Math.ceil(filteredFacturas.length / PAGE_SIZE);
@@ -122,6 +128,10 @@ export default function Facturacion() {
 
   const handleClearFilters = () => {
     setFilters({});
+    setDateFilters({
+      FechaEmisionDesde: new Date('2025-01-01'),
+      FechaEmisionHasta: new Date('2025-12-31')
+    });
     setCurrentPage(1);
   };
 
@@ -131,7 +141,21 @@ export default function Facturacion() {
 
       <CardSlot>
         <SubTitle title="Filtros de búsqueda" />
-        <FacturacionCedulaFilter filters={filters} onChange={setFilters} onClear={handleClearFilters} />
+        <div className="flex items-end gap-4">
+          <div className="flex-1">
+            <FacturacionCedulaFilter filters={filters} onChange={setFilters} />
+          </div>
+          <div className="flex-1">
+            <FacturacionFechaFilter filters={dateFilters} onChange={setDateFilters} />
+          </div>
+          <button
+            type="button"
+            onClick={handleClearFilters}
+            className="btn btn-primary"
+          >
+            Limpiar filtros
+          </button>
+        </div>
       </CardSlot>
 
       <CardSlot>
