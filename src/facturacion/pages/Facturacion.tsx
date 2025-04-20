@@ -1,15 +1,9 @@
 import { useState } from "react";
-import Title from "../../shared/components/Title";
+import { Title, SubTitle, EndSlot, CardSlot } from "../../shared/components";
 import { Factura, FacturacionCedula, FacturacionFechaEmisionFilter } from "../types/factura";
+import { FacturacionCedulaFilter, FacturacionFechaFilter, FacturacionTable } from "../components";
 import { PAGE_SIZE } from "../../shared/utils/constants";
-import CardSlot from "../../shared/components/slots/CardSlot";
-import FacturacionTable from "../components/FacturacionTable";
-import SubTitle from "../../shared/components/SubTitle";
-import FacturacionCedulaFilter from "../components/FacturacionCedulaFilter";
-import FacturacionFechaFilter from "../components/FacturacionFechaFilter";
-import EndSlot from "../../shared/components/slots/EndSlot";
 import { Link } from "react-router-dom";
-
 
 const mockFacturas: Factura[] = [
   {
@@ -103,7 +97,6 @@ const mockFacturas: Factura[] = [
     Estado: "PENDIENTE"
   }
 ];
-
 
 export default function Facturacion() {
   const [facturas, setFacturas] = useState<Factura[]>(mockFacturas);

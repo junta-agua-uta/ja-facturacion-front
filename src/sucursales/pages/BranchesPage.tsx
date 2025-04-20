@@ -1,15 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Branch, BranchFilter } from '../types/sucursal';
-import BranchFilters from '../components/BranchFilters';
-import BranchTable from '../components/BranchTable';
-import ConfirmModal from '../modals/ConfirmModal';
-import EditModal from '../modals/EditModal';
-import AddBranchModal from '../modals/AddBranchModal';
-import Title from '../../shared/components/Title';
+import { BranchFilters, BranchTable } from '../components';
+import { AddBranchModal, EditModal, ConfirmModal } from '../modals';
 import { PAGE_SIZE } from '../../shared/utils/constants';
-import SubTitle from '../../shared/components/SubTitle';
-import CardSlot from '../../shared/components/slots/CardSlot';
-import EndSlot from '../../shared/components/slots/EndSlot';
+import { Title, SubTitle, EndSlot, CardSlot } from '../../shared/components';
 
 const mockBranches: Branch[] = [
   {
