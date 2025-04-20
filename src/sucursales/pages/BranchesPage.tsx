@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Branch, BranchFilter } from '../types/sucursal';
-import BranchFilters from './components/BranchFilters';
-import BranchTable from './components/BranchTable';
+import BranchFilters from '../components/BranchFilters';
+import BranchTable from '../components/BranchTable';
 import ConfirmModal from '../modals/ConfirmModal';
 import EditModal from '../modals/EditModal';
 import AddBranchModal from '../modals/AddBranchModal';
@@ -73,8 +73,6 @@ const mockBranches: Branch[] = [
     code: 110,
   },
 ];
-
-
 
 export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>(mockBranches);

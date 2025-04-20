@@ -1,5 +1,5 @@
-import { BranchTableProps } from '../../types/sucursal';
-import Table from '../../../shared/components/Table';
+import { BranchTableProps } from '../types/sucursal';
+import Table from '../../shared/components/Table';
 
 export default function BranchTable({
   data,
