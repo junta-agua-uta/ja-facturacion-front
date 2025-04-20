@@ -1,5 +1,5 @@
 import { FaTrash, FaEdit } from 'react-icons/fa';
-import { BranchTableProps } from '../../../types/sucursal';
+import { BranchTableProps } from '../../types/sucursal';
 import Pagination from './Pagination';
 
 export default function BranchTable({

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Branch, BranchFilter } from '../types/sucursal';
-import BranchFilters from '../features/sucursales/components/BranchFilters';
-import BranchTable from '../features/sucursales/components/BranchTable';
-import ConfirmModal from '../components/modals/ConfirmModal';
-import EditModal from '../components/modals/EditModal';
-import AddBranchModal from '../components/modals/AddBranchModal';
+import BranchFilters from './components/BranchFilters';
+import BranchTable from './components/BranchTable';
+import ConfirmModal from '../modals/ConfirmModal';
+import EditModal from '../modals/EditModal';
+import AddBranchModal from '../modals/AddBranchModal';
 
 
 const mockBranches: Branch[] = [
