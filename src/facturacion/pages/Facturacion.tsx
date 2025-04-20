@@ -6,6 +6,8 @@ import CardSlot from "../../shared/components/slots/CardSlot";
 import FacturacionTable from "../components/FacturacionTable";
 import SubTitle from "../../shared/components/SubTitle";
 import FacturacionCedulaFilter from "../components/FacturacionCedulaFilter";
+import EndSlot from "../../shared/components/slots/EndSlot";
+import { Link } from "react-router-dom";
 
 
 const mockFacturas: Factura[] = [
@@ -133,6 +135,16 @@ export default function Facturacion() {
       </CardSlot>
 
       <CardSlot>
+        <EndSlot>
+          <Link to={"/junta/facturas/crear"}>
+            <button
+              className="btn btn-primary hover:bg-blue-500 hover:border-blue-500"
+            >
+              Añadir factura
+            </button>
+          </Link>
+        </EndSlot>
+
         <FacturacionTable
           data={paginatedFacturas}
           pagination={{

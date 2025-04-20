@@ -9,6 +9,7 @@ import Title from '../../shared/components/Title';
 import { PAGE_SIZE } from '../../shared/utils/constants';
 import SubTitle from '../../shared/components/SubTitle';
 import CardSlot from '../../shared/components/slots/CardSlot';
+import EndSlot from '../../shared/components/slots/EndSlot';
 
 const mockBranches: Branch[] = [
   {
@@ -161,7 +162,7 @@ export default function BranchesPage() {
       </CardSlot>
 
       <CardSlot>
-        <div className="flex justify-end mb-4">
+        <EndSlot>
           <button
             className="btn btn-primary"
             onClick={() => {
@@ -171,7 +172,7 @@ export default function BranchesPage() {
           >
             Añadir sucursal
           </button>
-        </div>
+        </EndSlot>
 
         <BranchTable
           data={paginatedBranches}
