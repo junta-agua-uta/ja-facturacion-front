@@ -4,6 +4,7 @@ import Pagination from './Pagination';
 interface Column<T> {
   header: string;
   accessor: keyof T;
+  Cell?: ({ value }: { value: any }) => React.ReactNode;
 }
 
 interface TableProps<T> {
@@ -45,7 +46,9 @@ export default function Table<T extends { id: string }>({
               <tr key={item.id}>
                 {columns.map((column, index) => (
                   <td key={index}>
-                    {String(item[column.accessor])}
+                    {column.Cell 
+                      ? column.Cell({ value: item[column.accessor] })
+                      : String(item[column.accessor])}
                   </td>
                 ))}
                 {showActions && (onEdit || onDelete) && (

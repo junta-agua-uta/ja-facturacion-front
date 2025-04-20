@@ -10,7 +10,7 @@ export default function FacturacionCedulaFilter({ filters, onChange }: Props) {
         <div>
             <input
                 type="text"
-                placeholder="Filtrar por número de cedula"
+                placeholder="Buscar por número de cedula"
                 className="input input-bordered w-full"
                 value={filters.Cedula ?? ''}
                 onChange={(e) => onChange({ ...filters, Cedula: e.target.value })}

@@ -8,8 +8,8 @@ type Props = Readonly<{
 export default function FacturacionFechaFilter({ filters, onChange }: Props) {
     return (
         <div className="flex gap-4">
-            <div className="flex-1">
-                <label className="label">
+            <div className="flex-1 space-y-2">
+                <label className="label font-bold">
                     <span className="label-text">Desde:</span>
                 </label>
                 <input
@@ -22,9 +22,9 @@ export default function FacturacionFechaFilter({ filters, onChange }: Props) {
                     })}
                 />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 space-y-2">
                 <label className="label">
-                    <span className="label-text">Hasta:</span>
+                    <span className="label-text font-bold">Hasta:</span>
                 </label>
                 <input
                     type="date"

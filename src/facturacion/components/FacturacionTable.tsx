@@ -8,6 +8,13 @@ export default function FacturacionTable({
     onPageChange
   }: TableProps<Factura>) {
 
+    const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const columns = [
         {
             header: 'Nombre Comercial',
@@ -23,7 +30,8 @@ export default function FacturacionTable({
         },
         {
             header: 'Fecha Emisión',
-            accessor: 'FechaEmision' as const
+            accessor: 'FechaEmision' as const,
+            Cell: ({ value }: { value: Date }) => formatDate(value)
         },
         {
             header: 'Total',
