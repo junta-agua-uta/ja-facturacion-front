@@ -1,6 +1,6 @@
 import { Outlet,  useLocation } from 'react-router-dom'
-import { FacturasIcon, AutorizacionesIcon, UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon } from './icons/icons';
-import NavItem from './layout/NavItem';
+import { FacturasIcon, AutorizacionesIcon, UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon } from './utils/icons';
+import NavItem from './components/NavItem';
 
 const Layout = () => {
 
@@ -87,7 +87,7 @@ const Layout = () => {
         </button>
       </aside>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-hidden max-w-7xl mx-auto mt-10">
         <Outlet />
       </main>
     </div>

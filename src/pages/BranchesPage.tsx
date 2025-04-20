@@ -157,7 +157,7 @@ export default function BranchesPage() {
       <h1 className="text-3xl font-bold text-primary">Sucursales</h1>
 
       <div className="card bg-base-100 shadow-lg p-6">
-        <h2 className="text-xl font-semibold text-secondary">Filtros de búsqueda</h2>
+        <h2 className="text-xl font-bold text-secondary">Filtros de búsqueda</h2>
         <BranchFilters filters={filters} onChange={setFilters} onClear={handleClearFilters} />
       </div>
 

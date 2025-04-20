@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import Layout from './components/Layout'
+import Layout from './core/Layout.tsx'
 import Login  from './components/auth/Login.tsx'
 import { createBrowserRouter, RouterProvider, Navigate} from 'react-router-dom'
 import BranchesPage from './pages/BranchesPage.tsx'
