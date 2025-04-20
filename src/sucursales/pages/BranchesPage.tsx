@@ -7,6 +7,8 @@ import EditModal from '../modals/EditModal';
 import AddBranchModal from '../modals/AddBranchModal';
 import Title from '../../shared/components/Title';
 import { PAGE_SIZE } from '../../shared/utils/constants';
+import SubTitle from '../../shared/components/SubTitle';
+import CardSlot from '../../shared/components/slots/CardSlot';
 
 const mockBranches: Branch[] = [
   {
@@ -155,12 +157,12 @@ export default function BranchesPage() {
   return (
     <>
       <Title title="Sucursales" />
-      <div className="card bg-base-100 shadow-lg p-6">
-        <h2 className="text-xl font-bold text-secondary">Filtros de búsqueda</h2>
+      <CardSlot>
+        <SubTitle title="Filtros de búsqueda" />
         <BranchFilters filters={filters} onChange={setFilters} onClear={handleClearFilters} />
-      </div>
+      </CardSlot>
 
-      <div className="card bg-base-100 shadow-lg p-6">
+      <CardSlot>
         <div className="flex justify-end mb-4">
           <button
             className="btn btn-primary"
@@ -192,7 +194,7 @@ export default function BranchesPage() {
             (document.getElementById('delete_modal') as HTMLDialogElement)?.showModal();
           }}
         />
-      </div>
+      </CardSlot>
 
       <ConfirmModal
         id="delete_modal"
