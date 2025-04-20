@@ -1,5 +1,4 @@
 import { FaTrash, FaEdit } from 'react-icons/fa';
-import { ReactNode } from 'react';
 import Pagination from './Pagination';
 
 interface Column<T> {

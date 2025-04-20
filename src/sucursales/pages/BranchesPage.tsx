@@ -6,6 +6,7 @@ import ConfirmModal from '../modals/ConfirmModal';
 import EditModal from '../modals/EditModal';
 import AddBranchModal from '../modals/AddBranchModal';
 import Title from '../../shared/components/Title';
+import { PAGE_SIZE } from '../../shared/utils/constants';
 
 const mockBranches: Branch[] = [
   {
@@ -72,7 +73,6 @@ const mockBranches: Branch[] = [
 ];
 
 
-const PAGE_SIZE = 6;
 
 export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>(mockBranches);
