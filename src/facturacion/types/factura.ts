@@ -1,4 +1,5 @@
 export interface Factura {
+    id: string;
     NombreComercial: string;
     Cedula: string;
     Concepto: string;
@@ -6,3 +7,7 @@ export interface Factura {
     Total: string;
     Estado: string;
 }
+
+
+//TODD: Agregar el tipo para el filtro de la tabla cedula
+//TODO: Agregar el tipo para el filtro de la tabla fecha emision desde y hasta

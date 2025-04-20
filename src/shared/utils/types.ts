@@ -7,8 +7,8 @@ export type Pagination = {
 
 
 export type TableActions <T> = {
-    onEdit: (branch: T) => void;
-    onDelete: (branchId: string) => void;
+    onEdit?: (branch: T) => void;
+    onDelete?: (branchId: string) => void;
 };
 
 export type TableProps<T> = {
