@@ -24,6 +24,16 @@ const Layout = () => {
             isActive={isActive('facturas')}
             icon={<FacturasIcon isActive={isActive('facturas')} />}
             label="Facturas"
+            children={[
+              {
+                label: "Ver todas las facturas",
+                to: "/junta/facturas"
+              },
+              {
+                label: "Crear factura",
+                to: "/junta/facturas/crear"
+              }
+            ]}
           />
 
           <NavItem
