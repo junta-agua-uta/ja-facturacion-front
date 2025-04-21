@@ -108,7 +108,6 @@ export default function BranchesPage() {
         { ...newBranch, id: (prev.length + 1).toString() },
       ]);
       setNewBranch({ id: '', name: '', address: '', code: 0 });
-      (document.getElementById('add_modal') as HTMLDialogElement)?.close();
     }
   };
 
@@ -127,7 +126,6 @@ export default function BranchesPage() {
       );
       setBranchToEdit(null); // Cierra el modal
       setEditForm(null); // Limpia el formulario
-      (document.getElementById('edit_modal') as HTMLDialogElement)?.close(); // Cierra el modal explícitamente
     }
   };
 
