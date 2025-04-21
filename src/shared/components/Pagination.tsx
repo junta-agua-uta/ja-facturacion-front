@@ -42,4 +42,4 @@ const Pagination: React.FC<PaginationProps> = ({ pagination, onPageChange }) => 
   );
 };
 
-export default Pagination;
+export default Pagination; 

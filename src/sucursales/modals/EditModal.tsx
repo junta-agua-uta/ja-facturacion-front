@@ -1,4 +1,4 @@
-import { Branch } from "../../types/sucursal";
+import { Branch } from "../../sucursales/types/sucursal";
 
 type EditModalProps = {
   readonly id: string;

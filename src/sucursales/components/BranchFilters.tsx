@@ -1,4 +1,4 @@
-import { BranchFilter } from "../../../types/sucursal";
+import { BranchFilter } from "../types/sucursal";
 
 type Props = Readonly<{
   filters: BranchFilter;

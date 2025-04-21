@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Branch, BranchFilter } from '../types/sucursal';
-import BranchFilters from '../features/sucursales/components/BranchFilters';
-import BranchTable from '../features/sucursales/components/BranchTable';
-import ConfirmModal from '../components/modals/ConfirmModal';
-import EditModal from '../components/modals/EditModal';
-import AddBranchModal from '../components/modals/AddBranchModal';
-
+import { BranchFilters, BranchTable } from '../components';
+import { AddBranchModal, EditModal, ConfirmModal } from '../modals';
+import { PAGE_SIZE } from '../../shared/utils/constants';
+import { Title, SubTitle, EndSlot, CardSlot } from '../../shared/components';
 
 const mockBranches: Branch[] = [
   {
@@ -70,9 +68,6 @@ const mockBranches: Branch[] = [
     code: 110,
   },
 ];
-
-
-const PAGE_SIZE = 6;
 
 export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>(mockBranches);
@@ -153,16 +148,15 @@ export default function BranchesPage() {
   }, [editForm]);
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-primary">Sucursales</h1>
-
-      <div className="card bg-base-100 shadow-lg p-6">
-        <h2 className="text-xl font-semibold text-secondary">Filtros de búsqueda</h2>
+    <>
+      <Title title="Sucursales" />
+      <CardSlot>
+        <SubTitle title="Filtros de búsqueda" />
         <BranchFilters filters={filters} onChange={setFilters} onClear={handleClearFilters} />
-      </div>
+      </CardSlot>
 
-      <div className="card bg-base-100 shadow-lg p-6">
-        <div className="flex justify-end mb-4">
+      <CardSlot>
+        <EndSlot>
           <button
             className="btn btn-primary"
             onClick={() => {
@@ -172,7 +166,7 @@ export default function BranchesPage() {
           >
             Añadir sucursal
           </button>
-        </div>
+        </EndSlot>
 
         <BranchTable
           data={paginatedBranches}
@@ -193,7 +187,7 @@ export default function BranchesPage() {
             (document.getElementById('delete_modal') as HTMLDialogElement)?.showModal();
           }}
         />
-      </div>
+      </CardSlot>
 
       <ConfirmModal
         id="delete_modal"
@@ -219,7 +213,6 @@ export default function BranchesPage() {
         onCancel={() => setNewBranch({ id: '', name: '', address: '', code: 0 })}
         onSave={handleAddBranch}
       />
-
-    </div>
+    </>
   );
 }

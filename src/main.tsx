@@ -1,10 +1,12 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import Layout from './components/Layout'
-import Login  from './components/auth/Login.tsx'
+import Layout from './core/Layout.tsx'
+import Login from './auth/Login.tsx'
 import { createBrowserRouter, RouterProvider, Navigate} from 'react-router-dom'
-import BranchesPage from './pages/BranchesPage.tsx'
+import BranchesPage from './sucursales/pages/BranchesPage.tsx'
+import Facturacion from './facturacion/pages/Facturacion.tsx'
+import AgregarFacturas from './facturacion/pages/AgregarFacturas.tsx'
 
 const router = createBrowserRouter([
   {
@@ -20,8 +22,21 @@ const router = createBrowserRouter([
     element: <Layout />,
     children: [
       {
+        path: '',
+        element: <Navigate to="facturas" replace />
+      },
+      {
         path: 'facturas',
-        element: <div>Facturas Page</div>
+        children: [
+          {
+            path: '',
+            element: <Facturacion />
+          },
+          {
+            path: 'crear',
+            element: <AgregarFacturas />
+          }
+        ]
       },
       {
         path: 'autorizaciones',

@@ -1,6 +1,6 @@
 import { Outlet,  useLocation } from 'react-router-dom'
-import { FacturasIcon, AutorizacionesIcon, UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon } from './icons/icons';
-import NavItem from './layout/NavItem';
+import { FacturasIcon, AutorizacionesIcon, UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon } from './utils/icons';
+import NavItem from './components/NavItem';
 
 const Layout = () => {
 
@@ -12,7 +12,7 @@ const Layout = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <aside className="w-64 flex flex-col bg-gray-200">
+      <aside className="w-64 flex flex-col bg-gray-200 border-r border-gray-300 shadow-xl">
         <div className="p-4 flex justify-center">
           <img src="/logo_agua.svg" alt="Logo Agua Pública" className="h-36" />
         </div>
@@ -24,6 +24,16 @@ const Layout = () => {
             isActive={isActive('facturas')}
             icon={<FacturasIcon isActive={isActive('facturas')} />}
             label="Facturas"
+            children={[
+              {
+                label: "Ver todas las facturas",
+                to: "/junta/facturas"
+              },
+              {
+                label: "Crear factura",
+                to: "/junta/facturas/crear"
+              }
+            ]}
           />
 
           <NavItem
@@ -87,7 +97,7 @@ const Layout = () => {
         </button>
       </aside>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-hidden max-w-7xl mx-auto mt-10 p-6 space-y-6">
         <Outlet />
       </main>
     </div>
