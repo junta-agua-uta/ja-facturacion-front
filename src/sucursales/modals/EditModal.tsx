@@ -17,7 +17,7 @@ export default function EditModal({
   onCancel,
   onSave,
 }: EditModalProps) {
-    if (!branch) return null; // Si no hay sucursal, no renderizar nada
+  if (!branch) return null;
 
   return (
     <dialog id={id} className="modal">
@@ -64,23 +64,16 @@ export default function EditModal({
             />
           </div>
 
-          <div className="modal-action">
+          <div className="modal-action flex gap-2">
             <button
-              type="button"
               className="btn btn-outline"
-              onClick={() => {
-                onCancel(); // Llama a la función para limpiar el estado
-                (document.getElementById(id) as HTMLDialogElement)?.close(); // Cierra el modal explícitamente
-              }}
+              onClick={onCancel}
             >
               Cancelar
             </button>
             <button
-              type="button"
               className="btn btn-primary"
-              onClick={() => {
-                onSave(); // Llama a la función para guardar los cambios
-              }}
+              onClick={onSave}
             >
               Guardar cambios
             </button>

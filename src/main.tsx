@@ -4,9 +4,10 @@ import './index.css'
 import Layout from './core/Layout.tsx'
 import Login from './auth/Login.tsx'
 import { createBrowserRouter, RouterProvider, Navigate} from 'react-router-dom'
-import BranchesPage from './sucursales/pages/BranchesPage.tsx'
 import Facturacion from './facturacion/pages/Facturacion.tsx'
 import AgregarFacturas from './facturacion/pages/AgregarFacturas.tsx'
+import BranchesPage from './sucursales/pages/BranchesPage.tsx'
+import MedicionesPage from './medicion/pages/MedicionPage.tsx'
 
 const router = createBrowserRouter([
   {
@@ -52,7 +53,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'mediciones',
-        element: <div>Mediciones Page</div>
+        element: <MedicionesPage />
       },
       {
         path: 'perfil',
