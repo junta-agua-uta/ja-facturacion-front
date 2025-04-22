@@ -8,7 +8,7 @@ import Facturacion from './facturacion/pages/Facturacion.tsx'
 import AgregarFacturas from './facturacion/pages/AgregarFacturas.tsx'
 import BranchesPage from './sucursales/pages/BranchesPage.tsx'
 import MedicionesPage from './medicion/pages/MedicionPage.tsx'
-
+import ClientesPage from './Clientes/pages/ClientesPage.tsx'
 const router = createBrowserRouter([
   {
     path: '/',
@@ -45,7 +45,8 @@ const router = createBrowserRouter([
       },
       {
         path: 'usuarios',
-        element: <div>Usuarios Page</div>
+        element: <ClientesPage />
+      
       },
       {
         path: 'sucursales',
