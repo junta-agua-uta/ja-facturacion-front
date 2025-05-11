@@ -129,6 +129,7 @@ export default function Facturacion() {
   };
 
   return (
+    console.log("Facturas", import.meta.env.VITE_API_URL),
     <>
       <Title title="Facturas" />
 
