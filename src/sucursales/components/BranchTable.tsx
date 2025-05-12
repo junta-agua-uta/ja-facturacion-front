@@ -1,4 +1,4 @@
-import { Branch} from '../types/sucursal';
+import { Branch } from '../types/sucursal';
 import Table from '../../shared/components/Table';
 import { TableProps } from '../../shared/utils/types';
 
@@ -12,15 +12,15 @@ export default function BranchTable({
   const columns = [
     {
       header: 'Nombre',
-      accessor: 'name' as const
+      accessor: 'nombre' as const
     },
     {
-      header: 'Dirección',
-      accessor: 'address' as const
+      header: 'Ubicación',
+      accessor: 'ubicacion' as const
     },
     {
-      header: 'Código',
-      accessor: 'code' as const
+      header: 'Punto de Emisión',
+      accessor: 'puntoEmision' as const
     }
   ];
 

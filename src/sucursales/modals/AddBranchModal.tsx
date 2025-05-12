@@ -26,32 +26,30 @@ export default function AddBranchModal({
             <input
               type="text"
               className="input input-bordered w-full"
-              value={branch.name}
-              onChange={(e) => onChange({ ...branch, name: e.target.value })}
+              value={branch.nombre}
+              onChange={(e) => onChange({ ...branch, nombre: e.target.value })}
               required
             />
           </div>
 
           <div>
-            <label className="label">Dirección</label>
+            <label className="label">Ubicación</label>
             <input
               type="text"
               className="input input-bordered w-full"
-              value={branch.address}
-              onChange={(e) => onChange({ ...branch, address: e.target.value })}
+              value={branch.ubicacion}
+              onChange={(e) => onChange({ ...branch, ubicacion: e.target.value })}
               required
             />
           </div>
 
           <div>
-            <label className="label">Código</label>
+            <label className="label">Punto de Emisión</label>
             <input
-              type="number"
+              type="text"
               className="input input-bordered w-full"
-              value={branch.code}
-              onChange={(e) =>
-                onChange({ ...branch, code: Number(e.target.value) })
-              }
+              value={branch.puntoEmision}
+              onChange={(e) => onChange({ ...branch, puntoEmision: e.target.value })}
               required
             />
           </div>
