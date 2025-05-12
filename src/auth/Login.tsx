@@ -1,29 +1,41 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authService } from './Services/auth.service';
 
 const Login = () => {
     const [cedula, setCedula] = useState('');
-    const [contrasena, setContrasena] = useState('');
+    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validación básica
-        if (!cedula.trim() || !contrasena.trim()) {
-            setError('Por Favor, Complete Todos los Campos');
+        if (!cedula.trim() || !password.trim()) {
+            setError('Por favor complete todos los campos');
             return;
         }
 
+        setIsLoading(true);
+        setError('');
+
         try {
-            // Aquí irá la lógica de autenticación del backend
-            console.log('Iniciando sesión con:', { cedula, contrasena });
+            const result = await authService.login({ cedula, password });
+            console.log('Resultado del login:', result);
 
+            // Verificación adicional del almacenamiento
+            const storedToken = authService.getToken();
+            if (!storedToken) {
+                throw new Error('No se pudo almacenar el token');
+            }
 
-            navigate('/junta'); // Redirige al dashboard después de iniciar sesión
+            navigate('/junta');
         } catch (error) {
-            setError('Error al iniciar sesión. Verifique sus credenciales.');
+            console.error('Error en el login:', error);
+            setError(error instanceof Error ? error.message : 'Error al iniciar sesión');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -63,8 +75,8 @@ const Login = () => {
                             id="contrasena"
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Escribe tu contraseña"
-                            value={contrasena}
-                            onChange={(e) => setContrasena(e.target.value)}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                         />
                         <div className="mt-1 text-right">
                             <a
@@ -81,12 +93,14 @@ const Login = () => {
                             {error}
                         </div>
                     )}
-                    <div  className="flex justify-center">
+                    <div className="flex justify-center">
                         <button
                             type="submit"
-                            className="w-2/3 px-4 py-2 cursor-pointer text-white bg-blue-900 rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={isLoading}
+                            className={`w-2/3 px-4 py-2 text-white bg-blue-900 rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
                         >
-                            Iniciar Sesión
+                            {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                         </button>
                     </div>
 
