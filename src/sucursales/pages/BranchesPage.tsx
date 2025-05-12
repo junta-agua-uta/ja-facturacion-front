@@ -1,78 +1,65 @@
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 import { Branch, BranchFilter } from '../types/sucursal';
 import { BranchFilters, BranchTable } from '../components';
 import { AddBranchModal, EditModal, ConfirmModal } from '../modals';
 import { PAGE_SIZE } from '../../shared/utils/constants';
 import { Title, SubTitle, EndSlot, CardSlot } from '../../shared/components';
 
-const mockBranches: Branch[] = [
-  {
-    id: '1',
-    name: 'Junta Administradora de Agua Potable La Esperanza',
-    address: 'Quito',
-    code: 101,
-  },
-  {
-    id: '2',
-    name: 'Junta de Agua Potable San Miguel',
-    address: 'Guayaquil',
-    code: 102,
-  },
-  {
-    id: '3',
-    name: 'Agua Potable El Progreso',
-    address: 'Cuenca',
-    code: 103,
-  },
-  {
-    id: '4',
-    name: 'Comité de Agua Potable Los Andes',
-    address: 'Ambato',
-    code: 104,
-  },
-  {
-    id: '5',
-    name: 'Sistema Comunitario de Agua La Paz',
-    address: 'Loja',
-    code: 105,
-  },
-  {
-    id: '6',
-    name: 'Junta Administradora El Valle',
-    address: 'Manta',
-    code: 106,
-  },
+interface ApiBranch {
+  ID: number;
+  NOMBRE: string;
+  UBICACION: string;
+  PUNTO_EMISION: string;
+}
 
-  {
-    id: '7',
-    name: 'Agua Potable San Juan',
-    address: 'Machala',
-    code: 107,
+interface ApiResponse {
+  data: ApiBranch[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+}
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+// Configure Axios instance
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
   },
-  {
-    id: '8',
-    name: 'Comité de Agua Potable La Libertad',
-    address: 'Esmeraldas',
-    code: 108,
-  },
-  {
-    id: '9',
-    name: 'Sistema Comunitario de Agua El Sol',
-    address: 'Ibarra',
-    code: 109,
-  },
-  {
-    id: '10',
-    name: 'Junta Administradora de Agua Potable Santa Rosa',
-    address: 'Quito',
-    code: 110,
-  },
-];
+});
+
+// Add request interceptor for auth token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('USER_TOKEN');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized access
+      localStorage.removeItem('USER_TOKEN');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default function BranchesPage() {
-  const [branches, setBranches] = useState<Branch[]>(mockBranches);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [filters, setFilters] = useState<BranchFilter>({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [branchToDelete, setBranchToDelete] = useState<Branch | null>(null);
   const [branchToEdit, setBranchToEdit] = useState<Branch | null>(null);
@@ -80,52 +67,128 @@ export default function BranchesPage() {
 
   const [newBranch, setNewBranch] = useState<Branch>({
     id: '',
-    name: '',
-    address: '',
-    code: 0,
+    nombre: '',
+    ubicacion: '',
+    puntoEmision: '',
   });
 
+  useEffect(() => {
+    const fetchBranches = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await api.get('/sucursales', {
+          params: {
+            ...filters,
+            page: currentPage,
+            pageSize: PAGE_SIZE,
+          },
+        });
 
-  const filteredBranches = branches.filter(branch =>
-    filters.name ? branch.name.toLowerCase().includes(filters.name.toLowerCase()) : true
-  );
+        const data: ApiResponse = response.data;
+        const mappedBranches = data.data.map(branch => ({
+          id: branch.ID.toString(),
+          nombre: branch.NOMBRE,
+          ubicacion: branch.UBICACION,
+          puntoEmision: branch.PUNTO_EMISION,
+        }));
 
-  const totalPages = Math.ceil(filteredBranches.length / PAGE_SIZE);
-  const paginatedBranches = filteredBranches.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
+        setBranches(mappedBranches);
+        setTotalItems(data.totalItems);
+        setTotalPages(data.totalPages);
+        setCurrentPage(data.currentPage);
+      } catch (error) {
+        console.error('Error fetching branches:', error);
+        setError('No se pudo cargar la lista de sucursales');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBranches();
+  }, [currentPage, filters]);
 
   const handleClearFilters = () => {
     setFilters({});
     setCurrentPage(1);
   };
 
-  const handleAddBranch = () => {
-    if (newBranch.name && newBranch.address && newBranch.code) {
-      setBranches(prev => [
-        ...prev,
-        { ...newBranch, id: (prev.length + 1).toString() },
-      ]);
-      setNewBranch({ id: '', name: '', address: '', code: 0 });
+  const handleAddBranch = async () => {
+    if (newBranch.nombre && newBranch.ubicacion && newBranch.puntoEmision) {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await api.post('/sucursales', {
+          NOMBRE: newBranch.nombre,
+          UBICACION: newBranch.ubicacion,
+          PUNTO_EMISION: newBranch.puntoEmision,
+        });
+
+        const addedBranch = response.data;
+        setBranches(prev => [
+          ...prev,
+          {
+            id: addedBranch.ID.toString(),
+            nombre: addedBranch.NOMBRE,
+            ubicacion: addedBranch.UBICACION,
+            puntoEmision: addedBranch.PUNTO_EMISION,
+          },
+        ]);
+
+        setNewBranch({ id: '', nombre: '', ubicacion: '', puntoEmision: '' });
+        (document.getElementById('add_modal') as HTMLDialogElement)?.close();
+      } catch (error) {
+        console.error('Error adding branch:', error);
+        setError('No se pudo agregar la sucursal');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (branchToDelete) {
-      setBranches(prev => prev.filter(b => b.id !== branchToDelete.id));
-      setBranchToDelete(null);
+      setIsLoading(true);
+      setError(null);
+      try {
+        await api.delete(`/sucursales/${branchToDelete.id}`);
+
+        setBranches(prev => prev.filter(b => b.id !== branchToDelete.id));
+        setBranchToDelete(null);
+        (document.getElementById('delete_modal') as HTMLDialogElement)?.close();
+      } catch (error) {
+        console.error('Error deleting branch:', error);
+        setError('No se pudo eliminar la sucursal');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleEdit = () => {
+  const handleEdit = async () => {
     if (editForm) {
-      setBranches(prev =>
-        prev.map(b => (b.id === editForm.id ? { ...editForm } : b))
-      );
-      setBranchToEdit(null); // Cierra el modal
-      setEditForm(null); // Limpia el formulario
+      setIsLoading(true);
+      setError(null);
+      try {
+        await api.put(`/sucursales/${editForm.id}`, {
+          ID: parseInt(editForm.id),
+          NOMBRE: editForm.nombre,
+          UBICACION: editForm.ubicacion,
+          PUNTO_EMISION: editForm.puntoEmision,
+        });
+
+        setBranches(prev =>
+          prev.map(b => (b.id === editForm.id ? { ...editForm } : b))
+        );
+        setBranchToEdit(null);
+        setEditForm(null);
+        (document.getElementById('edit_modal') as HTMLDialogElement)?.close();
+      } catch (error) {
+        console.error('Error updating branch:', error);
+        setError('No se pudo actualizar la sucursal');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -133,17 +196,6 @@ export default function BranchesPage() {
     setBranchToEdit(null);
     setEditForm(null);
   };
-
-  useEffect(() => {
-    setCurrentPage(1);
-
-  }, [filters]);
-
-  useEffect(() => {
-    if (editForm) {
-      (document.getElementById('edit_modal') as HTMLDialogElement)?.showModal();
-    }
-  }, [editForm]);
 
   return (
     <>
@@ -166,31 +218,44 @@ export default function BranchesPage() {
           </button>
         </EndSlot>
 
-        <BranchTable
-          data={paginatedBranches}
-          pagination={{
-            currentPage,
-            totalPages,
-            pageSize: PAGE_SIZE,
-            totalItems: filteredBranches.length,
-          }}
-          onPageChange={setCurrentPage}
-          onEdit={(branch) => {
-            setBranchToEdit(branch);
-            setEditForm({ ...branch });
-          }}
-          onDelete={(branchId) => {
-            const branch = branches.find(b => b.id === branchId);
-            setBranchToDelete(branch ?? null);
-            (document.getElementById('delete_modal') as HTMLDialogElement)?.showModal();
-          }}
-        />
+        {error && (
+          <div className="alert alert-error mb-4">
+            <span>{error}</span>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <span className="loading loading-spinner loading-lg"></span>
+          </div>
+        ) : (
+          <BranchTable
+            data={branches}
+            pagination={{
+              currentPage,
+              totalPages,
+              pageSize: PAGE_SIZE,
+              totalItems,
+            }}
+            onPageChange={setCurrentPage}
+            onEdit={(branch) => {
+              setBranchToEdit(branch);
+              setEditForm({ ...branch });
+              (document.getElementById('edit_modal') as HTMLDialogElement)?.showModal(); // Esta línea faltaba
+            }}
+            onDelete={(branchId) => {
+              const branch = branches.find(b => b.id === branchId);
+              setBranchToDelete(branch ?? null);
+              (document.getElementById('delete_modal') as HTMLDialogElement)?.showModal();
+            }}
+          />
+        )}
       </CardSlot>
 
       <ConfirmModal
         id="delete_modal"
         title="Confirmar eliminación"
-        message={`¿Estás seguro de que deseas eliminar la sucursal "${branchToDelete?.name}"?`}
+        message={`¿Estás seguro de que deseas eliminar la sucursal "${branchToDelete?.nombre}"?`}
         onConfirm={handleDelete}
         onCancel={() => setBranchToDelete(null)}
       />
@@ -208,7 +273,7 @@ export default function BranchesPage() {
         id="add_modal"
         branch={newBranch}
         onChange={setNewBranch}
-        onCancel={() => setNewBranch({ id: '', name: '', address: '', code: 0 })}
+        onCancel={() => setNewBranch({ id: '', nombre: '', ubicacion: '', puntoEmision: '' })}
         onSave={handleAddBranch}
       />
     </>

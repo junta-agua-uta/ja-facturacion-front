@@ -23,7 +23,6 @@ export default function EditModal({
     <dialog id={id} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg">{title}</h3>
-
         <form method="dialog" className="space-y-4 mt-4">
           <div>
             <label className="label">
@@ -32,50 +31,58 @@ export default function EditModal({
             <input
               type="text"
               className="input input-bordered w-full"
-              value={branch.name}
-              onChange={(e) => onChange({ ...branch, name: e.target.value })}
+              value={branch.nombre}
+              onChange={(e) => onChange({ ...branch, nombre: e.target.value })}
               required
             />
           </div>
 
           <div>
             <label className="label">
-              <span className="label-text">Dirección</span>
+              <span className="label-text">Ubicación</span>
             </label>
             <input
               type="text"
               className="input input-bordered w-full"
-              value={branch.address}
-              onChange={(e) => onChange({ ...branch, address: e.target.value })}
+              value={branch.ubicacion}
+              onChange={(e) => onChange({ ...branch, ubicacion: e.target.value })}
               required
             />
           </div>
 
           <div>
             <label className="label">
-              <span className="label-text">Código</span>
+              <span className="label-text">Punto de Emisión</span>
             </label>
             <input
-              type="number"
+              type="text"
               className="input input-bordered w-full"
-              value={branch.code}
-              onChange={(e) => onChange({ ...branch, code: Number(e.target.value) })}
+              value={branch.puntoEmision}
+              onChange={(e) => onChange({ ...branch, puntoEmision: e.target.value })}
               required
             />
           </div>
 
-          <div className="modal-action flex gap-2">
+          <div className="modal-action">
             <button
+              type="button"
               className="btn btn-outline"
-              onClick={onCancel}
+              onClick={() => {
+                onCancel();
+                (document.getElementById(id) as HTMLDialogElement)?.close();
+              }}
             >
               Cancelar
             </button>
             <button
+              type="button"
               className="btn btn-primary"
-              onClick={onSave}
+              onClick={() => {
+                onSave();
+                (document.getElementById(id) as HTMLDialogElement)?.close();
+              }}
             >
-              Guardar cambios
+              Guardar
             </button>
           </div>
         </form>
