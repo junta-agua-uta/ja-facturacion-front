@@ -32,6 +32,7 @@ export default function BranchTable({
       onEdit={onEdit}
       onDelete={onDelete}
       onPageChange={onPageChange}
+      showDelete={false}
     />
   );
 }

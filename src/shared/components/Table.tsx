@@ -18,6 +18,7 @@ interface TableProps<T> {
   onDelete?: (id: string) => void;
   onPageChange?: (page: number) => void;
   showActions?: boolean;
+  showDelete?: boolean;
 }
 
 export default function Table<T extends { id: string }>({
@@ -27,7 +28,8 @@ export default function Table<T extends { id: string }>({
   onEdit,
   onDelete,
   onPageChange,
-  showActions = true
+  showActions = true,
+  showDelete = true
 }: TableProps<T>) {
   return (
     <>
@@ -61,7 +63,7 @@ export default function Table<T extends { id: string }>({
                         <FaEdit />
                       </button>
                     )}
-                    {onDelete && (
+                    {onDelete && showDelete && (
                       <button
                         className="btn btn-xs btn-circle btn-outline btn-error"
                         onClick={() => onDelete(item.id)}
@@ -84,4 +86,4 @@ export default function Table<T extends { id: string }>({
       )}
     </>
   );
-} 
+}
