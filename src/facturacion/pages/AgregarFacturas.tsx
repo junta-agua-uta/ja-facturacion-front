@@ -5,6 +5,7 @@ import { FacturaForm } from "../../shared/components/interfaces/factura.interfac
 import { useBranches } from "../hooks/useBranches";
 import { useClientePorCedula } from "../hooks/useClientePorCedula";
 import { SucursalSelect } from "../components/SucursalSelect";
+import { SelectCodigoModal } from "../modals/SelectCodigoModal";
 
 
 export default function AgregarFacturas() {
@@ -94,9 +95,36 @@ export default function AgregarFacturas() {
               </InputSlot>
 
               <InputSlot label="Código" >
-                <button className="btn btn-primary w-full">
-                  Seleccionar Código
-                </button>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    name="codigo"
+                    className="input input-bordered w-full"
+                    value={formData.codigo}
+                    readOnly
+                    placeholder="Selecciona un código"
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      const dialog = document.getElementById('select_codigo_modal') as HTMLDialogElement;
+                      dialog?.showModal();
+                    }}
+                  >
+                    Seleccionar Código
+                  </button>
+                </div>
+                <SelectCodigoModal
+                  id="select_codigo_modal"
+                  onSelect={(codigo: string, mes?: string) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      codigo: mes && mes !== 'ninguno' ? `${codigo} - ${mes}` : codigo
+                    }));
+                  }}
+                  onCancel={() => {}}
+                />
               </InputSlot>
             </div>
 
