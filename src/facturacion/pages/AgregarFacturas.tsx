@@ -2,18 +2,9 @@ import { SubTitle, Title, CardSlot } from "../../shared/components";
 import { useState, useEffect } from "react";
 import { InputSlot } from "../components";
 import api from '../../shared/api';
+import { FacturaForm } from "../../shared/components/interfaces/factura.interface";
+import { Branch } from "../../sucursales/types/sucursal";
 
-interface FacturaForm {
-  cedula: string;
-  cliente: string;
-  codigo: string;
-  emision: string;
-  vencimiento: string;
-  serie: string;
-  numero: string;
-  secuencia: string;
-  concepto: string;
-}
 
 export default function AgregarFacturas() {
   const [formData, setFormData] = useState<FacturaForm>({
@@ -22,18 +13,13 @@ export default function AgregarFacturas() {
     codigo: '',
     emision: '',
     vencimiento: '',
-    serie: '',
-    numero: '',
-    secuencia: '',
+    serie: '001',
+    numero: '300',
+    secuencia: '000001219',
     concepto: ''
   });
 
-  interface Branch {
-    id: string;
-    nombre: string;
-    ubicacion: string;
-    puntoEmision: string;
-  }
+
 
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string>("");

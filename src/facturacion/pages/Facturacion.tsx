@@ -3,6 +3,7 @@ import { Title, SubTitle, EndSlot, CardSlot } from "../../shared/components";
 import { Factura, FacturacionCedula, FacturacionFechaEmisionFilter } from "../types/factura";
 import { FacturacionCedulaFilter, FacturacionFechaFilter, FacturacionTable } from "../components";
 import { PAGE_SIZE } from "../../shared/utils/constants";
+import api from '../../shared/api';
 import { Link } from "react-router-dom";
 
 const mockFacturas: Factura[] = [
@@ -98,9 +99,6 @@ const mockFacturas: Factura[] = [
   }
 ];
 
-import api from '../../shared/api';
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Facturacion() {
   const [facturas, setFacturas] = useState<Factura[]>(mockFacturas);
@@ -109,7 +107,7 @@ export default function Facturacion() {
   useEffect(() => {
     const fetchFacturas = async () => {
       try {
-        const response = await api.get(`${API_URL}/facturas/all`);
+        const response = await api.get(`/facturas/all`);
         console.log('Respuesta de la API de facturas:', response.data);
       } catch (error) {
         console.error('Error al obtener facturas:', error);
