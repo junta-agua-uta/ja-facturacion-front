@@ -19,8 +19,6 @@ export default function AgregarFacturas() {
     concepto: ''
   });
 
-
-
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string>("");
   const [loadingBranches, setLoadingBranches] = useState<boolean>(true);
@@ -52,13 +50,46 @@ export default function AgregarFacturas() {
     fetchBranches();
   }, []);
 
+  // Debounce timeout para búsqueda de cliente por cédula
+  const [cedulaTimeout, setCedulaTimeout] = useState<ReturnType<typeof setTimeout>| null>(null);
+  const [clienteError, setClienteError] = useState<string | null>(null);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
+    // Si el campo editado es la cédula, buscar el cliente automáticamente
+    if (name === 'cedula') {
+      setClienteError(null);
+      // Limpiar timeout anterior
+      if (cedulaTimeout) clearTimeout(cedulaTimeout);
+      // Solo buscar si la cédula tiene al menos 10 caracteres
+      if (value.length >= 10) {
+        const timeout = setTimeout(async () => {
+          try {
+            const response = await api.get(`/clientes/buscarCedula`, { params: { cedula: value } });
+            const clientes = response.data;
+            if (Array.isArray(clientes) && clientes.length > 0 && clientes[0].RAZON_SOCIAL) {
+              setFormData(prev => ({ ...prev, cliente: clientes[0].RAZON_SOCIAL }));
+            } else {
+              setFormData(prev => ({ ...prev, cliente: '' }));
+              setClienteError('Cliente no encontrado');
+            }
+          } catch (error) {
+            setFormData(prev => ({ ...prev, cliente: '' }));
+            setClienteError('Error al buscar cliente');
+          }
+        }, 500); // 500ms debounce
+        setCedulaTimeout(timeout);
+      } else {
+        setFormData(prev => ({ ...prev, cliente: '' }));
+      }
+    }
   };
+
 
   return (
     <>
@@ -114,7 +145,11 @@ export default function AgregarFacturas() {
                   onChange={handleInputChange}
                   className="input input-bordered w-full"
                   placeholder="Nombre del cliente"
+                  readOnly
                 />
+                {clienteError && (
+                  <div className="text-xs text-red-500 mt-1">{clienteError}</div>
+                )}
               </InputSlot>
 
               <InputSlot label="Código" >
