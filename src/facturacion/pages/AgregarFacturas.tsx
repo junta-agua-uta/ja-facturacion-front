@@ -23,7 +23,10 @@ export default function AgregarFacturas() {
 
   // Sucursales
   const { branches, loading: loadingBranches, error: branchesError } = useBranches();
-  const [selectedBranch, setSelectedBranch] = useState<string>("");
+  const [selectedBranch, setSelectedBranch] = useState<string>(() => {
+    return localStorage.getItem('selectedBranch') || '';
+  });
+
 
   // Cliente por cédula
   const { cliente, error: clienteError } = useClientePorCedula(formData.cedula);
@@ -58,10 +61,15 @@ export default function AgregarFacturas() {
             <SucursalSelect
               branches={branches}
               selected={selectedBranch}
-              onChange={e => setSelectedBranch(e.target.value)}
+              onChange={e => {
+                const value = e.target.value;
+                setSelectedBranch(value);
+                localStorage.setItem('selectedBranch', value);
+              }}
               loading={loadingBranches}
               error={branchesError}
             />
+
           </div>
         </div>
 
@@ -123,7 +131,7 @@ export default function AgregarFacturas() {
                       codigo: mes && mes !== 'ninguno' ? `${codigo} - ${mes}` : codigo
                     }));
                   }}
-                  onCancel={() => {}}
+                  onCancel={() => { }}
                 />
               </InputSlot>
             </div>
@@ -158,7 +166,7 @@ export default function AgregarFacturas() {
                   className="textarea textarea-bordered w-full resize-none"
                   placeholder="Concepto de la factura"
                   rows={3}
-                />  
+                />
               </InputSlot>
             </div>
 

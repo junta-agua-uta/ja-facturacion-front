@@ -11,7 +11,16 @@ export function useBranches() {
     const fetchBranches = async () => {
       setLoading(true);
       setError(null);
+
       try {
+        const cached = localStorage.getItem('branches');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setBranches(parsed);
+          setLoading(false);
+          return;
+        }
+
         const response = await api.get('/sucursales');
         const data = response.data.data.map((branch: any) => ({
           id: branch.ID.toString(),
@@ -20,12 +29,14 @@ export function useBranches() {
           puntoEmision: branch.PUNTO_EMISION,
         }));
         setBranches(data);
+        localStorage.setItem('branches', JSON.stringify(data));
       } catch (err) {
         setError('No se pudo cargar la lista de sucursales');
       } finally {
         setLoading(false);
       }
     };
+
     fetchBranches();
   }, []);
 
