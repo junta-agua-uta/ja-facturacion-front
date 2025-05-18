@@ -1,6 +1,7 @@
 import { SubTitle, Title, CardSlot } from "../../shared/components";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { InputSlot } from "../components";
+import api from '../../shared/api';
 
 interface FacturaForm {
   cedula: string;
@@ -27,6 +28,44 @@ export default function AgregarFacturas() {
     concepto: ''
   });
 
+  interface Branch {
+    id: string;
+    nombre: string;
+    ubicacion: string;
+    puntoEmision: string;
+  }
+
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>("");
+  const [loadingBranches, setLoadingBranches] = useState<boolean>(true);
+  const [branchesError, setBranchesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchBranches = async () => {
+      setLoadingBranches(true);
+      setBranchesError(null);
+      try {
+        const response = await api.get('/sucursales');
+        const data = response.data;
+        const mappedBranches = data.data.map((branch: any) => ({
+          id: branch.ID.toString(),
+          nombre: branch.NOMBRE,
+          ubicacion: branch.UBICACION,
+          puntoEmision: branch.PUNTO_EMISION,
+        }));
+        setBranches(mappedBranches);
+        if (mappedBranches.length > 0) {
+          setSelectedBranch(mappedBranches[0].id);
+        }
+      } catch (error) {
+        setBranchesError("No se pudo cargar la lista de sucursales");
+      } finally {
+        setLoadingBranches(false);
+      }
+    };
+    fetchBranches();
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -45,9 +84,26 @@ export default function AgregarFacturas() {
           <p className="text-lg font-semibold text-gray-600">
             Facturador: <span className="font-bold text-blue-500">Jhon Doe</span>
           </p>
-          <p className="text-lg font-semibold text-gray-600">
-            Sucursal: <span className="font-bold text-blue-500">Junta Administradora de Agua Potable Miñarica San / Santa Rosa</span>
-          </p>
+          <div className="text-lg font-semibold text-gray-600 flex items-center gap-2">
+            Sucursal:
+            {loadingBranches ? (
+              <span className="text-blue-500 font-bold">Cargando...</span>
+            ) : branchesError ? (
+              <span className="text-red-500 font-bold">{branchesError}</span>
+            ) : (
+              <select
+                className="select select-bordered font-bold text-blue-500"
+                value={selectedBranch}
+                onChange={e => setSelectedBranch(e.target.value)}
+              >
+                {branches.map(branch => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.nombre}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
 
         <CardSlot>

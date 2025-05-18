@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Title, SubTitle, EndSlot, CardSlot } from "../../shared/components";
 import { Factura, FacturacionCedula, FacturacionFechaEmisionFilter } from "../types/factura";
 import { FacturacionCedulaFilter, FacturacionFechaFilter, FacturacionTable } from "../components";
@@ -98,8 +98,26 @@ const mockFacturas: Factura[] = [
   }
 ];
 
+import api from '../../shared/api';
+
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function Facturacion() {
   const [facturas, setFacturas] = useState<Factura[]>(mockFacturas);
+
+  // Fetch facturas desde la API y muestra la respuesta en consola
+  useEffect(() => {
+    const fetchFacturas = async () => {
+      try {
+        const response = await api.get(`${API_URL}/facturas/all`);
+        console.log('Respuesta de la API de facturas:', response.data);
+      } catch (error) {
+        console.error('Error al obtener facturas:', error);
+      }
+    };
+    fetchFacturas();
+  }, []);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<FacturacionCedula>({});
   const [dateFilters, setDateFilters] = useState<FacturacionFechaEmisionFilter>({
@@ -129,7 +147,6 @@ export default function Facturacion() {
   };
 
   return (
-    console.log("Facturas", import.meta.env.VITE_API_URL),
     <>
       <Title title="Facturas" />
 
