@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../shared/api';
 import { Branch, BranchFilter } from '../types/sucursal';
 import { BranchFilters, BranchTable } from '../components';
 import { AddBranchModal, EditModal, ConfirmModal } from '../modals';
@@ -20,37 +20,6 @@ interface ApiResponse {
   currentPage: number;
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-// Configure Axios instance
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add request interceptor for auth token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('USER_TOKEN');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Add response interceptor for error handling
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
-      localStorage.removeItem('USER_TOKEN');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
 
 export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -119,9 +88,9 @@ export default function BranchesPage() {
       setError(null);
       try {
         const response = await api.post('/sucursales', {
-          NOMBRE: newBranch.nombre,
-          UBICACION: newBranch.ubicacion,
-          PUNTO_EMISION: newBranch.puntoEmision,
+          nombre: newBranch.nombre,
+          ubicacion: newBranch.ubicacion,
+          punto_emision: newBranch.puntoEmision,
         });
 
         const addedBranch = response.data;
