@@ -1,32 +1,5 @@
 import React, { useState } from "react";
-
-const CODIGOS = [
-  "EXCEDENTE",
-  "TARIFA BASICA",
-  "MORA",
-  "MULTA",
-  "REBAJA",
-  "ABONO",
-  "CUOTA_PROYECTOS",
-  "VERTIENTE",
-  "OTROS"
-];
-
-const MESES = [
-  "ninguno",
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre"
-];
+import { CODIGOS, MESES } from "../types/factura";
 
 interface SelectCodigoModalProps {
   id: string;

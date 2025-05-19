@@ -49,18 +49,10 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
         </InputSlot>
 
         <InputSlot label="Código">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              name="codigo"
-              className="input input-bordered w-full"
-              value={formData.codigo}
-              readOnly
-              placeholder="Selecciona un código"
-            />
+          <div className="flex">
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-primary flex-1"
               onClick={onOpenCodigoModal}
             >
               Seleccionar Código

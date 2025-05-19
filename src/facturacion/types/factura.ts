@@ -29,7 +29,7 @@ export type CodigoConcepto =
     | 'MULTA'
     | 'REBAJA'
     | 'ABONO'
-    | 'CUOTA_PROYECTOS'
+    | 'CUOTA PROYECTOS'
     | 'VERTIENTE'
     | 'OTROS';
 
@@ -75,7 +75,7 @@ export const CONFIGURACION_CONCEPTOS: Record<CodigoConcepto, {
     codInterno: 'ABO001', 
     desc: 'Abono' 
   },
-  'CUOTA_PROYECTOS': { 
+  'CUOTA PROYECTOS': { 
     codInterno: 'CP001', 
     desc: 'Cuota Proyectos' 
   },
@@ -110,3 +110,31 @@ export const crearConcepto = (
     total: +(subtotal + iva)
   };
 };
+
+export const CODIGOS = [
+  "EXCEDENTE",
+  "TARIFA BASICA",
+  "MORA",
+  "MULTA",
+  "REBAJA",
+  "ABONO",
+  "CUOTA PROYECTOS",
+  "VERTIENTE",
+  "OTROS"
+];
+
+export const MESES = [
+  "ninguno",
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre"
+];
