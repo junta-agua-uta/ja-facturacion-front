@@ -5,13 +5,12 @@ import { FacturaFormContent } from "../components/FacturaForm";
 import { useFacturaForm } from "../hooks/useFacturaForm";
 import { useBranchSelection } from "../hooks/useBranchSelection";
 import { useMemo, useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 
 export default function AgregarFacturas() {
   // IMPORTANTE: Todos los hooks deben llamarse en el mismo orden en cada renderizado
   // 1. Hooks de React
-  const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // 2. Hooks personalizados
@@ -27,7 +26,8 @@ export default function AgregarFacturas() {
     handleConceptoChange,
     handleConceptoDelete,
     handleOpenCodigoModal,
-    saveFactura
+    saveFactura,
+    resetForm
   } = useFacturaForm();
 
   // Usar el hook para manejar la selección de sucursales
@@ -81,7 +81,10 @@ export default function AgregarFacturas() {
 
   // Manejar la cancelación
   const handleCancel = () => {
-    navigate('/junta/facturas');
+    // Restablecer el formulario a su estado inicial
+    resetForm();
+    // Limpiar cualquier mensaje de error
+    setErrorMessage(null);
   };
 
   // Calcular totales

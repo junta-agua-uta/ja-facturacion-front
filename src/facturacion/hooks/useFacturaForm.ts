@@ -22,12 +22,8 @@ export const useFacturaForm = () => {
     return `${year}-${month}-${day}`;
   };
   
-  // 2. Estados (useState hooks)
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-
-  // Estado del formulario con valores iniciales
-  const [formData, setFormData] = useState<FacturaForm>({
+  // Valores iniciales del formulario
+  const initialFormState: FacturaForm = {
     cedula: '',
     cliente: '',
     codigo: '',
@@ -37,13 +33,20 @@ export const useFacturaForm = () => {
     numero: DEFAULTS.numero,
     secuencia: DEFAULTS.secuencia,
     concepto: ''
-  });
+  };
+  
+  // 2. Estados (useState hooks)
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Estado del formulario con valores iniciales
+  const [formData, setFormData] = useState<FacturaForm>(initialFormState);
 
   // Estado para la tabla de conceptos
   const [conceptos, setConceptos] = useState<ConceptoCobro[]>([]);
 
   // Obtener cliente por cédula
-  const { cliente, clienteId, error: clienteError } = useClientePorCedula(formData.cedula);
+  const { cliente, clienteId, error: clienteError, resetCliente } = useClientePorCedula(formData.cedula);
 
   // Actualizar cliente automáticamente cuando cambia el resultado del hook
   useEffect(() => {
@@ -171,6 +174,19 @@ export const useFacturaForm = () => {
     }
   }, [clienteId, conceptos, navigate]);
 
+  // Función para restablecer el formulario a su estado inicial
+  const resetForm = useCallback(() => {
+    // Reiniciar el estado del cliente en el hook useClientePorCedula
+    resetCliente();
+    
+    // Restablecer el formulario a su estado inicial
+    setFormData(initialFormState);
+    
+    // Limpiamos los conceptos y errores
+    setConceptos([]);
+    setSaveError(null);
+  }, [initialFormState, resetCliente]);
+
   return {
     formData,
     setFormData,
@@ -183,6 +199,7 @@ export const useFacturaForm = () => {
     handleConceptoChange,
     handleConceptoDelete,
     handleOpenCodigoModal,
-    saveFactura
+    saveFactura,
+    resetForm
   };
 };

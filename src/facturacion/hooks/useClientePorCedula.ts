@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../../shared/api';
 
 interface ClienteResponse {
@@ -11,8 +11,16 @@ export function useClientePorCedula(cedula: string) {
   const [cliente, setCliente] = useState('');
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // Función para reiniciar el estado del cliente
+  const resetCliente = useCallback(() => {
+    setCliente('');
+    setClienteId(null);
+    setError(null);
+  }, []);
 
   useEffect(() => {
+    // Si la cédula está vacía o es muy corta, limpiamos los datos del cliente
     if (!cedula || cedula.length < 10) {
       setCliente('');
       setClienteId(null);
@@ -43,5 +51,5 @@ export function useClientePorCedula(cedula: string) {
     return () => clearTimeout(timeout);
   }, [cedula]);
 
-  return { cliente, clienteId, error };
+  return { cliente, clienteId, error, resetCliente };
 }
