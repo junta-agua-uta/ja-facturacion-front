@@ -12,7 +12,7 @@ const Layout = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <aside className="w-64 flex flex-col bg-gray-200 border-r border-gray-300 shadow-xl">
+      <aside className="w-64 flex flex-col bg-gray-200 border-r border-gray-300 shadow-xl pb-5">
         <div className="p-4 flex justify-center">
           <img src="/logo_agua.svg" alt="Logo Agua Pública" className="h-36" />
         </div>
@@ -97,7 +97,7 @@ const Layout = () => {
         </button>
       </aside>
 
-      <main className="flex-1 overflow-hidden max-w-7xl mx-auto mt-10 p-6 space-y-6">
+      <main className="flex-1 overflow-auto max-w-5xl mx-auto mt-10 p-6 space-y-6 max-h-full">
         <Outlet />
       </main>
     </div>
