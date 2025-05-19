@@ -106,6 +106,7 @@ export const crearConcepto = (
     cantidad,
     precio,
     descuento,
+    subtotal: +subtotal,
     iva,
     total: +(subtotal + iva)
   };

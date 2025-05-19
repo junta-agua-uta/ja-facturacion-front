@@ -6,6 +6,7 @@ export interface ConceptoCobro {
   cantidad: number;
   precio: number;
   descuento: number;
+  subtotal: number;
   iva: number;
   total: number;
 }
@@ -78,7 +79,7 @@ const ConceptoRow = memo(({
       <td>
         <button
           type="button"
-          className="btn btn-error btn-xs"
+          className="btn btn-error btn-xs text-white"
           onClick={() => onDelete(index)}
         >
           Eliminar
@@ -106,7 +107,7 @@ const TableHeader = () => (
       <th>Descuento</th>
       <th>IVA (15%)</th>
       <th>Total</th>
-      <th></th>
+      <th>Acciones</th>
     </tr>
   </thead>
 );
@@ -124,26 +125,28 @@ export const TablaConceptos: React.FC<TablaConceptosProps> = ({ conceptos, onCha
   }, [conceptos, onChange]);
 
   return (
-    <div className="overflow-x-auto mt-8">
+    <div className="mt-8 w-full">
       <div className="max-h-[280px] overflow-y-auto">
-        <table className="table w-full">
-          <TableHeader />
-          <tbody>
-            {conceptos.length === 0 ? (
-              <EmptyRow />
-            ) : (
-              conceptos.map((concepto, idx) => (
-                <ConceptoRow 
-                  key={`${concepto.codigo}-${idx}`}
-                  concepto={concepto}
-                  index={idx}
-                  onEdit={handleEdit}
-                  onDelete={onDelete}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
+        <div className="min-w-full inline-block align-middle">
+          <table className="table w-full">
+            <TableHeader />
+            <tbody>
+              {conceptos.length === 0 ? (
+                <EmptyRow />
+              ) : (
+                conceptos.map((concepto, idx) => (
+                  <ConceptoRow 
+                    key={`${concepto.codigo}-${idx}`}
+                    concepto={concepto}
+                    index={idx}
+                    onEdit={handleEdit}
+                    onDelete={onDelete}
+                  />
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
