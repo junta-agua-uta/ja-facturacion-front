@@ -30,6 +30,11 @@ export function useBranches() {
         }));
         setBranches(data);
         localStorage.setItem('branches', JSON.stringify(data));
+        
+        // Si no hay una sucursal seleccionada, seleccionar la primera
+        if (data.length > 0 && (!localStorage.getItem('selectedBranch'))) {
+          localStorage.setItem('selectedBranch', data[0].id);
+        }
       } catch (err) {
         setError('No se pudo cargar la lista de sucursales');
       } finally {

@@ -4,7 +4,7 @@ import { FacturaHeader } from "../components/FacturaHeader";
 import { FacturaFormContent } from "../components/FacturaForm";
 import { useFacturaForm } from "../hooks/useFacturaForm";
 import { useBranchSelection } from "../hooks/useBranchSelection";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function AgregarFacturas() {
@@ -37,12 +37,30 @@ export default function AgregarFacturas() {
     branchesError,
     handleBranchChange
   } = useBranchSelection();
+  
+  // Seleccionar automáticamente la primera sucursal si no hay ninguna seleccionada
+  useEffect(() => {
+    if (!loadingBranches && branches.length > 0 && !selectedBranch) {
+      // Simular la selección de la primera sucursal
+      const event = {
+        target: { value: branches[0].id }
+      } as React.ChangeEvent<HTMLSelectElement>;
+      handleBranchChange(event);
+    }
+  }, [branches, loadingBranches, selectedBranch, handleBranchChange]);
 
   // Manejar el guardado de la factura
   const handleSaveFactura = async () => {
     setErrorMessage(null);
     
-    if (!selectedBranch) {
+    // Si no hay sucursal seleccionada pero hay sucursales disponibles, seleccionar la primera
+    if (!selectedBranch && branches.length > 0) {
+      const event = {
+        target: { value: branches[0].id }
+      } as React.ChangeEvent<HTMLSelectElement>;
+      handleBranchChange(event);
+      // Continuar con la ejecución sin retornar
+    } else if (!selectedBranch) {
       setErrorMessage('Debe seleccionar una sucursal');
       return;
     }

@@ -6,9 +6,10 @@ export const useBranchSelection = () => {
   const { branches, loading: loadingBranches, error: branchesError } = useBranches();
   
   // Obtener sucursal guardada en localStorage
-  const [selectedBranch, setSelectedBranch] = useState<string>(() => 
-    localStorage.getItem('selectedBranch') || ''
-  );
+  const [selectedBranch, setSelectedBranch] = useState<string>(() => {
+    // La primera sucursal ya se selecciona en useBranches.ts si es necesario
+    return localStorage.getItem('selectedBranch') || '';
+  });
 
   // Guardar sucursal seleccionada en localStorage
   const handleBranchChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
