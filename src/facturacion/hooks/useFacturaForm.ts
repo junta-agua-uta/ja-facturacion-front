@@ -6,12 +6,21 @@ import { ConceptoCobro } from "../components/TablaConceptos";
 import { CodigoConcepto, CONFIGURACION_CONCEPTOS, crearConcepto } from "../types/factura";
 
 export const useFacturaForm = () => {
+  // Función para obtener la fecha actual en formato YYYY-MM-DD
+  const getCurrentDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Estado del formulario con valores iniciales
   const [formData, setFormData] = useState<FacturaForm>({
     cedula: '',
     cliente: '',
     codigo: '',
-    emision: '',
+    emision: getCurrentDate(), // Establecer fecha actual por defecto
     vencimiento: '',
     serie: DEFAULTS.serie,
     numero: DEFAULTS.numero,
