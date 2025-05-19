@@ -28,7 +28,7 @@ export const authService = {
         // Extraer datos del usuario del token (si no vienen en la respuesta)
         const tokenPayload = JSON.parse(atob(response.data.access_token.split('.')[1]));
         const userData: User = {
-          id: tokenPayload.sub || '', // Usar 'sub' u otro campo del payload
+          id: tokenPayload.id || '', // Usar 'sub' u otro campo del payload
           cedula: tokenPayload.cedula
         };
         
