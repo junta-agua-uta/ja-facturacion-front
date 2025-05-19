@@ -5,14 +5,15 @@ import { FacturaFormContent } from "../components/FacturaForm";
 import { useFacturaForm } from "../hooks/useFacturaForm";
 import { useBranchSelection } from "../hooks/useBranchSelection";
 import { useMemo, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
 
 export default function AgregarFacturas() {
   // IMPORTANTE: Todos los hooks deben llamarse en el mismo orden en cada renderizado
   // 1. Hooks de React
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  
+
   // 2. Hooks personalizados
   // Usar los hooks personalizados para manejar el estado y la lógica
   const {
@@ -37,7 +38,7 @@ export default function AgregarFacturas() {
     branchesError,
     handleBranchChange
   } = useBranchSelection();
-  
+
   // Seleccionar automáticamente la primera sucursal si no hay ninguna seleccionada
   useEffect(() => {
     if (!loadingBranches && branches.length > 0 && !selectedBranch) {
@@ -52,7 +53,7 @@ export default function AgregarFacturas() {
   // Manejar el guardado de la factura
   const handleSaveFactura = async () => {
     setErrorMessage(null);
-    
+
     // Si no hay sucursal seleccionada pero hay sucursales disponibles, seleccionar la primera
     if (!selectedBranch && branches.length > 0) {
       const event = {
@@ -64,20 +65,20 @@ export default function AgregarFacturas() {
       setErrorMessage('Debe seleccionar una sucursal');
       return;
     }
-    
+
     // Encontrar el ID de la sucursal seleccionada
     const selectedBranchObj = branches.find(branch => branch.id === selectedBranch);
     if (!selectedBranchObj) {
       setErrorMessage('Sucursal no válida');
       return;
     }
-    
+
     const success = await saveFactura(parseInt(selectedBranchObj.id));
     if (!success && saveError) {
       setErrorMessage(saveError);
     }
   };
-  
+
   // Manejar la cancelación
   const handleCancel = () => {
     navigate('/junta/facturas');
@@ -96,6 +97,13 @@ export default function AgregarFacturas() {
 
   return (
     <>
+      <Link
+        to="/junta/facturas"
+        className="inline-flex items-center gap-2 text-white btn btn-primary hover:bg-blue-600 hover:border-blue-600"
+      >
+        <FaArrowLeft />
+        Regresar
+      </Link>      
       <Title title="Facturación" />
       <SubTitle title="Servicio de Mantenimiento" />
 
@@ -138,7 +146,7 @@ export default function AgregarFacturas() {
             onDelete={handleConceptoDelete}
           />
         </div>
-        
+
         <div className="w-full lg:w-1/4 min-w-[300px]">
           <div className="sticky top-4">
             <CardSlot>
