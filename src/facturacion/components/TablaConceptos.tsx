@@ -21,6 +21,7 @@ const recalcularConcepto = (concepto: ConceptoCobro): ConceptoCobro => {
   const subtotal = (concepto.precio - concepto.descuento) * concepto.cantidad;
   return {
     ...concepto,
+    subtotal: +subtotal, // Aseguramos que el subtotal se actualice correctamente
     iva: +(subtotal * 0.15),
     total: +(subtotal + subtotal * 0.15)
   };
