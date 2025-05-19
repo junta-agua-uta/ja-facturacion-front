@@ -52,6 +52,11 @@ export const useFacturaForm = () => {
     // Verificar si requiere mes
     if (config.requiereMes && (!mes || mes === 'ninguno')) return;
     
+    // Buscar cuántos conceptos ya existen con ese tipo base
+    const count = conceptos.filter(c => c.codigo.startsWith(config.codInterno.slice(0, 3))).length;
+    // Generar el nuevo código incremental (ej: VER001, VER002, ...)
+    const codigoIncremental = `${config.codInterno.slice(0, 3)}${String(count + 1).padStart(3, '0')}`;
+
     // Crear descripción con mes si es necesario
     const descripcion = config.requiereMes 
       ? `${config.desc} - ${mes}` 
@@ -59,14 +64,14 @@ export const useFacturaForm = () => {
     
     // Crear nuevo concepto usando la función factory
     const nuevoConcepto = crearConcepto(
-      config.codInterno,
+      codigoIncremental,
       descripcion,
       config.precioBase || 0
     );
     
     // Agregar a la lista de conceptos
     setConceptos(prev => [...prev, nuevoConcepto]);
-  }, []);
+  }, [conceptos]);
 
   // Manejador para actualizar conceptos
   const handleConceptoChange = useCallback((idx: number, updated: ConceptoCobro) => {

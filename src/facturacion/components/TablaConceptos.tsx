@@ -97,7 +97,7 @@ const EmptyRow = () => (
 );
 
 const TableHeader = () => (
-  <thead>
+  <thead className="sticky top-0 bg-base-200 z-10">
     <tr>
       <th>Código</th>
       <th>Descripción</th>
@@ -125,24 +125,26 @@ export const TablaConceptos: React.FC<TablaConceptosProps> = ({ conceptos, onCha
 
   return (
     <div className="overflow-x-auto mt-8">
-      <table className="table w-full">
-        <TableHeader />
-        <tbody>
-          {conceptos.length === 0 ? (
-            <EmptyRow />
-          ) : (
-            conceptos.map((concepto, idx) => (
-              <ConceptoRow 
-                key={`${concepto.codigo}-${idx}`}
-                concepto={concepto}
-                index={idx}
-                onEdit={handleEdit}
-                onDelete={onDelete}
-              />
-            ))
-          )}
-        </tbody>
-      </table>
+      <div className="max-h-[280px] overflow-y-auto">
+        <table className="table w-full">
+          <TableHeader />
+          <tbody>
+            {conceptos.length === 0 ? (
+              <EmptyRow />
+            ) : (
+              conceptos.map((concepto, idx) => (
+                <ConceptoRow 
+                  key={`${concepto.codigo}-${idx}`}
+                  concepto={concepto}
+                  index={idx}
+                  onEdit={handleEdit}
+                  onDelete={onDelete}
+                />
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
