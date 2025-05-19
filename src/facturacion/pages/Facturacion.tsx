@@ -1,105 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Title, SubTitle, EndSlot, CardSlot } from "../../shared/components";
 import { Factura, FacturacionCedula, FacturacionFechaEmisionFilter } from "../types/factura";
 import { FacturacionCedulaFilter, FacturacionFechaFilter, FacturacionTable } from "../components";
 import { PAGE_SIZE } from "../../shared/utils/constants";
+import api from '../../shared/api';
 import { Link } from "react-router-dom";
 
-const mockFacturas: Factura[] = [
-  {
-    id: "1",
-    NombreComercial: "IMPORTADORA JUANITO",
-    Cedula: "1792837465001",
-    Concepto: "Venta de repuestos automotrices",
-    FechaEmision: new Date("2025-03-15"),
-    Total: "543.80 $",
-    Estado: "PAGADO"
-  },
-  {
-    id: "2",
-    NombreComercial: "PAPELERÍA CENTRAL",
-    Cedula: "1002938475",
-    Concepto: "Útiles de oficina varios",
-    FechaEmision: new Date("2025-03-20"),
-    Total: "125.50 $",
-    Estado: "PENDIENTE"
-  },
-  {
-    id: "3",
-    NombreComercial: "SUPERMERCADO LA ESQUINA",
-    Cedula: "1804736251001",
-    Concepto: "Compra de víveres",
-    FechaEmision: new Date("2025-03-25"),
-    Total: "87.95 $",
-    Estado: "PAGADO"
-  },
-  {
-    id: "4",
-    NombreComercial: "SERVICIO TÉCNICO INTEGRAL",
-    Cedula: "1728394056",
-    Concepto: "Mantenimiento de equipos",
-    FechaEmision: new Date("2025-03-28"),
-    Total: "210.00 $",
-    Estado: "AUTORIZADO"
-  },
-  {
-    id: "5",
-    NombreComercial: "FARMACIA POPULAR",
-    Cedula: "0601928374",
-    Concepto: "Adquisición de medicamentos",
-    FechaEmision: new Date("2025-04-01"),
-    Total: "45.20 $",
-    Estado: "PAGADO"
-  },
-  {
-    id: "6",
-    NombreComercial: "RESTAURANTE SABORES DEL MUNDO",
-    Cedula: "1807654321001",
-    Concepto: "Consumo de alimentos",
-    FechaEmision: new Date("2025-04-05"),
-    Total: "32.75 $",
-    Estado: "PAGADO"
-  },
-  {
-    id: "7",
-    NombreComercial: "LIBRERÍA NACIONAL",
-    Cedula: "1712345678",
-    Concepto: "Compra de libros",
-    FechaEmision: new Date("2025-04-10"),
-    Total: "78.40 $",
-    Estado: "PENDIENTE"
-  },
-  {
-    id: "8",
-    NombreComercial: "ELECTRODOMÉSTICOS MODERNOS",
-    Cedula: "1809876543001",
-    Concepto: "Adquisición de lavadora",
-    FechaEmision: new Date("2025-04-12"),
-    Total: "450.00 $",
-    Estado: "AUTORIZADO"
-  },
-  {
-    id: "9",
-    NombreComercial: "CLÍNICA DEL SOL",
-    Cedula: "0102345678",
-    Concepto: "Consulta médica",
-    FechaEmision: new Date("2025-04-15"),
-    Total: "65.90 $",
-    Estado: "PAGADO"
-  },
-  {
-    id: "10",
-    NombreComercial: "CONSTRUCTORA EL MAESTRO",
-    Cedula: "1798765432001",
-    Concepto: "Compra de materiales de construcción",
-    FechaEmision: new Date("2025-04-18"),
-    Total: "1285.30 $",
-    Estado: "PENDIENTE"
-  }
-];
-
 export default function Facturacion() {
-  const [facturas, setFacturas] = useState<Factura[]>(mockFacturas);
+  const [facturas, setFacturas] = useState<Factura[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Fetch facturas desde la API y almacena la data mapeada
+  useEffect(() => {
+    const fetchFacturas = async () => {
+      setLoading(true);
+      try {
+        const response = await api.get(`/facturas/all`);
+        // Mapea los datos de la API al formato que espera la tabla
+        const apiFacturas = response.data?.data || [];
+        const mappedFacturas: Factura[] = apiFacturas.map((item: any) => ({
+          id: item.ID?.toString() ?? '',
+          NombreComercial: item.cliente?.NOMBRE_COMERCIAL ?? '',
+          Cedula: item.cliente?.IDENTIFICACION ?? '',
+          Concepto: item.cliente?.RAZON_SOCIAL ?? '', // Puedes cambiar este campo por otro si tienes un concepto real
+          FechaEmision: item.FECHA_EMISION ? new Date(item.FECHA_EMISION) : new Date(),
+          Total: item.TOTAL ? `${item.TOTAL} $` : '0 $',
+          Estado: item.ESTADO_FACTURA ?? ''
+        }));
+        setFacturas(mappedFacturas);
+      } catch (error) {
+        console.error('Error al obtener facturas:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFacturas();
+  }, []);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<FacturacionCedula>({});
   const [dateFilters, setDateFilters] = useState<FacturacionFechaEmisionFilter>({
@@ -128,8 +65,21 @@ export default function Facturacion() {
     setCurrentPage(1);
   };
 
+  if (loading) {
+    return (
+      <>
+        <Title title="Facturas" />
+        <CardSlot>
+          <div className="flex flex-col justify-center items-center h-32">
+            <div className="loader mb-2" style={{ border: '4px solid #f3f3f3', borderRadius: '50%', borderTop: '4px solid #3498db', width: '32px', height: '32px', animation: 'spin 1s linear infinite' }} />
+            <span>Cargando facturas...</span>
+          </div>
+        </CardSlot>
+      </>
+    );
+  }
+
   return (
-    console.log("Facturas", import.meta.env.VITE_API_URL),
     <>
       <Title title="Facturas" />
 
@@ -176,5 +126,12 @@ export default function Facturacion() {
       </CardSlot>
     </>
   );
+
+/* CSS para el loader (puedes moverlo a tu archivo global de estilos):
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+*/
 }
 
