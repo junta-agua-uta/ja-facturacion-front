@@ -9,9 +9,10 @@ import { authService } from "../../auth/Services/auth.service";
 import { useNavigate } from "react-router-dom";
 
 export const useFacturaForm = () => {
+  // IMPORTANTE: Todos los hooks deben llamarse en el mismo orden en cada renderizado
+  // 1. Hooks de React
   const navigate = useNavigate();
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  
   // Función para obtener la fecha actual en formato YYYY-MM-DD
   const getCurrentDate = () => {
     const today = new Date();
@@ -20,6 +21,10 @@ export const useFacturaForm = () => {
     const day = String(today.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+  
+  // 2. Estados (useState hooks)
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Estado del formulario con valores iniciales
   const [formData, setFormData] = useState<FacturaForm>({

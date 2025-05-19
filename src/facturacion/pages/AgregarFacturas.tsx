@@ -8,8 +8,12 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function AgregarFacturas() {
+  // IMPORTANTE: Todos los hooks deben llamarse en el mismo orden en cada renderizado
+  // 1. Hooks de React
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  // 2. Hooks personalizados
   // Usar los hooks personalizados para manejar el estado y la lógica
   const {
     formData,
@@ -137,12 +141,6 @@ export default function AgregarFacturas() {
                     <span>${total.toFixed(2)}</span>
                   </div>
                 </div>
-                {/* <button 
-                  className="btn btn-primary w-full mt-4"
-                  disabled={conceptos.length === 0}
-                >
-                  Generar Factura
-                </button> */}
               </div>
             </CardSlot>
           </div>
