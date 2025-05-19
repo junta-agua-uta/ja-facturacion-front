@@ -4,8 +4,14 @@ import { useClientePorCedula } from "./useClientePorCedula";
 import { DEFAULTS } from "../types/factura";
 import { ConceptoCobro } from "../components/TablaConceptos";
 import { CodigoConcepto, CONFIGURACION_CONCEPTOS, crearConcepto } from "../types/factura";
+import api from "../../shared/api";
+import { authService } from "../../auth/Services/auth.service";
+import { useNavigate } from "react-router-dom";
 
 export const useFacturaForm = () => {
+  const navigate = useNavigate();
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   // Función para obtener la fecha actual en formato YYYY-MM-DD
   const getCurrentDate = () => {
     const today = new Date();
@@ -32,7 +38,7 @@ export const useFacturaForm = () => {
   const [conceptos, setConceptos] = useState<ConceptoCobro[]>([]);
 
   // Obtener cliente por cédula
-  const { cliente, error: clienteError } = useClientePorCedula(formData.cedula);
+  const { cliente, clienteId, error: clienteError } = useClientePorCedula(formData.cedula);
 
   // Actualizar cliente automáticamente cuando cambia el resultado del hook
   useEffect(() => {
@@ -98,15 +104,80 @@ export const useFacturaForm = () => {
     dialog?.showModal();
   }, []);
 
+  // Función para guardar la factura
+  const saveFactura = useCallback(async (idSucursal: number) => {
+    if (!clienteId) {
+      setSaveError('No se ha seleccionado un cliente válido');
+      return false;
+    }
+
+    if (conceptos.length === 0) {
+      setSaveError('Debe agregar al menos un concepto a la factura');
+      return false;
+    }
+
+    const currentUser = authService.getCurrentUser();
+    if (!currentUser || !currentUser.id) {
+      setSaveError('No se ha iniciado sesión');
+      return false;
+    }
+
+    // Calcular totales
+    const subtotal = conceptos.reduce((sum, concepto) => sum + (concepto.subtotal || 0), 0);
+    const iva = conceptos.reduce((sum, concepto) => sum + (concepto.iva || 0), 0);
+    const total = subtotal + iva;
+
+    try {
+      setSaving(true);
+      setSaveError(null);
+
+      const facturaData = {
+        idSucursal: idSucursal,
+        idUsuario: parseInt(currentUser.id),
+        idCliente: clienteId,
+        idMedidor: 1, // Valor fijo como se solicitó
+        tipoPago: 'EFECTIVO', // Valor fijo como se solicitó
+        valorSinImpuesto: subtotal,
+        iva: iva,
+        total: total,
+        conceptos: conceptos.map(c => ({
+          codigo: c.codigo,
+          descripcion: c.descripcion,
+          cantidad: c.cantidad,
+          precioUnitario: c.precio,
+          descuento: c.descuento,
+          subtotal: c.subtotal,
+          iva: c.iva
+        }))
+      };
+
+      const response = await api.post('/facturas/crear', facturaData);
+      console.log('Factura creada:', response.data);
+      
+      // Redireccionar a la lista de facturas
+      navigate('/junta/facturas');
+      return true;
+    } catch (error: any) {
+      console.error('Error al guardar factura:', error);
+      setSaveError(error.response?.data?.message || 'Error al guardar la factura');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }, [clienteId, conceptos, navigate]);
+
   return {
     formData,
     setFormData,
     conceptos,
     clienteError,
+    saving,
+    saveError,
     handleInputChange,
     handleConceptoSelect,
     handleConceptoChange,
     handleConceptoDelete,
-    handleOpenCodigoModal
+    handleOpenCodigoModal,
+    saveFactura
   };
 };

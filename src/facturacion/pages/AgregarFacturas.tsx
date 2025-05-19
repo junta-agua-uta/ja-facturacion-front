@@ -4,19 +4,25 @@ import { FacturaHeader } from "../components/FacturaHeader";
 import { FacturaFormContent } from "../components/FacturaForm";
 import { useFacturaForm } from "../hooks/useFacturaForm";
 import { useBranchSelection } from "../hooks/useBranchSelection";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function AgregarFacturas() {
+  const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   // Usar los hooks personalizados para manejar el estado y la lógica
   const {
     formData,
     conceptos,
     clienteError,
+    saving,
+    saveError,
     handleInputChange,
     handleConceptoSelect,
     handleConceptoChange,
     handleConceptoDelete,
-    handleOpenCodigoModal
+    handleOpenCodigoModal,
+    saveFactura
   } = useFacturaForm();
 
   // Usar el hook para manejar la selección de sucursales
@@ -27,6 +33,33 @@ export default function AgregarFacturas() {
     branchesError,
     handleBranchChange
   } = useBranchSelection();
+
+  // Manejar el guardado de la factura
+  const handleSaveFactura = async () => {
+    setErrorMessage(null);
+    
+    if (!selectedBranch) {
+      setErrorMessage('Debe seleccionar una sucursal');
+      return;
+    }
+    
+    // Encontrar el ID de la sucursal seleccionada
+    const selectedBranchObj = branches.find(branch => branch.id === selectedBranch);
+    if (!selectedBranchObj) {
+      setErrorMessage('Sucursal no válida');
+      return;
+    }
+    
+    const success = await saveFactura(parseInt(selectedBranchObj.id));
+    if (!success && saveError) {
+      setErrorMessage(saveError);
+    }
+  };
+  
+  // Manejar la cancelación
+  const handleCancel = () => {
+    navigate('/junta/facturas');
+  };
 
   // Calcular totales
   const { subtotal, iva, total } = useMemo(() => {
@@ -57,12 +90,20 @@ export default function AgregarFacturas() {
 
         {/* Formulario principal */}
         <CardSlot>
+          {errorMessage && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {errorMessage}
+            </div>
+          )}
           <FacturaFormContent
             formData={formData}
             clienteError={clienteError}
             onInputChange={handleInputChange}
             onOpenCodigoModal={handleOpenCodigoModal}
             onConceptoSelect={handleConceptoSelect}
+            onSave={handleSaveFactura}
+            onCancel={handleCancel}
+            saving={saving}
           />
         </CardSlot>
       </div>

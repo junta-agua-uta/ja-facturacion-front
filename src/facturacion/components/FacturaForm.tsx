@@ -9,6 +9,9 @@ interface FacturaFormProps {
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onOpenCodigoModal: () => void;
   onConceptoSelect: (codigo: string, mes?: string) => void;
+  onSave?: () => void;
+  onCancel?: () => void;
+  saving?: boolean;
 }
 
 export const FacturaFormContent: React.FC<FacturaFormProps> = ({
@@ -16,7 +19,10 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
   clienteError,
   onInputChange,
   onOpenCodigoModal,
-  onConceptoSelect
+  onConceptoSelect,
+  onSave,
+  onCancel,
+  saving = false
 }) => {
   return (
     <form className="grid grid-cols-3 gap-6">
@@ -139,13 +145,32 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
 
         {/* Botones de acción */}
         <div className="flex justify-end gap-4 pt-8">
-          <button className="btn btn-outline" type="button">
+          <button 
+            className="btn btn-outline" 
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+          >
             Cancelar
           </button>
-          <button className="btn btn-primary hover:bg-blue-600 hover:border-blue-600" type="button">
-            Guardar
+          <button 
+            className="btn btn-primary hover:bg-blue-600 hover:border-blue-600" 
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+          >
+            {saving ? (
+              <>
+                <span className="loading loading-spinner loading-xs mr-2"></span>
+                Guardando...
+              </>
+            ) : 'Guardar'}
           </button>
-          <button className="btn btn-secondary" type="button">
+          <button 
+            className="btn btn-secondary" 
+            type="button"
+            disabled={saving}
+          >
             Generar...
           </button>
         </div>
