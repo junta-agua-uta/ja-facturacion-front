@@ -8,6 +8,7 @@ import Facturacion from './facturacion/pages/Facturacion.tsx'
 import AgregarFacturas from './facturacion/pages/AgregarFacturas.tsx'
 import BranchesPage from './sucursales/pages/BranchesPage.tsx'
 import MedicionesPage from './medicion/pages/MedicionPage.tsx'
+import ProtectedRoute from './core/ProtectedRoute.tsx'
 
 const router = createBrowserRouter([
   {
@@ -19,50 +20,59 @@ const router = createBrowserRouter([
     element: <Login />
   },
   {
+    // Ruta protegida que verifica autenticación
     path: '/junta',
-    element: <Layout />,
+    element: <ProtectedRoute />,
     children: [
       {
-        path: '',
-        element: <Navigate to="facturas" replace />
-      },
-      {
-        path: 'facturas',
+        // Layout se renderiza solo si el usuario está autenticado
+        element: <Layout />,
         children: [
           {
             path: '',
-            element: <Facturacion />
+            element: <Navigate to="facturas" replace />
           },
           {
-            path: 'crear',
-            element: <AgregarFacturas />
+            path: 'facturas',
+            children: [
+              {
+                path: '',
+                element: <Facturacion />
+              },
+              {
+                path: 'crear',
+                element: <AgregarFacturas />
+              }
+            ]
+          },
+          {
+            path: 'autorizaciones',
+            element: <div>Autorizaciones Page</div>
+          },
+          {
+            path: 'usuarios',
+            element: <div>Usuarios Page</div>
+          },
+          {
+            path: 'sucursales',
+            element: <BranchesPage />
+          },
+          {
+            path: 'mediciones',
+            element: <MedicionesPage />
+          },
+          {
+            path: 'perfil',
+            element: <div>Perfil Page</div>
           }
         ]
-      },
-      {
-        path: 'autorizaciones',
-        element: <div>Autorizaciones Page</div>
-      },
-      {
-        path: 'usuarios',
-        element: <div>Usuarios Page</div>
-      },
-      {
-        path: 'sucursales',
-        element: <BranchesPage />
-      },
-      {
-        path: 'mediciones',
-        element: <MedicionesPage />
-      },
-      {
-        path: 'perfil',
-        element: <div>Perfil Page</div>
-      },
-      {
-        
       }
     ]
+  },
+  {
+    // Ruta de fallback para cualquier otra URL no definida
+    path: '*',
+    element: <Navigate to="/login" replace />
   }
 ])
 
