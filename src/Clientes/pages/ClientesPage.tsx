@@ -58,7 +58,7 @@ export default function ClientesPage() {
   const [filters, setFilters] = useState<ClienteFilter>({});
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [clienteToDelete, setClienteToDelete] = useState<Cliente | null>(null);
+
   const [clienteToEdit, setClienteToEdit] = useState<Cliente | null>(null);
   const [editForm, setEditForm] = useState<Cliente | null>(null);
 
@@ -105,12 +105,7 @@ export default function ClientesPage() {
     }
   };
 
-  const handleDelete = () => {
-    if (clienteToDelete) {
-      setClientes(prev => prev.filter(c => c.id !== clienteToDelete.id));
-      setClienteToDelete(null);
-    }
-  };
+  
 
   const handleEdit = () => {
     if (editForm) {
@@ -171,21 +166,11 @@ export default function ClientesPage() {
             setClienteToEdit(cliente);
             setEditForm({ ...cliente });
           }}
-          onDelete={(clienteId) => {
-            const cliente = clientes.find(c => c.id === clienteId);
-            setClienteToDelete(cliente ?? null);
-            (document.getElementById('delete_modal') as HTMLDialogElement)?.showModal();
-          }}
+          
         />
       </CardSlot>
 
-      <ConfirmModal
-        id="delete_modal"
-        title="Confirmar eliminación"
-        message={`¿Estás seguro de que deseas eliminar el cliente "${clienteToDelete?.identificacion}"?`}
-        onConfirm={handleDelete}
-        onCancel={() => setClienteToDelete(null)}
-      />
+    
 
       <EditClienteModal
         id="edit_modal"
