@@ -9,6 +9,7 @@ import AgregarFacturas from './facturacion/pages/AgregarFacturas.tsx'
 import BranchesPage from './sucursales/pages/BranchesPage.tsx'
 import MedicionesPage from './medicion/pages/MedicionPage.tsx'
 import ProtectedRoute from './core/ProtectedRoute.tsx'
+import Profile from './profile/Profile.tsx'
 
 const router = createBrowserRouter([
   {
@@ -63,7 +64,7 @@ const router = createBrowserRouter([
           },
           {
             path: 'perfil',
-            element: <div>Perfil Page</div>
+            element:<Profile/>
           }
         ]
       }
