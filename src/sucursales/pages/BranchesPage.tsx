@@ -20,7 +20,6 @@ interface ApiResponse {
   currentPage: number;
 }
 
-
 export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [filters, setFilters] = useState<BranchFilter>({});
@@ -31,7 +30,6 @@ export default function BranchesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [branchToDelete, setBranchToDelete] = useState<Branch | null>(null);
-  const [branchToEdit, setBranchToEdit] = useState<Branch | null>(null);
   const [editForm, setEditForm] = useState<Branch | null>(null);
 
   const [newBranch, setNewBranch] = useState<Branch>({
@@ -41,19 +39,15 @@ export default function BranchesPage() {
     puntoEmision: '',
   });
 
+  const [allBranches, setAllBranches] = useState<Branch[]>([]);
+
   useEffect(() => {
+    // Solo se ejecuta una vez para cargar todos los datos
     const fetchBranches = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await api.get('/sucursales', {
-          params: {
-            ...filters,
-            page: currentPage,
-            pageSize: PAGE_SIZE,
-          },
-        });
-
+        const response = await api.get('/sucursales');
         const data: ApiResponse = response.data;
         const mappedBranches = data.data.map(branch => ({
           id: branch.ID.toString(),
@@ -61,11 +55,7 @@ export default function BranchesPage() {
           ubicacion: branch.UBICACION,
           puntoEmision: branch.PUNTO_EMISION,
         }));
-
-        setBranches(mappedBranches);
-        setTotalItems(data.totalItems);
-        setTotalPages(data.totalPages);
-        setCurrentPage(data.currentPage);
+        setAllBranches(mappedBranches);
       } catch (error) {
         console.error('Error fetching branches:', error);
         setError('No se pudo cargar la lista de sucursales');
@@ -73,9 +63,27 @@ export default function BranchesPage() {
         setIsLoading(false);
       }
     };
-
     fetchBranches();
-  }, [currentPage, filters]);
+  }, []);
+
+  useEffect(() => {
+    // Filtrado y paginación local
+    let filtered = allBranches.filter(branch => {
+      return (
+        (!filters.nombre || branch.nombre.toLowerCase().includes(filters.nombre.toLowerCase())) &&
+        (!filters.ubicacion || branch.ubicacion.toLowerCase().includes(filters.ubicacion.toLowerCase())) &&
+        (!filters.puntoEmision || branch.puntoEmision.toLowerCase().includes(filters.puntoEmision.toLowerCase()))
+      );
+    });
+    const total = filtered.length;
+    const totalPagesCalc = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    setBranches(filtered.slice(start, end));
+    setTotalItems(total);
+    setTotalPages(totalPagesCalc);
+    if (currentPage > totalPagesCalc) setCurrentPage(1);
+  }, [allBranches, filters, currentPage]);
 
   const handleClearFilters = () => {
     setFilters({});
@@ -94,16 +102,13 @@ export default function BranchesPage() {
         });
 
         const addedBranch = response.data;
-        setBranches(prev => [
-          ...prev,
-          {
-            id: addedBranch.ID.toString(),
-            nombre: addedBranch.NOMBRE,
-            ubicacion: addedBranch.UBICACION,
-            puntoEmision: addedBranch.PUNTO_EMISION,
-          },
-        ]);
-
+        const branchObj = {
+          id: addedBranch.ID.toString(),
+          nombre: addedBranch.NOMBRE,
+          ubicacion: addedBranch.UBICACION,
+          puntoEmision: addedBranch.PUNTO_EMISION,
+        };
+        setAllBranches(prev => [...prev, branchObj]);
         setNewBranch({ id: '', nombre: '', ubicacion: '', puntoEmision: '' });
         (document.getElementById('add_modal') as HTMLDialogElement)?.close();
       } catch (error) {
@@ -121,8 +126,7 @@ export default function BranchesPage() {
       setError(null);
       try {
         await api.delete(`/sucursales/${branchToDelete.id}`);
-
-        setBranches(prev => prev.filter(b => b.id !== branchToDelete.id));
+        setAllBranches(prev => prev.filter(b => b.id !== branchToDelete.id));
         setBranchToDelete(null);
         (document.getElementById('delete_modal') as HTMLDialogElement)?.close();
       } catch (error) {
@@ -145,11 +149,8 @@ export default function BranchesPage() {
           UBICACION: editForm.ubicacion,
           PUNTO_EMISION: editForm.puntoEmision,
         });
-
-        setBranches(prev =>
-          prev.map(b => (b.id === editForm.id ? { ...editForm } : b))
-        );
-        setBranchToEdit(null);
+        setAllBranches(prev => prev.map(b => (b.id === editForm.id ? { ...editForm } : b)));
+        setBranchToDelete(null);
         setEditForm(null);
         (document.getElementById('edit_modal') as HTMLDialogElement)?.close();
       } catch (error) {
@@ -162,7 +163,6 @@ export default function BranchesPage() {
   };
 
   const handleCancelEdit = () => {
-    setBranchToEdit(null);
     setEditForm(null);
   };
 
@@ -208,7 +208,6 @@ export default function BranchesPage() {
             }}
             onPageChange={setCurrentPage}
             onEdit={(branch) => {
-              setBranchToEdit(branch);
               setEditForm({ ...branch });
               (document.getElementById('edit_modal') as HTMLDialogElement)?.showModal(); // Esta línea faltaba
             }}
