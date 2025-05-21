@@ -33,7 +33,7 @@ const Login = () => {
             navigate('/junta');
         } catch (error) {
             console.error('Error en el login:', error);
-            setError(error instanceof Error ? error.message : 'Error al iniciar sesión');
+            setError(error instanceof Error ? error.message : 'Credenciales Incorrectas');
         } finally {
             setIsLoading(false);
         }
