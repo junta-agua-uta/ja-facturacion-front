@@ -1,32 +1,35 @@
+// src/components/modals/EditClienteModal.tsx
 import { Cliente } from "../types/cliente";
+
 type EditClienteModalProps = {
-    readonly id: string;
-    readonly title: string;
-    readonly cliente: Cliente | null;
-    readonly onChange: (cliente: Cliente) => void;
-    readonly onCancel: () => void;
-    readonly onSave: () => void;
-  };
+  readonly id: string;
+  readonly title: string;
+  readonly cliente: Cliente | null;
+  readonly onChange: (cliente: Cliente) => void;
+  readonly onCancel: () => void;
+  readonly onSave: () => void;
+};
+
+export function EditClienteModal({
+  id,
+  title,
+  cliente,
+  onChange,
+  onCancel,
+  onSave,
+}: EditClienteModalProps) {
+  if (!cliente) return null;
   
-  export function EditClienteModal({
-    id,
-    title,
-    cliente,
-    onChange,
-    onCancel,
-    onSave,
-  }: EditClienteModalProps) {
-    if (!cliente) return null;
-    
-    return (
-      <dialog id={id} className="modal">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">{title}</h3>
-          
-          <form method="dialog" className="space-y-4 mt-4">
+  return (
+    <dialog id={id} className="modal">
+      <div className="modal-box max-w-3xl">
+        <h3 className="font-bold text-lg">{title}</h3>
+        
+        <form method="dialog" className="space-y-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="label">
-                <span className="label-text">Identificación</span>
+                <span className="label-text">Identificación *</span>
               </label>
               <input
                 type="text"
@@ -39,7 +42,7 @@ type EditClienteModalProps = {
             
             <div>
               <label className="label">
-                <span className="label-text">Razón Social</span>
+                <span className="label-text">Razón Social *</span>
               </label>
               <input
                 type="text"
@@ -52,7 +55,19 @@ type EditClienteModalProps = {
             
             <div>
               <label className="label">
-                <span className="label-text">Dirección</span>
+                <span className="label-text">Nombre Comercial</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={cliente.nombreComercial || ''}
+                onChange={(e) => onChange({ ...cliente, nombreComercial: e.target.value })}
+              />
+            </div>
+            
+            <div>
+              <label className="label">
+                <span className="label-text">Dirección *</span>
               </label>
               <input
                 type="text"
@@ -65,26 +80,33 @@ type EditClienteModalProps = {
             
             <div>
               <label className="label">
-                <span className="label-text">Teléfono Nro 1</span>
+                <span className="label-text">Teléfono 1</span>
               </label>
               <input
                 type="text"
                 className="input input-bordered w-full"
-                value={cliente.telefonoNro1}
-                onChange={(e) => onChange({ ...cliente, telefonoNro1: e.target.value })}
-                required
+                value={cliente.telefono1 || ''}
+                onChange={(e) => onChange({ 
+                  ...cliente, 
+                  telefono1: e.target.value,
+                  telefonoNro1: e.target.value
+                })}
               />
             </div>
             
             <div>
               <label className="label">
-                <span className="label-text">Teléfono Nro 2</span>
+                <span className="label-text">Teléfono 2</span>
               </label>
               <input
                 type="text"
                 className="input input-bordered w-full"
-                value={cliente.telefonoNro2}
-                onChange={(e) => onChange({ ...cliente, telefonoNro2: e.target.value })}
+                value={cliente.telefono2 || ''}
+                onChange={(e) => onChange({ 
+                  ...cliente, 
+                  telefono2: e.target.value,
+                  telefonoNro2: e.target.value
+                })}
               />
             </div>
             
@@ -93,29 +115,150 @@ type EditClienteModalProps = {
                 <span className="label-text">Correo Electrónico</span>
               </label>
               <input
-                type="text"
+                type="email"
                 className="input input-bordered w-full"
-                value={cliente.correoElectronico}
-                onChange={(e) => onChange({ ...cliente, correoElectronico: e.target.value })}
+                value={cliente.correo || ''}
+                onChange={(e) => onChange({ 
+                  ...cliente, 
+                  correo: e.target.value,
+                  correoElectronico: e.target.value
+                })}
               />
             </div>
-            
-            <div className="modal-action flex gap-2">
-              <button
-                className="btn btn-outline"
-                onClick={onCancel}
-              >
-                Cancelar
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={onSave}
-              >
-                Guardar cambios
-              </button>
+
+            <div>
+              <label className="label">
+                <span className="label-text">Tarifa</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={cliente.tarifa || ''}
+                onChange={(e) => onChange({ ...cliente, tarifa: e.target.value })}
+              />
             </div>
-          </form>
-        </div>
-      </dialog>
-    );
-  }
+
+            <div>
+              <label className="label">
+                <span className="label-text">Grupo</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={cliente.grupo || ''}
+                onChange={(e) => onChange({ ...cliente, grupo: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label className="label">
+                <span className="label-text">Zona</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={cliente.zona || ''}
+                onChange={(e) => onChange({ ...cliente, zona: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label className="label">
+                <span className="label-text">Ruta</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={cliente.ruta || ''}
+                onChange={(e) => onChange({ ...cliente, ruta: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label className="label">
+                <span className="label-text">Vendedor</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={cliente.vendedor || ''}
+                onChange={(e) => onChange({ ...cliente, vendedor: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label className="label">
+                <span className="label-text">Cobrador</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={cliente.cobrador || ''}
+                onChange={(e) => onChange({ ...cliente, cobrador: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label className="label">
+                <span className="label-text">Provincia</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={cliente.provincia || ''}
+                onChange={(e) => onChange({ ...cliente, provincia: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label className="label">
+                <span className="label-text">Ciudad</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={cliente.ciudad || ''}
+                onChange={(e) => onChange({ ...cliente, ciudad: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label className="label">
+                <span className="label-text">Parroquia</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
+                value={cliente.parroquia || ''}
+                onChange={(e) => onChange({ ...cliente, parroquia: e.target.value })}
+              />
+            </div>
+          </div>
+          
+          <div className="modal-action flex gap-2">
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => {
+                onCancel();
+                (document.getElementById(id) as HTMLDialogElement)?.close();
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                onSave();
+              }}
+              disabled={!cliente.identificacion || !cliente.razonSocial || !cliente.direccion}
+            >
+              Guardar cambios
+            </button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+  );
+}

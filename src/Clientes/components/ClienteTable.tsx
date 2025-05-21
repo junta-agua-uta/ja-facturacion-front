@@ -6,14 +6,11 @@ export default function ClienteTable({
   data,
   pagination,
   onEdit,
-  onDelete,
+  // onDelete,
   onPageChange
 }: TableProps<Cliente>) {
   const columns = [
-    {
-      header: 'ID',
-      accessor: 'id' as const
-    },
+  
     {
       header: 'Identificación',
       accessor: 'identificacion' as const
@@ -23,20 +20,60 @@ export default function ClienteTable({
       accessor: 'razonSocial' as const
     },
     {
+      header: 'Nombre Comercial',
+      accessor: 'nombreComercial' as const
+    },
+    {
       header: 'Dirección',
       accessor: 'direccion' as const
     },
     {
-      header: 'Teléfono Nro 1',
-      accessor: 'telefonoNro1' as const
+      header: 'Teléfono 1',
+      accessor: 'telefono1' as const
     },
     {
-      header: 'Teléfono Nro 2',
-      accessor: 'telefonoNro2' as const
+      header: 'Teléfono 2',
+      accessor: 'telefono2' as const
     },
     {
       header: 'Correo Electrónico',
-      accessor: 'correoElectronico' as const
+      accessor: 'correo' as const
+    },
+    {
+      header: 'Tarifa',
+      accessor: 'tarifa' as const
+    },
+    {
+      header: 'Grupo',
+      accessor: 'grupo' as const
+    },
+    {
+      header: 'Zona',
+      accessor: 'zona' as const
+    },
+    {
+      header: 'Ruta',
+      accessor: 'ruta' as const
+    },
+    {
+      header: 'Vendedor',
+      accessor: 'vendedor' as const
+    },
+    {
+      header: 'Cobrador',
+      accessor: 'cobrador' as const
+    },
+    {
+      header: 'Provincia',
+      accessor: 'provincia' as const
+    },
+    {
+      header: 'Ciudad',
+      accessor: 'ciudad' as const
+    },
+    {
+      header: 'Parroquia',
+      accessor: 'parroquia' as const
     }
   ];
 
@@ -46,7 +83,7 @@ export default function ClienteTable({
       columns={columns}
       pagination={pagination}
       onEdit={onEdit}
-      onDelete={onDelete}
+      // onDelete={onDelete}
       onPageChange={onPageChange}
     />
   );
