@@ -3,6 +3,8 @@ import { FacturasIcon, AutorizacionesIcon, UsuariosIcon, SucursalesIcon, Medicio
 import NavItem from './components/NavItem';
 import { authService } from '../auth/Services/auth.service';
 import { useEffect, useState } from 'react';
+import api from '../shared/api';
+
 
 const Layout = () => {
   const location = useLocation();
@@ -10,22 +12,26 @@ const Layout = () => {
   const [userName, setUserName] = useState('Usuario');
   const [userRole, setUserRole] = useState('');
 
-  // Verificar autenticación al cargar el componente
+
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    if (currentUser) {
-      // Si hay información adicional del usuario en el token, actualizar el estado
-      const token = authService.getToken();
-      if (token) {
+    const fetchUserData = async () => {
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
         try {
-          const decodedToken = authService.decodeToken(token);
-          setUserName(decodedToken.nombre || currentUser.cedula || 'Usuario');
-          setUserRole(decodedToken.rol || 'Usuario');
+          const response = await api.get('/auth/me');
+          console.log("Respuesta de /auth/me:", response.data); // Se verifica la respuesta
+          if (response.data) {
+            const nombreCompleto = `${response.data.NOMBRE} ${response.data.APELLIDO}`.trim();
+            setUserName(nombreCompleto || 'Usuario');
+            setUserRole(response.data.ROL || 'Usuario');
+          }
         } catch (error) {
-          console.error('Error al decodificar el token:', error);
+
         }
       }
-    }
+    };
+
+    fetchUserData();
   }, []);
 
   const handleLogout = () => {
@@ -45,7 +51,7 @@ const Layout = () => {
         </div>
 
         <nav className="flex-1">
-          
+
           <NavItem
             to="/junta/facturas"
             isActive={isActive('facturas')}
@@ -105,7 +111,7 @@ const Layout = () => {
           <p className="text-sm text-gray-500">{userRole}</p>
         </div>
 
-        <button 
+        <button
           onClick={handleLogout}
           className="mx-4 mb-4 px-6 py-2 bg-red-600 text-white rounded-2xl hover:bg-red-700 transition-colors duration-200 flex items-center justify-center hover:cursor-pointer">
           <svg
