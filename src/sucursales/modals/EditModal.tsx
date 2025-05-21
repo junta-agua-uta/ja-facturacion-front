@@ -17,13 +17,12 @@ export default function EditModal({
   onCancel,
   onSave,
 }: EditModalProps) {
-    if (!branch) return null; // Si no hay sucursal, no renderizar nada
+  if (!branch) return null;
 
   return (
     <dialog id={id} className="modal">
       <div className="modal-box">
         <h3 className="font-bold text-lg">{title}</h3>
-
         <form method="dialog" className="space-y-4 mt-4">
           <div>
             <label className="label">
@@ -32,34 +31,34 @@ export default function EditModal({
             <input
               type="text"
               className="input input-bordered w-full"
-              value={branch.name}
-              onChange={(e) => onChange({ ...branch, name: e.target.value })}
+              value={branch.nombre}
+              onChange={(e) => onChange({ ...branch, nombre: e.target.value })}
               required
             />
           </div>
 
           <div>
             <label className="label">
-              <span className="label-text">Dirección</span>
+              <span className="label-text">Ubicación</span>
             </label>
             <input
               type="text"
               className="input input-bordered w-full"
-              value={branch.address}
-              onChange={(e) => onChange({ ...branch, address: e.target.value })}
+              value={branch.ubicacion}
+              onChange={(e) => onChange({ ...branch, ubicacion: e.target.value })}
               required
             />
           </div>
 
           <div>
             <label className="label">
-              <span className="label-text">Código</span>
+              <span className="label-text">Punto de Emisión</span>
             </label>
             <input
-              type="number"
+              type="text"
               className="input input-bordered w-full"
-              value={branch.code}
-              onChange={(e) => onChange({ ...branch, code: Number(e.target.value) })}
+              value={branch.puntoEmision}
+              onChange={(e) => onChange({ ...branch, puntoEmision: e.target.value })}
               required
             />
           </div>
@@ -69,8 +68,8 @@ export default function EditModal({
               type="button"
               className="btn btn-outline"
               onClick={() => {
-                onCancel(); // Llama a la función para limpiar el estado
-                (document.getElementById(id) as HTMLDialogElement)?.close(); // Cierra el modal explícitamente
+                onCancel();
+                (document.getElementById(id) as HTMLDialogElement)?.close();
               }}
             >
               Cancelar
@@ -79,10 +78,11 @@ export default function EditModal({
               type="button"
               className="btn btn-primary"
               onClick={() => {
-                onSave(); // Llama a la función para guardar los cambios
+                onSave();
+                (document.getElementById(id) as HTMLDialogElement)?.close();
               }}
             >
-              Guardar cambios
+              Guardar
             </button>
           </div>
         </form>

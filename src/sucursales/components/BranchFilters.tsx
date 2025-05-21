@@ -16,8 +16,8 @@ export default function BranchFilters({ filters, onChange, onClear }: Props) {
           type="text"
           placeholder="Buscar por nombre de la sucursal"
           className="input border border-gray-300 input-md"
-          value={filters.name ?? ''}
-          onChange={(e) => onChange({ ...filters, name: e.target.value })}
+          value={filters.nombre ?? ''}
+          onChange={(e) => onChange({ ...filters, nombre: e.target.value })}
         />
 
           <button

@@ -1,10 +1,12 @@
 export type Branch = {
   id: string;
-  name: string;
-  address: string;
-  code: string | number;
+  nombre: string;
+  ubicacion: string;
+  puntoEmision: string;
 };
 
 export type BranchFilter = {
-  name?: string;
+  nombre?: string;
+  ubicacion?: string;
+  puntoEmision?: string;
 };
