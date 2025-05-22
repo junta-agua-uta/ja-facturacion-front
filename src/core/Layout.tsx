@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { FacturasIcon, AutorizacionesIcon, UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon } from './utils/icons';
+import { FacturasIcon, /*AutorizacionesIcon,*/ UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon } from './utils/icons';
 import NavItem from './components/NavItem';
 import { authService } from '../auth/Services/auth.service';
 import { useEffect, useState } from 'react';
@@ -69,12 +69,12 @@ const Layout = () => {
             ]}
           />
 
-          <NavItem
+          {/* <NavItem
             to="/junta/autorizaciones"
             isActive={isActive('autorizaciones')}
             icon={<AutorizacionesIcon isActive={isActive('autorizaciones')} />}
             label="Autorizaciones"
-          />
+          /> */}
 
           <NavItem
             to="/junta/usuarios"

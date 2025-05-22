@@ -118,7 +118,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
         {/* Header del modal */}
         <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-800">Vista Previa - Contenido de la Imprimir</h2>
+          <h2 className="text-xl font-bold text-gray-800">Vista Previa </h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
@@ -133,9 +133,6 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
             <div className="print-container max-w-md mx-auto p-6 border-2 border-gray-800 bg-white">
               {/* Header */}
               <div className="header text-center mb-6">
-                <div className="title text-lg font-bold text-blue-600 mb-2">
-                  Contenido de la Imprimir
-                </div>
                 <div className="subtitle text-sm font-bold mb-4">
                   JUNTA<br />
                   ADMINISTRADORA DE<br />
