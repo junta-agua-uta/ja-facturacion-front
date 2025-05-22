@@ -3,22 +3,33 @@ import { TablaConceptos } from "../components/TablaConceptos";
 import { FacturaHeader } from "../components/FacturaHeader";
 import { FacturaFormContent } from "../components/FacturaForm";
 import { useFacturaForm } from "../hooks/useFacturaForm";
-import { useBranchSelection } from "../hooks/useBranchSelection";
 import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
+import { AddClienteModal } from "../../Clientes/mod/AddClienteModal";
+import { Cliente } from "../../Clientes/types/cliente";
+import { useClientePorCedula } from "../hooks/useClientePorCedula";
+import api from "../../shared/api";
+import { useBranchSelection } from "../hooks/useBranchSelection";
 
 export default function AgregarFacturas() {
   // IMPORTANTE: Todos los hooks deben llamarse en el mismo orden en cada renderizado
   // 1. Hooks de React
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [nuevoCliente, setNuevoCliente] = useState<Cliente>({
+    id: '0',
+    identificacion: '',
+    razonSocial: '',
+    direccion: '',
+    telefono1: '',
+    correo: ''
+  });
 
   // 2. Hooks personalizados
   // Usar los hooks personalizados para manejar el estado y la lógica
   const {
     formData,
     conceptos,
-    clienteError,
     saving,
     saveError,
     handleInputChange,
@@ -30,13 +41,30 @@ export default function AgregarFacturas() {
     resetForm
   } = useFacturaForm();
 
-  // Usar el hook para manejar la selección de sucursales
+  // Obtener el estado del cliente y el modal desde el hook useClientePorCedula
   const {
-    branches,
-    selectedBranch,
-    loadingBranches,
-    branchesError,
-    handleBranchChange
+    error: clienteError,
+    showAddButton,
+    showAddClienteModal,
+    handleAddCliente,
+    handleCloseAddClienteModal
+  } = useClientePorCedula(formData.cedula);
+
+  // Actualizar la cédula del nuevo cliente cuando cambia el formulario
+  useEffect(() => {
+    setNuevoCliente((prev: Cliente) => ({
+      ...prev,
+      identificacion: formData.cedula
+    }));
+  }, [formData.cedula]);
+
+  // Usar el hook para manejar la selección de sucursales
+  const { 
+    branches, 
+    selectedBranch, 
+    loadingBranches, 
+    branchesError, 
+    handleBranchChange 
   } = useBranchSelection();
 
   // Seleccionar automáticamente la primera sucursal si no hay ninguna seleccionada
@@ -48,7 +76,9 @@ export default function AgregarFacturas() {
       } as React.ChangeEvent<HTMLSelectElement>;
       handleBranchChange(event);
     }
-  }, [branches, loadingBranches, selectedBranch, handleBranchChange]);
+  }, [branches, loadingBranches, selectedBranch]);
+
+
 
   // Manejar el guardado de la factura
   const handleSaveFactura = async () => {
@@ -145,9 +175,19 @@ export default function AgregarFacturas() {
             formData={formData}
             clienteError={clienteError}
             total={total}
+            showAddClienteButton={showAddButton}
             onInputChange={handleInputChange}
             onOpenCodigoModal={handleOpenCodigoModal}
             onConceptoSelect={handleConceptoSelect}
+            onAddCliente={() => {
+              // Actualizar la cédula en el estado del nuevo cliente
+              setNuevoCliente(prev => ({
+                ...prev,
+                identificacion: formData.cedula
+              }));
+              // Abrir el modal
+              handleAddCliente();
+            }}
             onSave={handleSaveFactura}
             onCancel={handleCancel}
             saving={saving}
@@ -191,6 +231,80 @@ export default function AgregarFacturas() {
           </div>
         </div>
       </div>
+
+      {/* Modal para agregar cliente */}
+      <AddClienteModal
+        id="add_cliente_modal"
+        isOpen={showAddClienteModal}
+        cliente={nuevoCliente}
+        onChange={(updatedCliente) => {
+          setNuevoCliente(updatedCliente);
+        }}
+        onCancel={() => {
+          handleCloseAddClienteModal();
+          setNuevoCliente({
+            id: '0',
+            identificacion: formData.cedula,
+            razonSocial: '',
+            direccion: '',
+            telefono1: '',
+            correo: ''
+          });
+        }}
+        onSave={async () => {
+          try {
+            // Formatear los datos del cliente para la API
+            const formatClienteForAPI = (cliente: Cliente) => ({
+              identificacion: cliente.identificacion,
+              razonSocial: cliente.razonSocial,
+              nombreComercial: cliente.nombreComercial || 'Sin Nombre Comercial',
+              direccion: cliente.direccion,
+              telefono1: cliente.telefono1 || '',
+              telefono2: cliente.telefono2 || '',
+              correo: cliente.correo || '',
+              tarifa: cliente.tarifa || '',
+              grupo: cliente.grupo || '',
+              zona: cliente.zona || '',
+              ruta: cliente.ruta || '',
+              vendedor: cliente.vendedor || '',
+              cobrador: cliente.cobrador || '',
+              provincia: cliente.provincia || '',
+              ciudad: cliente.ciudad || '',
+              parroquia: cliente.parroquia || ''
+            });
+
+            const formattedCliente = formatClienteForAPI(nuevoCliente);
+            
+            // Enviar la petición para guardar el cliente
+            await api.post('/clientes', formattedCliente);
+            
+            // Mostrar mensaje de éxito
+            alert('Cliente agregado exitosamente');
+            
+            // Cerrar el modal y limpiar el formulario
+            handleCloseAddClienteModal();
+            setNuevoCliente({
+              id: '0',
+              identificacion: formData.cedula,
+              razonSocial: '',
+              direccion: '',
+              telefono1: '',
+              correo: ''
+            });
+            
+            // Actualizar el formulario con los datos del nuevo cliente
+            handleInputChange({
+              target: {
+                name: 'cliente',
+                value: nuevoCliente.razonSocial
+              }
+            } as React.ChangeEvent<HTMLInputElement>);
+          } catch (error) {
+            console.error('Error al guardar el cliente:', error);
+            alert('No se pudo guardar el cliente');
+          }
+        }}
+      />
     </>
   );
 }

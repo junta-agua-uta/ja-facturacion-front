@@ -11,12 +11,31 @@ export function useClientePorCedula(cedula: string) {
   const [cliente, setCliente] = useState('');
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showAddButton, setShowAddButton] = useState(false);
+  const [showAddClienteModal, setShowAddClienteModal] = useState(false);
   
   // Función para reiniciar el estado del cliente
   const resetCliente = useCallback(() => {
     setCliente('');
     setClienteId(null);
     setError(null);
+    setShowAddButton(false);
+  }, []);
+  
+  // Función para manejar el clic en el botón de agregar cliente
+  const handleAddCliente = useCallback(() => {
+    setShowAddClienteModal(true);
+  }, []);
+
+  // Función para cerrar el modal
+  const handleCloseAddClienteModal = useCallback(() => {
+    setShowAddClienteModal(false);
+  }, []);
+
+  // Función para manejar cuando se agrega un cliente exitosamente
+  const handleClienteAdded = useCallback(() => {
+    setShowAddClienteModal(false);
+    // Aquí podrías implementar lógica adicional después de agregar el cliente
   }, []);
 
   useEffect(() => {
@@ -36,10 +55,13 @@ export function useClientePorCedula(cedula: string) {
           setCliente(clienteData.RAZON_SOCIAL);
           setClienteId(clienteData.ID);
           setError(null);
+          setShowAddButton(false);
         } else {
           setCliente('');
           setClienteId(null);
           setError('Cliente no encontrado');
+          // Mostrar el botón de agregar solo si la cédula tiene un formato válido
+          setShowAddButton(/^\d{10}(\d{3})?$/.test(cedula));
         }
       } catch (error) {
         console.error('Error al buscar cliente:', error);
@@ -51,5 +73,15 @@ export function useClientePorCedula(cedula: string) {
     return () => clearTimeout(timeout);
   }, [cedula]);
 
-  return { cliente, clienteId, error, resetCliente };
+  return {
+    cliente,
+    clienteId,
+    error,
+    resetCliente,
+    showAddButton,
+    showAddClienteModal,
+    handleAddCliente,
+    handleCloseAddClienteModal,
+    handleClienteAdded
+  };
 }

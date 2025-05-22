@@ -46,7 +46,14 @@ export const useFacturaForm = () => {
   const [conceptos, setConceptos] = useState<ConceptoCobro[]>([]);
 
   // Obtener cliente por cédula
-  const { cliente, clienteId, error: clienteError, resetCliente } = useClientePorCedula(formData.cedula);
+  const { 
+    cliente, 
+    clienteId, 
+    error: clienteError, 
+    resetCliente, 
+    showAddButton, 
+    handleAddCliente 
+  } = useClientePorCedula(formData.cedula);
 
   // Actualizar cliente automáticamente cuando cambia el resultado del hook
   useEffect(() => {
@@ -185,11 +192,33 @@ export const useFacturaForm = () => {
     setSaveError(null);
   }, [initialFormState, resetCliente]);
 
+  // Estado para controlar la visibilidad del modal de agregar cliente
+  const [showAddClienteModal, setShowAddClienteModal] = useState(false);
+
+  // Función para manejar el clic en el botón de agregar cliente
+  const handleAddClienteClick = useCallback(() => {
+    setShowAddClienteModal(true);
+  }, []);
+
+  // Función para manejar el cierre del modal
+  const handleCloseAddClienteModal = useCallback(() => {
+    setShowAddClienteModal(false);
+  }, []);
+
+  // Función para manejar el guardado exitoso del cliente
+  const handleClienteAdded = useCallback(() => {
+    // Cerrar el modal
+    setShowAddClienteModal(false);
+    // Aquí podrías implementar lógica adicional después de agregar un cliente
+    // como por ejemplo, volver a buscar el cliente por cédula
+  }, []);
+
   return {
     formData,
-    setFormData,
     conceptos,
     clienteError,
+    showAddButton,
+    showAddClienteModal,
     saving,
     saveError,
     handleInputChange,
@@ -197,6 +226,9 @@ export const useFacturaForm = () => {
     handleConceptoChange,
     handleConceptoDelete,
     handleOpenCodigoModal,
+    handleAddCliente: handleAddClienteClick,
+    handleCloseAddClienteModal,
+    handleClienteAdded,
     saveFactura,
     resetForm
   };

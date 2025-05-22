@@ -4,6 +4,7 @@ import { Cliente } from "../types/cliente";
 
 type AddClienteModalProps = {
   id: string;
+  isOpen: boolean;
   cliente: Cliente;
   onChange: (cliente: Cliente) => void;
   onCancel: () => void;
@@ -12,6 +13,7 @@ type AddClienteModalProps = {
 
 export function AddClienteModal({
   id,
+  isOpen,
   cliente,
   onChange,
   onCancel,
@@ -40,9 +42,38 @@ export function AddClienteModal({
     
     setErrors(newErrors);
   }, [cliente.identificacion, cliente.telefono1, cliente.correo]);
+  // Controlar la visibilidad del modal
+  useEffect(() => {
+    const dialog = document.getElementById(id) as HTMLDialogElement;
+    if (isOpen) {
+      dialog?.showModal();
+    } else {
+      dialog?.close();
+    }
+  }, [isOpen, id]);
+
+  // Manejar el cierre del modal
+  const handleCancel = () => {
+    const dialog = document.getElementById(id) as HTMLDialogElement;
+    dialog?.close();
+    onCancel();
+    setErrors({});
+  };
+
+  // Manejar el cierre del modal al hacer clic fuera del contenido
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === e.currentTarget) {
+      handleCancel();
+    }
+  };
+
   return (
-    <dialog id={id} className="modal">
-      <div className="modal-box max-w-4xl">
+    <dialog 
+      id={id} 
+      className="modal"
+      onClick={handleBackdropClick}
+    >
+      <div className="modal-box max-w-4xl" onClick={(e) => e.stopPropagation()}>
         <h3 className="font-bold text-lg">Nuevo Cliente</h3>
         
         <form className="space-y-4 mt-4">
@@ -180,11 +211,7 @@ export function AddClienteModal({
             <button
               type="button"
               className="btn btn-outline"
-              onClick={() => {
-                onCancel();
-                setErrors({});
-                (document.getElementById(id) as HTMLDialogElement)?.close();
-              }}
+              onClick={handleCancel}
             >
               Cancelar
             </button>

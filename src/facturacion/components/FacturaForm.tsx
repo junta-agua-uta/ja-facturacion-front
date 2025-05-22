@@ -8,9 +8,11 @@ interface FacturaFormProps {
   formData: FacturaFormType;
   clienteError: string | null;
   total?: number; // Agregamos el total como prop
+  showAddClienteButton?: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onOpenCodigoModal: () => void;
   onConceptoSelect: (codigo: string, mes?: string) => void;
+  onAddCliente?: () => void;
   onSave?: () => void;
   onCancel?: () => void;
   saving?: boolean;
@@ -20,9 +22,11 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
   formData,
   clienteError,
   total = 0,
+  showAddClienteButton = false,
   onInputChange,
   onOpenCodigoModal,
   onConceptoSelect,
+  onAddCliente,
   onSave,
   onCancel,
   saving = false
@@ -115,9 +119,20 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
               placeholder="Nombre del cliente"
               readOnly
             />
-            {clienteError && (
-              <div className="text-xs text-red-500 mt-1">{clienteError}</div>
-            )}
+            <div className="flex flex-col gap-2 mt-1">
+              {clienteError && (
+                <div className="text-xs text-red-500">{clienteError}</div>
+              )}
+              {showAddClienteButton && onAddCliente && (
+                <button
+                  type="button"
+                  onClick={onAddCliente}
+                  className="btn btn-sm btn-outline btn-primary w-full"
+                >
+                  + Agregar Cliente
+                </button>
+              )}
+            </div>
           </InputSlot>
 
           <InputSlot label="Código">
