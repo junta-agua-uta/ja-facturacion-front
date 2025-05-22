@@ -163,7 +163,7 @@ export const useFacturaForm = () => {
         }))
       };
 
-      const response = await api.post('/facturas/crear', facturaData);
+      await api.post('/facturas/crear', facturaData);
       
       // Redireccionar a la lista de facturas
       navigate('/junta/facturas');
