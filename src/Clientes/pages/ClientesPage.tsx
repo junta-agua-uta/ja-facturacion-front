@@ -104,7 +104,7 @@ export default function ClientesPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await api.get<ApiResponse>('https://juntaagua.onrender.com/apiV2/clientes');
+        const response = await api.get<ApiResponse>('/clientes');
         
         const convertedClientes = response.data.data.map(convertApiToCliente);
         setClientes(convertedClientes);
@@ -160,10 +160,10 @@ export default function ClientesPage() {
       try {
         const formattedCliente = formatClienteForAPI(newCliente);
         
-        await api.post('/apiV2/clientes', formattedCliente);
+        await api.post('/clientes', formattedCliente);
         
         // Refetch the data to get the updated list
-        const fetchResponse = await api.get<ApiResponse>('/apiV2/clientes');
+        const fetchResponse = await api.get<ApiResponse>('/clientes');
         const convertedClientes = fetchResponse.data.data.map(convertApiToCliente);
         setClientes(convertedClientes);
         
@@ -186,7 +186,7 @@ export default function ClientesPage() {
       try {
         const formattedCliente = formatClienteForAPI(editForm);
         
-        await api.put(`https://juntaagua.onrender.com/apiV2/clientes/${editForm.id}`, formattedCliente);
+        await api.put(`/clientes/${editForm.id}`, formattedCliente);
 
         // Update local state
         setClientes(prev =>
@@ -211,7 +211,7 @@ export default function ClientesPage() {
       setIsLoading(true);
       setError(null);
       try {
-        await api.delete(`/apiV2/clientes/${clienteToDelete.id}`);
+        await api.delete(`/clientes/${clienteToDelete.id}`);
 
         setClientes(prev => prev.filter(c => c.id !== clienteToDelete.id));
         setClienteToDelete(null);
