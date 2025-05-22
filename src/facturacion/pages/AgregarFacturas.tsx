@@ -87,14 +87,27 @@ export default function AgregarFacturas() {
     setErrorMessage(null);
   };
 
-  // Calcular totales
-  const { subtotal, iva, total } = useMemo(() => {
-    const sub = conceptos.reduce((sum, concepto) => sum + (concepto.subtotal || 0), 0);
-    const ivaCalculado = conceptos.reduce((sum, concepto) => sum + (concepto.iva || 0), 0);
+  // Calcular totales incluyendo descuento total
+  const { subtotal, descuentoTotal, total } = useMemo(() => {
+    // Calcular subtotal sin descuentos (precio * cantidad)
+    const subtotalSinDescuento = conceptos.reduce((sum, concepto) => 
+      sum + (concepto.precio * concepto.cantidad), 0
+    );
+    
+    // Calcular descuento total aplicado
+    const descuento = conceptos.reduce((sum, concepto) => 
+      sum + (concepto.descuento * concepto.cantidad), 0
+    );
+    
+    // Calcular subtotal con descuentos aplicados
+    const subtotalConDescuento = conceptos.reduce((sum, concepto) => 
+      sum + (concepto.subtotal || 0), 0
+    );
+
     return {
-      subtotal: sub,
-      iva: ivaCalculado,
-      total: sub + ivaCalculado
+      subtotal: subtotalSinDescuento,
+      descuentoTotal: descuento,
+      total: subtotalConDescuento 
     };
   }, [conceptos]);
 
@@ -161,10 +174,12 @@ export default function AgregarFacturas() {
                     <span>Subtotal:</span>
                     <span>${subtotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>IVA (15%):</span>
-                    <span>${iva.toFixed(2)}</span>
-                  </div>
+                  {descuentoTotal > 0 && (
+                    <div className="flex justify-between text-red-600">
+                      <span>Descuento total:</span>
+                      <span>-${descuentoTotal.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="border-t border-gray-200 my-2"></div>
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total:</span>

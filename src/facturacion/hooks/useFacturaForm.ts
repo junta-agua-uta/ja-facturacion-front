@@ -132,8 +132,6 @@ export const useFacturaForm = () => {
 
     // Calcular totales
     const subtotal = conceptos.reduce((sum, concepto) => sum + (concepto.subtotal || 0), 0);
-    const iva = conceptos.reduce((sum, concepto) => sum + (concepto.iva || 0), 0);
-    const total = subtotal + iva;
 
     try {
       setSaving(true);
@@ -146,16 +144,16 @@ export const useFacturaForm = () => {
         idMedidor: 1, // Valor fijo como se solicitó
         tipoPago: 'EFECTIVO', // Valor fijo como se solicitó
         valorSinImpuesto: subtotal,
-        iva: iva,
-        total: total,
-        conceptos: conceptos.map(c => ({
-          codigo: c.codigo,
+        // iva: ,
+        // total: total,
+        detalles: conceptos.map(c => ({
           descripcion: c.descripcion,
+          // codigo: c.codigo,
+          idRazon:1,
           cantidad: c.cantidad,
-          precioUnitario: c.precio,
-          descuento: c.descuento,
+          // precioUnitario: c.precio,
           subtotal: c.subtotal,
-          iva: c.iva
+          descuento: c.descuento,
         }))
       };
 

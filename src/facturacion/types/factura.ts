@@ -101,8 +101,6 @@ export const crearConcepto = (
   descuento: number = 0
 ): ConceptoCobro => {
   const subtotal = (precio - descuento) * cantidad;
-  const iva = +(subtotal * 0.15);
-  
   return {
     codigo,
     descripcion,
@@ -110,8 +108,7 @@ export const crearConcepto = (
     precio,
     descuento,
     subtotal: +subtotal,
-    iva,
-    total: +(subtotal + iva)
+    total: +(subtotal)
   };
 };
 

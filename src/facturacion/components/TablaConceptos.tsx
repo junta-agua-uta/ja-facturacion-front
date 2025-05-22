@@ -7,7 +7,6 @@ export interface ConceptoCobro {
   precio: number;
   descuento: number;
   subtotal: number;
-  iva: number;
   total: number;
 }
 
@@ -22,8 +21,7 @@ const recalcularConcepto = (concepto: ConceptoCobro): ConceptoCobro => {
   return {
     ...concepto,
     subtotal: +subtotal, // Aseguramos que el subtotal se actualice correctamente
-    iva: +(subtotal * 0.15),
-    total: +(subtotal + subtotal * 0.15)
+    total: +(subtotal)
   };
 };
 
@@ -75,7 +73,6 @@ const ConceptoRow = memo(({
           }}
         />
       </td>
-      <td>{concepto.iva.toFixed(2)}</td>
       <td>{concepto.total.toFixed(2)}</td>
       <td>
         <button
@@ -106,7 +103,6 @@ const TableHeader = () => (
       <th>Cantidad</th>
       <th>Precio</th>
       <th>Descuento</th>
-      <th>IVA (15%)</th>
       <th>Total</th>
       <th>Acciones</th>
     </tr>
