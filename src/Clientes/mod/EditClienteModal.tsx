@@ -86,9 +86,15 @@ export function EditClienteModal({
                 type="text"
                 className="input input-bordered w-full"
                 value={cliente.identificacion}
-                onChange={(e) => onChange({ ...cliente, identificacion: e.target.value })}
+                onChange={(e) => {
+                  // Solo permitir números y limitar a 13 caracteres
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 13);
+                  onChange({ ...cliente, identificacion: value });
+                }}
                 pattern="\d{10}(\d{3})?"
                 title="La identificación debe tener 10 o 13 dígitos"
+                minLength={10}
+                maxLength={13}
                 required
               />
             </div>
@@ -101,7 +107,11 @@ export function EditClienteModal({
                 type="text"
                 className="input input-bordered w-full"
                 value={cliente.razonSocial}
-                onChange={(e) => onChange({ ...cliente, razonSocial: e.target.value })}
+                onChange={(e) => {
+                  // Solo permitir letras y espacios
+                  const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
+                  onChange({ ...cliente, razonSocial: value });
+                }}
                 placeholder="Distribuidora Andina Cía. Ltda."
                 required
               />
@@ -142,13 +152,18 @@ export function EditClienteModal({
                 type="text"
                 className={`input input-bordered w-full`}
                 value={cliente.telefono1 || ''}
-                onChange={(e) => onChange({ 
-                  ...cliente, 
-                  telefono1: e.target.value,
-                  telefonoNro1: e.target.value
-                })}
+                onChange={(e) => {
+                  // Solo permitir números y limitar a 10 caracteres
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  onChange({ 
+                    ...cliente, 
+                    telefono1: value,
+                    telefonoNro1: value
+                  });
+                }}
                 pattern="09\d{8}"
                 title="El teléfono debe comenzar con 09 y tener 10 dígitos"
+                maxLength={10}
                 required
               />
             </div>
