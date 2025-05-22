@@ -40,6 +40,14 @@ export default function FacturacionTable({
         {
             header: 'Estado',
             accessor: 'Estado' as const
+        },
+        {
+            header: 'Sucursal',
+            accessor: 'Sucursal' as const
+        },
+        {
+            header: 'Usuario',
+            accessor: 'Usuario' as const
         }
     ]
 

@@ -15,18 +15,64 @@ export default function Facturacion() {
     const fetchFacturas = async () => {
       setLoading(true);
       try {
-        const response = await api.get(`/facturas/all`);
-        // Mapea los datos de la API al formato que espera la tabla
-        const apiFacturas = response.data?.data || [];
-        const mappedFacturas: Factura[] = apiFacturas.map((item: any) => ({
-          id: item.ID?.toString() ?? '',
-          NombreComercial: item.cliente?.NOMBRE_COMERCIAL ?? '',
-          Cedula: item.cliente?.IDENTIFICACION ?? '',
-          Concepto: item.cliente?.RAZON_SOCIAL ?? '', // Puedes cambiar este campo por otro si tienes un concepto real
-          FechaEmision: item.FECHA_EMISION ? new Date(item.FECHA_EMISION) : new Date(),
-          Total: item.TOTAL ? `${item.TOTAL} $` : '0 $',
-          Estado: item.ESTADO_FACTURA ?? ''
-        }));
+        // Array para almacenar todas las facturas de todas las páginas
+        let allFacturas: any[] = [];
+        let totalPages = 1;
+        
+        // Función para mapear los datos de la API al formato que espera la tabla
+        const mapFacturas = (apiFacturas: any[]) => {
+          return apiFacturas.map((item: any) => ({
+            id: item.ID?.toString() ?? '',
+            NombreComercial: item.cliente?.NOMBRE_COMERCIAL ?? '',
+            Cedula: item.cliente?.IDENTIFICACION ?? '',
+            Concepto: item.cliente?.RAZON_SOCIAL ?? '', // Puedes cambiar este campo por otro si tienes un concepto real
+            FechaEmision: item.FECHA_EMISION ? new Date(item.FECHA_EMISION) : new Date(),
+            Total: item.TOTAL ? `${item.TOTAL} $` : '0 $',
+            Estado: item.ESTADO_FACTURA ?? '',
+            // Agregar más campos si es necesario
+            Sucursal: item.sucursal?.NOMBRE ?? '',
+            Usuario: item.usuario ? `${item.usuario.NOMBRE} ${item.usuario.APELLIDO}` : ''
+          }));
+        };
+        
+        // Obtener la primera página para saber cuántas páginas hay en total
+        const firstResponse = await api.get('/facturas/all', {
+          params: { page: 1 }
+        });
+        
+        if (firstResponse.data) {
+          const { data, totalPages: apiTotalPages } = firstResponse.data;
+          totalPages = apiTotalPages || 1;
+          
+          // Agregar los datos de la primera página
+          allFacturas = [...allFacturas, ...(data || [])];
+          
+          // Obtener el resto de las páginas si hay más de una
+          if (totalPages > 1) {
+            // Crear un array de promesas para todas las páginas restantes
+            const pagePromises = [];
+            for (let page = 2; page <= totalPages; page++) {
+              pagePromises.push(
+                api.get('/facturas/all', {
+                  params: { page }
+                })
+              );
+            }
+            
+            // Ejecutar todas las promesas en paralelo
+            const responses = await Promise.all(pagePromises);
+            
+            // Procesar cada respuesta y agregar los datos
+            responses.forEach(response => {
+              if (response.data && response.data.data) {
+                allFacturas = [...allFacturas, ...response.data.data];
+              }
+            });
+          }
+        }
+        
+        // Mapear todas las facturas obtenidas
+        const mappedFacturas = mapFacturas(allFacturas);
         setFacturas(mappedFacturas);
       } catch (error) {
         console.error('Error al obtener facturas:', error);
@@ -34,6 +80,7 @@ export default function Facturacion() {
         setLoading(false);
       }
     };
+    
     fetchFacturas();
   }, []);
 

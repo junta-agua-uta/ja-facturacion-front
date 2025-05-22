@@ -131,6 +131,7 @@ export default function AgregarFacturas() {
           <FacturaFormContent
             formData={formData}
             clienteError={clienteError}
+            total={total}
             onInputChange={handleInputChange}
             onOpenCodigoModal={handleOpenCodigoModal}
             onConceptoSelect={handleConceptoSelect}

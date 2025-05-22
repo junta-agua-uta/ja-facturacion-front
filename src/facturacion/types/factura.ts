@@ -8,6 +8,9 @@ export interface Factura {
     FechaEmision: Date;
     Total: string;
     Estado: string;
+    // Campos adicionales de la API
+    Sucursal?: string;
+    Usuario?: string;
 }
 
 
