@@ -96,9 +96,8 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
   }
 
   if (esRUC) {
-    const cedula = identificacion.slice(0, 10);
     const sufijo = identificacion.slice(10);
-    return validarCedulaEcuatoriana(cedula) && sufijo === '001';
+    return identificacion.length==13 && sufijo === '001';
   }
 
   return false;

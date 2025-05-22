@@ -47,7 +47,8 @@ export default function AgregarFacturas() {
     showAddButton,
     showAddClienteModal,
     handleAddCliente,
-    handleCloseAddClienteModal
+    handleCloseAddClienteModal,
+    handleClienteAdded // <-- importar del hook
   } = useClientePorCedula(formData.cedula);
 
   // Actualizar la cédula del nuevo cliente cuando cambia el formulario
@@ -299,6 +300,11 @@ export default function AgregarFacturas() {
                 value: nuevoCliente.razonSocial
               }
             } as React.ChangeEvent<HTMLInputElement>);
+
+            // Llamar a handleClienteAdded para refrescar el estado y ocultar el botón
+            if (typeof handleClienteAdded === 'function') {
+              handleClienteAdded();
+            }
           } catch (error) {
             console.error('Error al guardar el cliente:', error);
             alert('No se pudo guardar el cliente');

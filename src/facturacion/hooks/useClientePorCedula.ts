@@ -13,6 +13,8 @@ export function useClientePorCedula(cedula: string) {
   const [error, setError] = useState<string | null>(null);
   const [showAddButton, setShowAddButton] = useState(false);
   const [showAddClienteModal, setShowAddClienteModal] = useState(false);
+  const [refrescar, setRefrescar] = useState(false);
+
 
   // Función para reiniciar el estado del cliente
   const resetCliente = useCallback(() => {
@@ -34,9 +36,11 @@ export function useClientePorCedula(cedula: string) {
 
   // Función para manejar cuando se agrega un cliente exitosamente
   const handleClienteAdded = useCallback(() => {
-    setShowAddClienteModal(false);
-    // Aquí podrías implementar lógica adicional después de agregar el cliente
-  }, []);
+  setShowAddClienteModal(false);
+  // Fuerza una nueva búsqueda
+  setRefrescar(prev => !prev);
+}, []);
+
 
   //Funcion de validacion de cedula ecuatoriana
   function validarCedulaEcuatoriana(cedula: string): boolean {
@@ -97,47 +101,48 @@ export function useClientePorCedula(cedula: string) {
   }
 
   useEffect(() => {
-    // Si la cédula está vacía o es muy corta, limpiamos los datos del cliente
-    if (!cedula || cedula.length < 10) {
-      setCliente("");
-      setClienteId(null);
-      setError(null);
-      return;
-    }
-    const timeout = setTimeout(async () => {
-      try {
-        const response = await api.get("/clientes/buscarCedula", {
-          params: { cedula },
-        });
-        const clientes = response.data;
-        if (
-          Array.isArray(clientes) &&
-          clientes.length > 0 &&
-          clientes[0].RAZON_SOCIAL
-        ) {
-          const clienteData = clientes[0] as ClienteResponse;
-          setCliente(clienteData.RAZON_SOCIAL);
-          setClienteId(clienteData.ID);
-          setError(null);
-          setShowAddButton(false);
-        } else {
-          setCliente("");
-          setClienteId(null);
-          setError("Cliente no encontrado");
-          // Mostrar el botón de agregar solo si la cédula tiene un formato válido o el RUC tiene 13 dígitos
-          setShowAddButton(
-            validarCedulaEcuatoriana(cedula) || validarRucEcuatoriano(cedula)
-          );
-        }
-      } catch (error) {
-        console.error("Error al buscar cliente:", error);
+  if (!cedula || cedula.length < 10) {
+    setCliente("");
+    setClienteId(null);
+    setError(null);
+    return;
+  }
+
+  const timeout = setTimeout(async () => {
+    try {
+      const response = await api.get("/clientes/buscarCedula", {
+        params: { cedula },
+      });
+      const clientes = response.data;
+      if (
+        Array.isArray(clientes) &&
+        clientes.length > 0 &&
+        clientes[0].RAZON_SOCIAL
+      ) {
+        const clienteData = clientes[0] as ClienteResponse;
+        setCliente(clienteData.RAZON_SOCIAL);
+        setClienteId(clienteData.ID);
+        setError(null);
+        setShowAddButton(false);
+      } else {
         setCliente("");
         setClienteId(null);
-        setError("Error al buscar cliente");
+        setError("Cliente no encontrado");
+        setShowAddButton(
+          validarCedulaEcuatoriana(cedula) || validarRucEcuatoriano(cedula)
+        );
       }
-    }, 500);
-    return () => clearTimeout(timeout);
-  }, [cedula]);
+    } catch (error) {
+      console.error("Error al buscar cliente:", error);
+      setCliente("");
+      setClienteId(null);
+      setError("Error al buscar cliente");
+    }
+  }, 500);
+
+  return () => clearTimeout(timeout);
+}, [cedula, refrescar]); // ← ¡agregado refrescar aquí!
+
 
   return {
     cliente,
