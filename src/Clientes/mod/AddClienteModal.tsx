@@ -36,7 +36,7 @@ export function AddClienteModal({
       newErrors.identificacion = 'La identificación debe tener 10 o 13 dígitos';
     }
   } else {
-    newErrors.identificacion = 'La identificación debe tener 10 o 13 dígitos';
+    newErrors.identificacion = 'Cédula o RUC inválido';
   }
 
   // Validar teléfono
