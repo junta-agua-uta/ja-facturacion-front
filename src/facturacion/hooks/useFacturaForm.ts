@@ -51,8 +51,7 @@ export const useFacturaForm = () => {
     clienteId, 
     error: clienteError, 
     resetCliente, 
-    showAddButton, 
-    handleAddCliente 
+    showAddButton 
   } = useClientePorCedula(formData.cedula);
 
   // Actualizar cliente automáticamente cuando cambia el resultado del hook

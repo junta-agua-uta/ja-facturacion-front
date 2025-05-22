@@ -96,6 +96,7 @@ export function EditClienteModal({
                 minLength={10}
                 maxLength={13}
                 required
+                readOnly
               />
             </div>
             
