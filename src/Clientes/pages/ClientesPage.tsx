@@ -99,6 +99,7 @@ const convertApiToCliente = (apiCliente: ApiCliente): Cliente => {
   };
 };
 
+
   useEffect(() => {
     const fetchClientes = async () => {
       setIsLoading(true);
@@ -130,10 +131,13 @@ const convertApiToCliente = (apiCliente: ApiCliente): Cliente => {
         
         setClientes(convertedClientes);
         
-        // Si la API no devuelve paginación, calcular manualmente
-        setTotalItems(response.data.totalItems || convertedClientes.length);
-        setTotalPages(response.data.totalPages || Math.ceil(convertedClientes.length / PAGE_SIZE));
-        setCurrentPage(response.data.currentPage || 1);
+        // Calcular paginación localmente
+        const totalItems = convertedClientes.length;
+        const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+        
+        setTotalItems(totalItems);
+        setTotalPages(totalPages);
+        setCurrentPage(1); // Resetear a la primera página cuando cambien los filtros
       } catch (error) {
         console.error('Error fetching clientes:', error);
         setError('No se pudo cargar la lista de clientes');
@@ -143,7 +147,14 @@ const convertApiToCliente = (apiCliente: ApiCliente): Cliente => {
     };
 
     fetchClientes();
-  }, [currentPage, filters]);
+  }, [filters]);
+
+  // Obtener datos para la página actual
+  const getCurrentPageData = () => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const endIndex = startIndex + PAGE_SIZE;
+    return clientes.slice(startIndex, endIndex);
+  };
 
   const handleClearFilters = () => {
     setFilters({});
@@ -284,7 +295,7 @@ const handleAddCliente = async () => {
           </div>
         ) : (
           <ClienteTable
-            data={clientes}
+            data={getCurrentPageData()}
             pagination={{
               currentPage,
               totalPages,
