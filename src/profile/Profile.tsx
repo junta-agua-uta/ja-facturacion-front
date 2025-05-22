@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../shared/api';
 import { UserIcon } from '@heroicons/react/24/solid'; // Ícono de usuario
 
@@ -13,7 +12,7 @@ interface UserData {
 }
 
 const Profile = () => {
-  const navigate = useNavigate();
+  // Removed unused navigate variable
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
