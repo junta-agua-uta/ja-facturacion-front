@@ -42,14 +42,14 @@ export function AddClienteModal({
   }, [cliente.identificacion, cliente.telefono1, cliente.correo]);
   return (
     <dialog id={id} className="modal">
-      <div className="modal-box max-w-3xl">
+      <div className="modal-box max-w-4xl">
         <h3 className="font-bold text-lg">Nuevo Cliente</h3>
         
         <form className="space-y-4 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="label">
-                <span className="label-text">Identificación *</span>
+                <span className="label-text">Cédula de Identidad </span>
               </label>
               <input
                 type="text"
@@ -67,15 +67,21 @@ export function AddClienteModal({
             
             <div>
               <label className="label">
-                <span className="label-text">Razón Social *</span>
+                <span className="label-text">Razón Social </span>
               </label>
               <input
                 type="text"
-                className="input input-bordered w-full"
+                className={`input input-bordered w-full ${errors.razonSocial ? 'input-error' : ''}`}
                 value={cliente.razonSocial}
                 onChange={(e) => onChange({ ...cliente, razonSocial: e.target.value })}
+                placeholder="Distribuidora Andina Cía. Ltda."
                 required
               />
+              {errors.razonSocial && (
+                <label className="label">
+                  <span className="label-text-alt text-error">{errors.razonSocial}</span>
+                </label>
+              )}
             </div>
             
             <div>
@@ -87,20 +93,27 @@ export function AddClienteModal({
                 className="input input-bordered w-full"
                 value={cliente.nombreComercial || ''}
                 onChange={(e) => onChange({ ...cliente, nombreComercial: e.target.value })}
+                placeholder="Andina Market"
               />
             </div>
             
             <div>
               <label className="label">
-                <span className="label-text">Dirección *</span>
+                <span className="label-text">Dirección </span>
               </label>
               <input
                 type="text"
-                className="input input-bordered w-full"
+                className={`input input-bordered w-full ${errors.direccion ? 'input-error' : ''}`}
                 value={cliente.direccion}
                 onChange={(e) => onChange({ ...cliente, direccion: e.target.value })}
+                placeholder="Calle 10 de Agosto y Bolívar"
                 required
               />
+              {errors.direccion && (
+                <label className="label">
+                  <span className="label-text-alt text-error">{errors.direccion}</span>
+                </label>
+              )}
             </div>
             
             <div>
@@ -154,6 +167,7 @@ export function AddClienteModal({
               className="btn btn-outline"
               onClick={() => {
                 onCancel();
+                setErrors({});
                 (document.getElementById(id) as HTMLDialogElement)?.close();
               }}
             >

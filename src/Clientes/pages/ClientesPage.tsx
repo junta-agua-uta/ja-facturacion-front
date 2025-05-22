@@ -73,31 +73,31 @@ export default function ClientesPage() {
 
   const [newCliente, setNewCliente] = useState<Cliente>(defaultNewCliente);
 
-  // Convert API data to internal format
-  const convertApiToCliente = (apiCliente: ApiCliente): Cliente => {
-    return {
-      id: apiCliente.ID.toString(),
-      identificacion: apiCliente.IDENTIFICACION,
-      razonSocial: apiCliente.RAZON_SOCIAL,
-      nombreComercial: apiCliente.NOMBRE_COMERCIAL,
-      direccion: apiCliente.DIRECCION,
-      telefono1: apiCliente.TELEFONO1,
-      telefono2: apiCliente.TELEFONO2,
-      correo: apiCliente.CORREO,
-      tarifa: apiCliente.TARIFA,
-      grupo: apiCliente.GRUPO,
-      zona: apiCliente.ZONA,
-      ruta: apiCliente.RUTA,
-      vendedor: apiCliente.VENDEDOR,
-      cobrador: apiCliente.COBRADOR,
-      provincia: apiCliente.PROVINCIA,
-      ciudad: apiCliente.CIUDAD,
-      parroquia: apiCliente.PARROQUIA,
-      telefonoNro1: apiCliente.TELEFONO1,
-      telefonoNro2: apiCliente.TELEFONO2,
-      correoElectronico: apiCliente.CORREO
-    };
+
+const convertApiToCliente = (apiCliente: ApiCliente): Cliente => {
+  return {
+    id: apiCliente.ID.toString(),
+    identificacion: apiCliente.IDENTIFICACION,
+    razonSocial: apiCliente.RAZON_SOCIAL,
+    nombreComercial: apiCliente.NOMBRE_COMERCIAL,
+    direccion: apiCliente.DIRECCION,
+    telefono1: apiCliente.TELEFONO1,
+    telefono2: apiCliente.TELEFONO2,
+    correo: apiCliente.CORREO,
+    tarifa: apiCliente.TARIFA,
+    grupo: apiCliente.GRUPO,
+    zona: apiCliente.ZONA,
+    ruta: apiCliente.RUTA,
+    vendedor: apiCliente.VENDEDOR,
+    cobrador: apiCliente.COBRADOR,
+    provincia: apiCliente.PROVINCIA,
+    ciudad: apiCliente.CIUDAD,
+    parroquia: apiCliente.PARROQUIA,
+    telefonoNro1: apiCliente.TELEFONO1,
+    telefonoNro2: apiCliente.TELEFONO2,
+    correoElectronico: apiCliente.CORREO
   };
+};
 
   useEffect(() => {
     const fetchClientes = async () => {
@@ -174,7 +174,7 @@ export default function ClientesPage() {
   };
 
   // Handle adding a new cliente
-  const handleAddCliente = async () => {
+const handleAddCliente = async () => {
     if (newCliente.identificacion && newCliente.razonSocial && newCliente.direccion) {
       setIsLoading(true);
       setError(null);

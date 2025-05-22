@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Cliente } from "../types/cliente";
 
+
 type EditClienteModalProps = {
   readonly id: string;
   readonly title: string;
@@ -19,18 +20,39 @@ export function EditClienteModal({
   onCancel,
   onSave,
 }: EditClienteModalProps) {
-  if (!cliente) return null;
-  
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
-  
+  const [errors, setErrors] = useState({
+    telefono1: "",
+    telefono2: "",
+    correo: "",
+    razonSocial: "",
+    direccion: ""
+  });
+
+  // Resetear errores cuando cambie el cliente
+  useEffect(() => {
+    if (cliente) {
+      setErrors({
+        telefono1: "",
+        telefono2: "",
+        correo: "",
+        razonSocial: "",
+        direccion: ""
+      });
+    }
+  }, [cliente]);
+
   // Validate fields when they change
   useEffect(() => {
-    const newErrors: {[key: string]: string} = {};
+    if (!cliente) return;
     
-    // Validate identification (10 or 13 digits)
-    if (cliente.identificacion && !/^\d{10}(\d{3})?$/.test(cliente.identificacion)) {
-      newErrors.identificacion = 'La identificación debe tener 10 o 13 dígitos';
-    }
+    // Inicializar con valores vacíos
+    const newErrors = {
+      telefono1: "",
+      telefono2: "",
+      correo: "",
+      razonSocial: "",
+      direccion: ""
+    };
     
     // Validate phone (must start with 09 and be 10 digits)
     if (cliente.telefono1 && !/^09\d{8}$/.test(cliente.telefono1)) {
@@ -43,31 +65,32 @@ export function EditClienteModal({
     }
     
     setErrors(newErrors);
-  }, [cliente.identificacion, cliente.telefono1, cliente.correo]);
+  }, [cliente, cliente?.telefono1, cliente?.correo]);
+  
+  if (!cliente) return null;
+  
+  
   
   return (
     <dialog id={id} className="modal">
-      <div className="modal-box max-w-3xl">
+      <div className="modal-box max-w-4xl">
         <h3 className="font-bold text-lg">{title}</h3>
         
-        <form method="dialog" className="space-y-4 mt-4">
+        <form className="space-y-4 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="label">
-                <span className="label-text">Identificación *</span>
+                <span className="label-text">Cédula de Identidad *</span>
               </label>
               <input
                 type="text"
-                className={`input input-bordered w-full ${errors.identificacion ? 'input-error' : ''}`}
+                className="input input-bordered w-full"
                 value={cliente.identificacion}
                 onChange={(e) => onChange({ ...cliente, identificacion: e.target.value })}
                 pattern="\d{10}(\d{3})?"
                 title="La identificación debe tener 10 o 13 dígitos"
                 required
               />
-              {errors.identificacion && (
-                <div className="text-error text-sm mt-1">{errors.identificacion}</div>
-              )}
             </div>
             
             <div>
@@ -79,6 +102,7 @@ export function EditClienteModal({
                 className="input input-bordered w-full"
                 value={cliente.razonSocial}
                 onChange={(e) => onChange({ ...cliente, razonSocial: e.target.value })}
+                placeholder="Distribuidora Andina Cía. Ltda."
                 required
               />
             </div>
@@ -92,6 +116,7 @@ export function EditClienteModal({
                 className="input input-bordered w-full"
                 value={cliente.nombreComercial || ''}
                 onChange={(e) => onChange({ ...cliente, nombreComercial: e.target.value })}
+                placeholder="Andina Market"
               />
             </div>
             
@@ -104,6 +129,7 @@ export function EditClienteModal({
                 className="input input-bordered w-full"
                 value={cliente.direccion}
                 onChange={(e) => onChange({ ...cliente, direccion: e.target.value })}
+                placeholder="Calle 10 de Agosto y Bolívar"
                 required
               />
             </div>
@@ -114,7 +140,7 @@ export function EditClienteModal({
               </label>
               <input
                 type="text"
-                className={`input input-bordered w-full ${errors.telefono1 ? 'input-error' : ''}`}
+                className={`input input-bordered w-full`}
                 value={cliente.telefono1 || ''}
                 onChange={(e) => onChange({ 
                   ...cliente, 
@@ -125,9 +151,6 @@ export function EditClienteModal({
                 title="El teléfono debe comenzar con 09 y tener 10 dígitos"
                 required
               />
-              {errors.telefono1 && (
-                <div className="text-error text-sm mt-1">{errors.telefono1}</div>
-              )}
             </div>
             
             <div>
@@ -136,7 +159,7 @@ export function EditClienteModal({
               </label>
               <input
                 type="email"
-                className={`input input-bordered w-full ${errors.correo ? 'input-error' : ''}`}
+                className={`input input-bordered w-full`}
                 value={cliente.correo || ''}
                 onChange={(e) => onChange({ 
                   ...cliente, 
@@ -147,9 +170,6 @@ export function EditClienteModal({
                 title="Ingrese un correo electrónico válido"
                 required
               />
-              {errors.correo && (
-                <div className="text-error text-sm mt-1">{errors.correo}</div>
-              )}
             </div>
           </div>
           
@@ -170,7 +190,7 @@ export function EditClienteModal({
               onClick={() => {
                 onSave();
               }}
-              disabled={!cliente.identificacion || !cliente.razonSocial || !cliente.direccion || !cliente.telefono1 || !cliente.correo || Object.keys(errors).length > 0}
+              disabled={!cliente.identificacion || !cliente.razonSocial || !cliente.direccion || !cliente.telefono1 || !cliente.correo || Object.values(errors).some(error => error !== "")}
             >
               Guardar cambios
             </button>
