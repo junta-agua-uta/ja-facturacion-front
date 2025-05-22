@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Branch } from "../../sucursales/types/sucursal";
 
 type EditModalProps = {
@@ -17,7 +18,32 @@ export default function EditModal({
   onCancel,
   onSave,
 }: EditModalProps) {
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
   if (!branch) return null;
+
+  const validate = () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!branch.nombre.trim()) newErrors.nombre = "El nombre es obligatorio.";
+    if (!branch.ubicacion.trim()) newErrors.ubicacion = "La ubicación es obligatoria.";
+
+    // Validar que puntoEmision no esté vacío y sea un número válido
+    if (!branch.puntoEmision.toString().trim()) {
+      newErrors.puntoEmision = "El punto de emisión es obligatorio.";
+    } else if (isNaN(Number(branch.puntoEmision))) {
+      newErrors.puntoEmision = "El punto de emisión debe ser un número.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSave = () => {
+    if (validate()) {
+      onSave();
+      (document.getElementById(id) as HTMLDialogElement)?.close();
+    }
+  };
 
   return (
     <dialog id={id} className="modal">
@@ -30,11 +56,11 @@ export default function EditModal({
             </label>
             <input
               type="text"
-              className="input input-bordered w-full"
+              className={`input input-bordered w-full ${errors.nombre ? "input-error" : ""}`}
               value={branch.nombre}
               onChange={(e) => onChange({ ...branch, nombre: e.target.value })}
-              required
             />
+            {errors.nombre && <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>}
           </div>
 
           <div>
@@ -43,11 +69,11 @@ export default function EditModal({
             </label>
             <input
               type="text"
-              className="input input-bordered w-full"
+              className={`input input-bordered w-full ${errors.ubicacion ? "input-error" : ""}`}
               value={branch.ubicacion}
               onChange={(e) => onChange({ ...branch, ubicacion: e.target.value })}
-              required
             />
+            {errors.ubicacion && <p className="text-red-500 text-sm mt-1">{errors.ubicacion}</p>}
           </div>
 
           <div>
@@ -55,12 +81,12 @@ export default function EditModal({
               <span className="label-text">Punto de Emisión</span>
             </label>
             <input
-              type="text"
-              className="input input-bordered w-full"
+              type="number"
+              className={`input input-bordered w-full ${errors.puntoEmision ? "input-error" : ""}`}
               value={branch.puntoEmision}
               onChange={(e) => onChange({ ...branch, puntoEmision: e.target.value })}
-              required
             />
+            {errors.puntoEmision && <p className="text-red-500 text-sm mt-1">{errors.puntoEmision}</p>}
           </div>
 
           <div className="modal-action">
@@ -77,10 +103,7 @@ export default function EditModal({
             <button
               type="button"
               className="btn btn-primary"
-              onClick={() => {
-                onSave();
-                (document.getElementById(id) as HTMLDialogElement)?.close();
-              }}
+              onClick={handleSave}
             >
               Guardar
             </button>
