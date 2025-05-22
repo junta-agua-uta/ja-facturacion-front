@@ -134,6 +134,7 @@ export function EditClienteModal({
                 minLength={10}
                 maxLength={13}
                 required
+                readOnly
               />
               {errors.identificacion && (
                 <div className="text-error text-sm mt-1">{errors.identificacion}</div>
