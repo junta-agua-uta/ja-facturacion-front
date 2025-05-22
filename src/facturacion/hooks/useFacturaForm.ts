@@ -1,0 +1,205 @@
+import { useState, useEffect, useCallback } from "react";
+import { FacturaForm } from "../../shared/components/interfaces/factura.interface";
+import { useClientePorCedula } from "./useClientePorCedula";
+import { DEFAULTS } from "../types/factura";
+import { ConceptoCobro } from "../components/TablaConceptos";
+import { CodigoConcepto, CONFIGURACION_CONCEPTOS, crearConcepto } from "../types/factura";
+import api from "../../shared/api";
+import { authService } from "../../auth/Services/auth.service";
+import { useNavigate } from "react-router-dom";
+
+export const useFacturaForm = () => {
+  // IMPORTANTE: Todos los hooks deben llamarse en el mismo orden en cada renderizado
+  // 1. Hooks de React
+  const navigate = useNavigate();
+  
+  // Función para obtener la fecha actual en formato YYYY-MM-DD
+  const getCurrentDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  
+  // Valores iniciales del formulario
+  const initialFormState: FacturaForm = {
+    cedula: '',
+    cliente: '',
+    codigo: '',
+    emision: getCurrentDate(), // Establecer fecha actual por defecto
+    vencimiento: '',
+    serie: DEFAULTS.serie,
+    numero: DEFAULTS.numero,
+    secuencia: DEFAULTS.secuencia,
+    concepto: ''
+  };
+  
+  // 2. Estados (useState hooks)
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Estado del formulario con valores iniciales
+  const [formData, setFormData] = useState<FacturaForm>(initialFormState);
+
+  // Estado para la tabla de conceptos
+  const [conceptos, setConceptos] = useState<ConceptoCobro[]>([]);
+
+  // Obtener cliente por cédula
+  const { cliente, clienteId, error: clienteError, resetCliente } = useClientePorCedula(formData.cedula);
+
+  // Actualizar cliente automáticamente cuando cambia el resultado del hook
+  useEffect(() => {
+    if (cliente && formData.cliente !== cliente) {
+      setFormData(prev => ({ ...prev, cliente }));
+    }
+  }, [cliente, formData.cliente]);
+
+  // Manejador de cambios en el formulario
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  }, []);
+
+  // Manejador para selección de conceptos
+  const handleConceptoSelect = useCallback((codigo: string, mes?: string) => {
+    // Verificar si el código existe en nuestra configuración
+    const tipoConcepto = codigo as CodigoConcepto;
+    const config = CONFIGURACION_CONCEPTOS[tipoConcepto];
+    
+    if (!config) return;
+    
+    // Verificar si requiere mes
+    if (config.requiereMes && (!mes || mes === 'ninguno')) return;
+    
+    // Buscar cuántos conceptos ya existen con ese tipo base
+    const count = conceptos.filter(c => c.codigo.startsWith(config.codInterno.slice(0, 3))).length;
+    // Generar el nuevo código incremental (ej: VER001, VER002, ...)
+    const codigoIncremental = `${config.codInterno.slice(0, 3)}${String(count + 1).padStart(3, '0')}`;
+
+    // Crear descripción con mes si es necesario
+    const descripcion = config.requiereMes 
+      ? `${config.desc} - ${mes}` 
+      : config.desc;
+    
+    // Crear nuevo concepto usando la función factory
+    const nuevoConcepto = crearConcepto(
+      codigoIncremental,
+      descripcion,
+      config.precioBase || 0
+    );
+    
+    // Agregar a la lista de conceptos
+    setConceptos(prev => [...prev, nuevoConcepto]);
+  }, [conceptos]);
+
+  // Manejador para actualizar conceptos
+  const handleConceptoChange = useCallback((idx: number, updated: ConceptoCobro) => {
+    setConceptos(prev => prev.map((c, i) => i === idx ? updated : c));
+  }, []); 
+
+  // Manejador para eliminar conceptos
+  const handleConceptoDelete = useCallback((idx: number) => {
+    setConceptos(prev => prev.filter((_, i) => i !== idx));
+  }, []);
+
+  // Manejador para abrir el modal de selección de código
+  const handleOpenCodigoModal = useCallback(() => {
+    const dialog = document.getElementById('select_codigo_modal') as HTMLDialogElement;
+    dialog?.showModal();
+  }, []);
+
+  // Función para guardar la factura
+  const saveFactura = useCallback(async (idSucursal: number) => {
+    if (!clienteId) {
+      setSaveError('No se ha seleccionado un cliente válido');
+      return false;
+    }
+
+    if (conceptos.length === 0) {
+      setSaveError('Debe agregar al menos un concepto a la factura');
+      return false;
+    }
+
+    const currentUser = authService.getCurrentUser();
+    if (!currentUser || !currentUser.id) {
+      setSaveError('No se ha iniciado sesión');
+      return false;
+    }
+
+    // Calcular totales
+    const subtotal = conceptos.reduce((sum, concepto) => sum + (concepto.subtotal || 0), 0);
+    const iva = conceptos.reduce((sum, concepto) => sum + (concepto.iva || 0), 0);
+    const total = subtotal + iva;
+
+    try {
+      setSaving(true);
+      setSaveError(null);
+
+      const facturaData = {
+        idSucursal: idSucursal,
+        idUsuario: parseInt(currentUser.id),
+        idCliente: clienteId,
+        idMedidor: 1, // Valor fijo como se solicitó
+        tipoPago: 'EFECTIVO', // Valor fijo como se solicitó
+        valorSinImpuesto: subtotal,
+        iva: iva,
+        total: total,
+        conceptos: conceptos.map(c => ({
+          codigo: c.codigo,
+          descripcion: c.descripcion,
+          cantidad: c.cantidad,
+          precioUnitario: c.precio,
+          descuento: c.descuento,
+          subtotal: c.subtotal,
+          iva: c.iva
+        }))
+      };
+
+      const response = await api.post('/facturas/crear', facturaData);
+      console.log('Factura creada:', response.data);
+      
+      // Redireccionar a la lista de facturas
+      navigate('/junta/facturas');
+      return true;
+    } catch (error: any) {
+      console.error('Error al guardar factura:', error);
+      setSaveError(error.response?.data?.message || 'Error al guardar la factura');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }, [clienteId, conceptos, navigate]);
+
+  // Función para restablecer el formulario a su estado inicial
+  const resetForm = useCallback(() => {
+    // Reiniciar el estado del cliente en el hook useClientePorCedula
+    resetCliente();
+    
+    // Restablecer el formulario a su estado inicial
+    setFormData(initialFormState);
+    
+    // Limpiamos los conceptos y errores
+    setConceptos([]);
+    setSaveError(null);
+  }, [initialFormState, resetCliente]);
+
+  return {
+    formData,
+    setFormData,
+    conceptos,
+    clienteError,
+    saving,
+    saveError,
+    handleInputChange,
+    handleConceptoSelect,
+    handleConceptoChange,
+    handleConceptoDelete,
+    handleOpenCodigoModal,
+    saveFactura,
+    resetForm
+  };
+};

@@ -1,10 +1,43 @@
-import { Outlet,  useLocation } from 'react-router-dom'
-import { FacturasIcon, AutorizacionesIcon, UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon } from './icons/icons';
-import NavItem from './layout/NavItem';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { FacturasIcon, AutorizacionesIcon, UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon } from './utils/icons';
+import NavItem from './components/NavItem';
+import { authService } from '../auth/Services/auth.service';
+import { useEffect, useState } from 'react';
+import api from '../shared/api';
+
 
 const Layout = () => {
-
   const location = useLocation();
+  const navigate = useNavigate();
+  const [userName, setUserName] = useState('Usuario');
+  const [userRole, setUserRole] = useState('');
+
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        try {
+          const response = await api.get('/auth/me');
+          console.log("Respuesta de /auth/me:", response.data); // Se verifica la respuesta
+          if (response.data) {
+            const nombreCompleto = `${response.data.NOMBRE} ${response.data.APELLIDO}`.trim();
+            setUserName(nombreCompleto || 'Usuario');
+            setUserRole(response.data.ROL || 'Usuario');
+          }
+        } catch (error) {
+
+        }
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const handleLogout = () => {
+    authService.logout();
+    navigate('/login');
+  };
 
   const isActive = (path: string) => {
     return location.pathname.includes(path);
@@ -12,18 +45,28 @@ const Layout = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <aside className="w-64 flex flex-col bg-gray-200">
+      <aside className="w-64 flex flex-col bg-gray-200 border-r border-gray-300 shadow-xl pb-5">
         <div className="p-4 flex justify-center">
           <img src="/logo_agua.svg" alt="Logo Agua Pública" className="h-36" />
         </div>
 
         <nav className="flex-1">
-          
+
           <NavItem
             to="/junta/facturas"
             isActive={isActive('facturas')}
             icon={<FacturasIcon isActive={isActive('facturas')} />}
             label="Facturas"
+            children={[
+              {
+                label: "Ver todas las facturas",
+                to: "/junta/facturas"
+              },
+              {
+                label: "Crear factura",
+                to: "/junta/facturas/crear"
+              }
+            ]}
           />
 
           <NavItem
@@ -64,12 +107,13 @@ const Layout = () => {
 
         <div className="p-4 flex flex-col items-center">
           <PerfilIcon isActive={false} />
-          <p className="text-base font-medium text-gray-900">Jhon Doe</p>
-          <p className="text-sm text-gray-500">Administrador</p>
+          <p className="text-base font-medium text-gray-900">{userName}</p>
+          <p className="text-sm text-gray-500">{userRole}</p>
         </div>
 
-        <button 
-        className="mx-4 mb-4 px-6 py-2 bg-red-600 text-white rounded-2xl hover:bg-red-700 transition-colors duration-200 flex items-center justify-center hover:cursor-pointer">
+        <button
+          onClick={handleLogout}
+          className="mx-4 mb-4 px-6 py-2 bg-red-600 text-white rounded-2xl hover:bg-red-700 transition-colors duration-200 flex items-center justify-center hover:cursor-pointer">
           <svg
             className="w-5 h-5 mr-2"
             fill="none"
@@ -87,7 +131,7 @@ const Layout = () => {
         </button>
       </aside>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto max-w-5xl mx-auto mt-10 p-6 space-y-6 max-h-full">
         <Outlet />
       </main>
     </div>
