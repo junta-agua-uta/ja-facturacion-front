@@ -73,31 +73,31 @@ export default function ClientesPage() {
 
   const [newCliente, setNewCliente] = useState<Cliente>(defaultNewCliente);
 
-  // Convert API data to internal format
-  const convertApiToCliente = (apiCliente: ApiCliente): Cliente => {
-    return {
-      id: apiCliente.ID.toString(),
-      identificacion: apiCliente.IDENTIFICACION,
-      razonSocial: apiCliente.RAZON_SOCIAL,
-      nombreComercial: apiCliente.NOMBRE_COMERCIAL,
-      direccion: apiCliente.DIRECCION,
-      telefono1: apiCliente.TELEFONO1,
-      telefono2: apiCliente.TELEFONO2,
-      correo: apiCliente.CORREO,
-      tarifa: apiCliente.TARIFA,
-      grupo: apiCliente.GRUPO,
-      zona: apiCliente.ZONA,
-      ruta: apiCliente.RUTA,
-      vendedor: apiCliente.VENDEDOR,
-      cobrador: apiCliente.COBRADOR,
-      provincia: apiCliente.PROVINCIA,
-      ciudad: apiCliente.CIUDAD,
-      parroquia: apiCliente.PARROQUIA,
-      telefonoNro1: apiCliente.TELEFONO1,
-      telefonoNro2: apiCliente.TELEFONO2,
-      correoElectronico: apiCliente.CORREO
-    };
+
+const convertApiToCliente = (apiCliente: ApiCliente): Cliente => {
+  return {
+    id: apiCliente.ID.toString(),
+    identificacion: apiCliente.IDENTIFICACION,
+    razonSocial: apiCliente.RAZON_SOCIAL,
+    nombreComercial: apiCliente.NOMBRE_COMERCIAL,
+    direccion: apiCliente.DIRECCION,
+    telefono1: apiCliente.TELEFONO1,
+    telefono2: apiCliente.TELEFONO2,
+    correo: apiCliente.CORREO,
+    tarifa: apiCliente.TARIFA,
+    grupo: apiCliente.GRUPO,
+    zona: apiCliente.ZONA,
+    ruta: apiCliente.RUTA,
+    vendedor: apiCliente.VENDEDOR,
+    cobrador: apiCliente.COBRADOR,
+    provincia: apiCliente.PROVINCIA,
+    ciudad: apiCliente.CIUDAD,
+    parroquia: apiCliente.PARROQUIA,
+    telefonoNro1: apiCliente.TELEFONO1,
+    telefonoNro2: apiCliente.TELEFONO2,
+    correoElectronico: apiCliente.CORREO
   };
+};
 
   useEffect(() => {
     const fetchClientes = async () => {
@@ -132,38 +132,38 @@ export default function ClientesPage() {
   // Format client data for API
   const formatClienteForAPI = (cliente: Cliente) => {
     return {
-      IDENTIFICACION: cliente.identificacion,
-      RAZON_SOCIAL: cliente.razonSocial,
-      NOMBRE_COMERCIAL: cliente.nombreComercial || '',
-      DIRECCION: cliente.direccion,
-      TELEFONO1: cliente.telefono1 || cliente.telefonoNro1 || '',
-      TELEFONO2: cliente.telefono2 || cliente.telefonoNro2 || '',
-      CORREO: cliente.correo || cliente.correoElectronico || '',
-      TARIFA: cliente.tarifa || '',
-      GRUPO: cliente.grupo || '',
-      ZONA: cliente.zona || '',
-      RUTA: cliente.ruta || '',
-      VENDEDOR: cliente.vendedor || '',
-      COBRADOR: cliente.cobrador || '',
-      PROVINCIA: cliente.provincia || '',
-      CIUDAD: cliente.ciudad || '',
-      PARROQUIA: cliente.parroquia || '',
-      ...(cliente.id && !isNaN(parseInt(cliente.id)) ? { ID: parseInt(cliente.id) } : {})
+      identificacion: cliente.identificacion,
+      razonSocial: cliente.razonSocial,
+      nombreComercial: cliente.nombreComercial || '',
+      direccion: cliente.direccion,
+      telefono1: cliente.telefono1 || cliente.telefonoNro1 || '',
+      telefono2: cliente.telefono2 || cliente.telefonoNro2 || '',
+      correo: cliente.correo || cliente.correoElectronico || '',
+      tarifa: cliente.tarifa || '',
+      grupo: cliente.grupo || '',
+      zona: cliente.zona || '',
+      ruta: cliente.ruta || '',
+      vendedor: cliente.vendedor || '',
+      cobrador: cliente.cobrador || '',
+      provincia: cliente.provincia || '',
+      ciudad: cliente.ciudad || '',
+      parroquia: cliente.parroquia || '',
+      ...(cliente.id && !isNaN(parseInt(cliente.id)) ? { id: parseInt(cliente.id) } : {})
     };
   };
 
   // Handle adding a new cliente
-  const handleAddCliente = async () => {
+const handleAddCliente = async () => {
     if (newCliente.identificacion && newCliente.razonSocial && newCliente.direccion) {
       setIsLoading(true);
       setError(null);
       try {
         const formattedCliente = formatClienteForAPI(newCliente);
         
-        await api.post('/apiV2/clientes', formattedCliente);
+        await api.post('https://juntaagua.onrender.com/apiV2/clientes', formattedCliente);
         
         // Refetch the data to get the updated list
-        const fetchResponse = await api.get<ApiResponse>('/apiV2/clientes');
+        const fetchResponse = await api.get<ApiResponse>('https://juntaagua.onrender.com/apiV2/clientes');
         const convertedClientes = fetchResponse.data.data.map(convertApiToCliente);
         setClientes(convertedClientes);
         
@@ -211,7 +211,7 @@ export default function ClientesPage() {
       setIsLoading(true);
       setError(null);
       try {
-        await api.delete(`/apiV2/clientes/${clienteToDelete.id}`);
+        await api.delete(`https://juntaagua.onrender.com/apiV2/clientes/${clienteToDelete.id}`);
 
         setClientes(prev => prev.filter(c => c.id !== clienteToDelete.id));
         setClienteToDelete(null);
