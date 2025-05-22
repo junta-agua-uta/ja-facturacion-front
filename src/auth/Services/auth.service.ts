@@ -19,7 +19,6 @@ export const authService = {
         }
       );
 
-      console.log('Respuesta completa del backend:', response.data);
 
       if (response.data.access_token) {
         // Guardar token (usando access_token en lugar de token)
@@ -34,10 +33,6 @@ export const authService = {
         
         localStorage.setItem('userData', JSON.stringify(userData));
 
-        console.log('Datos almacenados:', {
-          token: response.data.access_token,
-          user: userData
-        });
       }
 
       return response.data;

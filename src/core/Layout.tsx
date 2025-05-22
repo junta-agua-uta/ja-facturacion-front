@@ -19,7 +19,6 @@ const Layout = () => {
       if (currentUser) {
         try {
           const response = await api.get('/auth/me');
-          console.log("Respuesta de /auth/me:", response.data); // Se verifica la respuesta
           if (response.data) {
             const nombreCompleto = `${response.data.NOMBRE} ${response.data.APELLIDO}`.trim();
             setUserName(nombreCompleto || 'Usuario');

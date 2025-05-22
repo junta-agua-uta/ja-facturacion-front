@@ -44,7 +44,6 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
 
   const handlePrint = () => {
     // Aquí puedes agregar lógica adicional después de imprimir si es necesario
-    console.log('Documento enviado a imprimir');
     setIsPrintPreviewOpen(false);
   };
 
