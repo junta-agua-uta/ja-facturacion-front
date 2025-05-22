@@ -32,48 +32,8 @@ export default function ClienteTable({
       accessor: 'telefono1' as const
     },
     {
-      header: 'Teléfono 2',
-      accessor: 'telefono2' as const
-    },
-    {
       header: 'Correo Electrónico',
       accessor: 'correo' as const
-    },
-    {
-      header: 'Tarifa',
-      accessor: 'tarifa' as const
-    },
-    {
-      header: 'Grupo',
-      accessor: 'grupo' as const
-    },
-    {
-      header: 'Zona',
-      accessor: 'zona' as const
-    },
-    {
-      header: 'Ruta',
-      accessor: 'ruta' as const
-    },
-    {
-      header: 'Vendedor',
-      accessor: 'vendedor' as const
-    },
-    {
-      header: 'Cobrador',
-      accessor: 'cobrador' as const
-    },
-    {
-      header: 'Provincia',
-      accessor: 'provincia' as const
-    },
-    {
-      header: 'Ciudad',
-      accessor: 'ciudad' as const
-    },
-    {
-      header: 'Parroquia',
-      accessor: 'parroquia' as const
     }
   ];
 

@@ -1,4 +1,5 @@
 // src/components/modals/EditClienteModal.tsx
+import { useState, useEffect } from "react";
 import { Cliente } from "../types/cliente";
 
 type EditClienteModalProps = {
@@ -20,6 +21,30 @@ export function EditClienteModal({
 }: EditClienteModalProps) {
   if (!cliente) return null;
   
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  
+  // Validate fields when they change
+  useEffect(() => {
+    const newErrors: {[key: string]: string} = {};
+    
+    // Validate identification (10 or 13 digits)
+    if (cliente.identificacion && !/^\d{10}(\d{3})?$/.test(cliente.identificacion)) {
+      newErrors.identificacion = 'La identificación debe tener 10 o 13 dígitos';
+    }
+    
+    // Validate phone (must start with 09 and be 10 digits)
+    if (cliente.telefono1 && !/^09\d{8}$/.test(cliente.telefono1)) {
+      newErrors.telefono1 = 'El teléfono debe comenzar con 09 y tener 10 dígitos';
+    }
+    
+    // Validate email format
+    if (cliente.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.correo)) {
+      newErrors.correo = 'Ingrese un correo electrónico válido';
+    }
+    
+    setErrors(newErrors);
+  }, [cliente.identificacion, cliente.telefono1, cliente.correo]);
+  
   return (
     <dialog id={id} className="modal">
       <div className="modal-box max-w-3xl">
@@ -33,11 +58,16 @@ export function EditClienteModal({
               </label>
               <input
                 type="text"
-                className="input input-bordered w-full"
+                className={`input input-bordered w-full ${errors.identificacion ? 'input-error' : ''}`}
                 value={cliente.identificacion}
                 onChange={(e) => onChange({ ...cliente, identificacion: e.target.value })}
+                pattern="\d{10}(\d{3})?"
+                title="La identificación debe tener 10 o 13 dígitos"
                 required
               />
+              {errors.identificacion && (
+                <div className="text-error text-sm mt-1">{errors.identificacion}</div>
+              )}
             </div>
             
             <div>
@@ -80,158 +110,46 @@ export function EditClienteModal({
             
             <div>
               <label className="label">
-                <span className="label-text">Teléfono 1</span>
+                <span className="label-text">Teléfono 1 *</span>
               </label>
               <input
                 type="text"
-                className="input input-bordered w-full"
+                className={`input input-bordered w-full ${errors.telefono1 ? 'input-error' : ''}`}
                 value={cliente.telefono1 || ''}
                 onChange={(e) => onChange({ 
                   ...cliente, 
                   telefono1: e.target.value,
                   telefonoNro1: e.target.value
                 })}
+                pattern="09\d{8}"
+                title="El teléfono debe comenzar con 09 y tener 10 dígitos"
+                required
               />
+              {errors.telefono1 && (
+                <div className="text-error text-sm mt-1">{errors.telefono1}</div>
+              )}
             </div>
             
             <div>
               <label className="label">
-                <span className="label-text">Teléfono 2</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                value={cliente.telefono2 || ''}
-                onChange={(e) => onChange({ 
-                  ...cliente, 
-                  telefono2: e.target.value,
-                  telefonoNro2: e.target.value
-                })}
-              />
-            </div>
-            
-            <div>
-              <label className="label">
-                <span className="label-text">Correo Electrónico</span>
+                <span className="label-text">Correo Electrónico *</span>
               </label>
               <input
                 type="email"
-                className="input input-bordered w-full"
+                className={`input input-bordered w-full ${errors.correo ? 'input-error' : ''}`}
                 value={cliente.correo || ''}
                 onChange={(e) => onChange({ 
                   ...cliente, 
                   correo: e.target.value,
                   correoElectronico: e.target.value
                 })}
+                pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+                title="Ingrese un correo electrónico válido"
+                required
               />
-            </div>
-
-            <div>
-              <label className="label">
-                <span className="label-text">Tarifa</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                value={cliente.tarifa || ''}
-                onChange={(e) => onChange({ ...cliente, tarifa: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="label">
-                <span className="label-text">Grupo</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                value={cliente.grupo || ''}
-                onChange={(e) => onChange({ ...cliente, grupo: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="label">
-                <span className="label-text">Zona</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                value={cliente.zona || ''}
-                onChange={(e) => onChange({ ...cliente, zona: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="label">
-                <span className="label-text">Ruta</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                value={cliente.ruta || ''}
-                onChange={(e) => onChange({ ...cliente, ruta: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="label">
-                <span className="label-text">Vendedor</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                value={cliente.vendedor || ''}
-                onChange={(e) => onChange({ ...cliente, vendedor: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="label">
-                <span className="label-text">Cobrador</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                value={cliente.cobrador || ''}
-                onChange={(e) => onChange({ ...cliente, cobrador: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="label">
-                <span className="label-text">Provincia</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                value={cliente.provincia || ''}
-                onChange={(e) => onChange({ ...cliente, provincia: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="label">
-                <span className="label-text">Ciudad</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                value={cliente.ciudad || ''}
-                onChange={(e) => onChange({ ...cliente, ciudad: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="label">
-                <span className="label-text">Parroquia</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                value={cliente.parroquia || ''}
-                onChange={(e) => onChange({ ...cliente, parroquia: e.target.value })}
-              />
+              {errors.correo && (
+                <div className="text-error text-sm mt-1">{errors.correo}</div>
+              )}
             </div>
           </div>
           
@@ -252,7 +170,7 @@ export function EditClienteModal({
               onClick={() => {
                 onSave();
               }}
-              disabled={!cliente.identificacion || !cliente.razonSocial || !cliente.direccion}
+              disabled={!cliente.identificacion || !cliente.razonSocial || !cliente.direccion || !cliente.telefono1 || !cliente.correo || Object.keys(errors).length > 0}
             >
               Guardar cambios
             </button>

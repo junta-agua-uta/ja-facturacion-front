@@ -132,23 +132,23 @@ export default function ClientesPage() {
   // Format client data for API
   const formatClienteForAPI = (cliente: Cliente) => {
     return {
-      IDENTIFICACION: cliente.identificacion,
-      RAZON_SOCIAL: cliente.razonSocial,
-      NOMBRE_COMERCIAL: cliente.nombreComercial || '',
-      DIRECCION: cliente.direccion,
-      TELEFONO1: cliente.telefono1 || cliente.telefonoNro1 || '',
-      TELEFONO2: cliente.telefono2 || cliente.telefonoNro2 || '',
-      CORREO: cliente.correo || cliente.correoElectronico || '',
-      TARIFA: cliente.tarifa || '',
-      GRUPO: cliente.grupo || '',
-      ZONA: cliente.zona || '',
-      RUTA: cliente.ruta || '',
-      VENDEDOR: cliente.vendedor || '',
-      COBRADOR: cliente.cobrador || '',
-      PROVINCIA: cliente.provincia || '',
-      CIUDAD: cliente.ciudad || '',
-      PARROQUIA: cliente.parroquia || '',
-      ...(cliente.id && !isNaN(parseInt(cliente.id)) ? { ID: parseInt(cliente.id) } : {})
+      identificacion: cliente.identificacion,
+      razonSocial: cliente.razonSocial,
+      nombreComercial: cliente.nombreComercial || 'Sin Nombre Comercial',
+      direccion: cliente.direccion,
+      telefono1: cliente.telefono1 || cliente.telefonoNro1 || '',
+      telefono2: cliente.telefono2 || cliente.telefonoNro2 || '',
+      correo: cliente.correo || cliente.correoElectronico || '',
+      tarifa: cliente.tarifa || '',
+      grupo: cliente.grupo || '',
+      zona: cliente.zona || '',
+      ruta: cliente.ruta || '',
+      vendedor: cliente.vendedor || '',
+      cobrador: cliente.cobrador || '',
+      provincia: cliente.provincia || '',
+      ciudad: cliente.ciudad || '',
+      parroquia: cliente.parroquia || '',
+      ...(cliente.id && !isNaN(parseInt(cliente.id)) ? { id: parseInt(cliente.id) } : {})
     };
   };
 
