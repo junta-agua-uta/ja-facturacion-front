@@ -25,8 +25,30 @@ export function EditClienteModal({
     telefono2: "",
     correo: "",
     razonSocial: "",
-    direccion: ""
+    direccion: "",
+    identificacion: ""
   });
+
+  //Funcion de validacion de cedula ecuatoriana
+  function validarCedulaEcuatoriana(cedula: string): boolean {
+    if (!/^\d{10}$/.test(cedula)) return false;
+
+    const provincia = parseInt(cedula.slice(0, 2), 10);
+    const tercerDigito = parseInt(cedula[2], 10);
+    if (!(provincia >= 1 && provincia <= 24) || tercerDigito > 6) return false;
+
+    const coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
+    let suma = 0;
+
+    for (let i = 0; i < 9; i++) {
+      let valor = parseInt(cedula[i]) * coeficientes[i];
+      if (valor > 9) valor -= 9;
+      suma += valor;
+    }
+
+    const digitoVerificador = (10 - (suma % 10)) % 10;
+    return digitoVerificador === parseInt(cedula[9]);
+  }
 
   // Resetear errores cuando cambie el cliente
   useEffect(() => {
@@ -36,7 +58,8 @@ export function EditClienteModal({
         telefono2: "",
         correo: "",
         razonSocial: "",
-        direccion: ""
+        direccion: "",
+        identificacion: ""
       });
     }
   }, [cliente]);
@@ -51,7 +74,8 @@ export function EditClienteModal({
       telefono2: "",
       correo: "",
       razonSocial: "",
-      direccion: ""
+      direccion: "",
+      identificacion: ""
     };
     
     // Validate phone (must start with 09 and be 10 digits)
@@ -62,6 +86,20 @@ export function EditClienteModal({
     // Validate email format
     if (cliente.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.correo)) {
       newErrors.correo = 'Ingrese un correo electrónico válido';
+    }
+
+    // Validar identificación si tiene 10 digitos sino comprobar con 13
+    const id = cliente.identificacion;
+    if (id.length === 10) {
+      if (!validarCedulaEcuatoriana(id)) {
+        newErrors.identificacion = 'Cédula de identidad inválida';
+      }
+    } else if (id.length === 13) {
+      if (!/^\d{13}$/.test(id)) {
+        newErrors.identificacion = 'La identificación debe tener 10 o 13 dígitos';
+      }
+    } else {
+      newErrors.identificacion = 'La identificación debe tener 10 o 13 dígitos';
     }
     
     setErrors(newErrors);
@@ -97,6 +135,9 @@ export function EditClienteModal({
                 maxLength={13}
                 required
               />
+              {errors.identificacion && (
+                <div className="text-error text-sm mt-1">{errors.identificacion}</div>
+              )}
             </div>
             
             <div>

@@ -23,25 +23,58 @@ export function AddClienteModal({
   
   // Validate fields when they change
   useEffect(() => {
-    const newErrors: {[key: string]: string} = {};
-    
-    // Validate identification (10 or 13 digits)
-    if (cliente.identificacion && !/^\d{10}(\d{3})?$/.test(cliente.identificacion)) {
+  const newErrors: { [key: string]: string } = {};
+
+  // Validar identificación si tiene 10 digitos sino comprobar con 13
+  const id = cliente.identificacion;
+  if (id.length === 10) {
+    if (!validarCedulaEcuatoriana(id)) {
+      newErrors.identificacion = 'Cédula de identidad inválida';
+    }
+  } else if (id.length === 13) {
+    if (!/^\d{13}$/.test(id)) {
       newErrors.identificacion = 'La identificación debe tener 10 o 13 dígitos';
     }
-    
-    // Validate phone (must start with 09 and be 10 digits)
-    if (cliente.telefono1 && !/^09\d{8}$/.test(cliente.telefono1)) {
-      newErrors.telefono1 = 'El teléfono debe comenzar con 09 y tener 10 dígitos';
+  } else {
+    newErrors.identificacion = 'La identificación debe tener 10 o 13 dígitos';
+  }
+
+  // Validar teléfono
+  if (cliente.telefono1 && !/^09\d{8}$/.test(cliente.telefono1)) {
+    newErrors.telefono1 = 'El teléfono debe comenzar con 09 y tener 10 dígitos';
+  }
+
+  // Validar correo
+  if (cliente.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.correo)) {
+    newErrors.correo = 'Ingrese un correo electrónico válido';
+  }
+
+  setErrors(newErrors);
+}, [cliente.identificacion, cliente.telefono1, cliente.correo]);
+
+
+  //Funcion de validacion de cedula ecuatoriana
+  function validarCedulaEcuatoriana(cedula: string): boolean {
+    if (!/^\d{10}$/.test(cedula)) return false;
+
+    const provincia = parseInt(cedula.slice(0, 2), 10);
+    const tercerDigito = parseInt(cedula[2], 10);
+    if (!(provincia >= 1 && provincia <= 24) || tercerDigito > 6) return false;
+
+    const coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
+    let suma = 0;
+
+    for (let i = 0; i < 9; i++) {
+      let valor = parseInt(cedula[i]) * coeficientes[i];
+      if (valor > 9) valor -= 9;
+      suma += valor;
     }
-    
-    // Validate email format
-    if (cliente.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.correo)) {
-      newErrors.correo = 'Ingrese un correo electrónico válido';
-    }
-    
-    setErrors(newErrors);
-  }, [cliente.identificacion, cliente.telefono1, cliente.correo]);
+
+    const digitoVerificador = (10 - (suma % 10)) % 10;
+    return digitoVerificador === parseInt(cedula[9]);
+  }
+
+
   // Controlar la visibilidad del modal
   useEffect(() => {
     const dialog = document.getElementById(id) as HTMLDialogElement;
