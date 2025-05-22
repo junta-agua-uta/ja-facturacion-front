@@ -49,7 +49,10 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
 
   // Función para verificar si todos los campos están llenos
   const isFormValid = () => {
+    
+
     return (
+      validarIdentificacion(formData.cedula || '') &&
       formData.cedula?.trim() !== '' &&
       formData.cliente?.trim() !== '' &&
       formData.emision?.trim() !== '' &&
@@ -61,6 +64,46 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
       total > 0
     );
   };
+
+  //Funcion de validacion de cedula ecuatoriana
+  function validarCedulaEcuatoriana(cedula: string): boolean {
+    if (!/^\d{10}$/.test(cedula)) return false;
+
+    const provincia = parseInt(cedula.slice(0, 2), 10);
+    const tercerDigito = parseInt(cedula[2], 10);
+    if (!(provincia >= 1 && provincia <= 24) || tercerDigito > 6) return false;
+
+    const coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
+    let suma = 0;
+
+    for (let i = 0; i < 9; i++) {
+      let valor = parseInt(cedula[i]) * coeficientes[i];
+      if (valor > 9) valor -= 9;
+      suma += valor;
+    }
+
+    const digitoVerificador = (10 - (suma % 10)) % 10;
+    return digitoVerificador === parseInt(cedula[9]);
+  }
+
+  //Funcion para validar el RUC
+  function validarIdentificacion(identificacion: string): boolean {
+  const soloNumeros = /^\d{10}$/.test(identificacion);
+  const esRUC = /^\d{13}$/.test(identificacion);
+
+  if (soloNumeros) {
+    return validarCedulaEcuatoriana(identificacion);
+  }
+
+  if (esRUC) {
+    const cedula = identificacion.slice(0, 10);
+    const sufijo = identificacion.slice(10);
+    return validarCedulaEcuatoriana(cedula) && sufijo === '001';
+  }
+
+  return false;
+}
+
 
   return (
     <>
