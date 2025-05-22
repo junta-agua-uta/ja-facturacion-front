@@ -104,9 +104,30 @@ export default function ClientesPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await api.get<ApiResponse>('/clientes');
+        let response;
+        let apiData;
+
+        // Si hay un filtro por identificación, usar el endpoint de búsqueda por cédula
+        if (filters.identificacion && filters.identificacion.trim() !== '') {
+          response = await api.get(`/clientes/buscarCedula?cedula=${filters.identificacion.trim()}`);
+          apiData = response.data; // Este endpoint devuelve un array directamente
+        } 
+        // Si hay un filtro por razón social, usar el endpoint de búsqueda por nombre
+        else if (filters.razonSocial && filters.razonSocial.trim() !== '') {
+          response = await api.get(`/clientes/buscar?nombre=${filters.razonSocial.trim()}`);
+          apiData = response.data; // Este endpoint devuelve un array directamente
+        } 
+        // Si no hay filtros, obtener todos los clientes
+        else {
+          response = await api.get<ApiResponse>('/clientes');
+          apiData = response.data.data; // Este endpoint devuelve {data: [...], totalItems, etc.}
+        }
         
-        const convertedClientes = response.data.data.map(convertApiToCliente);
+        // Convertir los datos de la API al formato interno
+        const convertedClientes = Array.isArray(apiData) 
+          ? apiData.map(convertApiToCliente)
+          : [];
+        
         setClientes(convertedClientes);
         
         // Si la API no devuelve paginación, calcular manualmente
