@@ -69,8 +69,15 @@ export function AddClienteModal({
   }, [isOpen, id]);
 
   // Consultar información del SRI cuando la identificación es válida
+  const [lastCheckedId, setLastCheckedId] = useState<string>('');
+
   useEffect(() => {
     const consultarSri = async () => {
+      // Evitar consultas repetidas para la misma identificación
+      if (cliente.identificacion === lastCheckedId) {
+        return;
+      }
+
       // Solo consultar si la identificación tiene 10 o 13 dígitos
       if (cliente.identificacion.length === 10 || cliente.identificacion.length === 13) {
         // Validar cédula o RUC antes de consultar
@@ -83,6 +90,9 @@ export function AddClienteModal({
         }
         
         if (isValid) {
+          // Marcar esta identificación como consultada
+          setLastCheckedId(cliente.identificacion);
+          
           const data = await fetchContribuyenteInfo(cliente.identificacion);
           
           if (data && data.nombreComercial) {
@@ -98,8 +108,11 @@ export function AddClienteModal({
       }
     };
     
-    consultarSri();
-  }, [cliente.identificacion, fetchContribuyenteInfo, onChange]);
+    // Solo consultar si la identificación ha cambiado
+    if (cliente.identificacion !== lastCheckedId) {
+      consultarSri();
+    }
+  }, [cliente.identificacion, fetchContribuyenteInfo, onChange, lastCheckedId]);
 
   // Manejar el cierre del modal
   const handleCancel = () => {
@@ -107,6 +120,8 @@ export function AddClienteModal({
     dialog?.close();
     onCancel();
     setErrors({});
+    setLastCheckedId(''); // Limpiar la última identificación consultada
+    setRazonSocialReadOnly(false); // Restablecer el estado de solo lectura
   };
 
   // Manejar el cierre del modal al hacer clic fuera del contenido
