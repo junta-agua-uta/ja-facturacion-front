@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Cliente } from "../types/cliente";
 import { validarCedulaEcuatoriana } from "../../shared/utils/validateCedula";
+import { useSriClient } from "../../shared/hooks/useSriClient";
 
 type AddClienteModalProps = {
   id: string;
@@ -21,47 +22,84 @@ export function AddClienteModal({
   onSave,
 }: AddClienteModalProps) {
   const [errors, setErrors] = useState<{[key: string]: string}>({});
-  
+  const { loading, error, fetchContribuyenteInfo } = useSriClient();
+  const [razonSocialReadOnly, setRazonSocialReadOnly] = useState(false);
+
   // Validate fields when they change
   useEffect(() => {
-  const newErrors: { [key: string]: string } = {};
+    const newErrors: { [key: string]: string } = {};
 
-  // Validar identificación si tiene 10 digitos sino comprobar con 13
-  const id = cliente.identificacion;
-  if (id.length === 10) {
-    if (!validarCedulaEcuatoriana(id)) {
-      newErrors.identificacion = 'Cédula de identidad inválida';
+    // Validar identificación si tiene 10 digitos sino comprobar con 13
+    const id = cliente.identificacion;
+    if (id.length === 10) {
+      if (!validarCedulaEcuatoriana(id)) {
+        newErrors.identificacion = 'Cédula de identidad inválida';
+      }
+    } else if (id.length === 13) {
+      if (!/^\d{13}$/.test(id)) {
+        newErrors.identificacion = 'La identificación debe tener 10 o 13 dígitos';
+      }
+    } else {
+      newErrors.identificacion = 'Cédula o RUC inválido';
     }
-  } else if (id.length === 13) {
-    if (!/^\d{13}$/.test(id)) {
-      newErrors.identificacion = 'La identificación debe tener 10 o 13 dígitos';
+
+    // Validar teléfono
+    if (cliente.telefono1 && !/^09\d{8}$/.test(cliente.telefono1)) {
+      newErrors.telefono1 = 'El teléfono debe comenzar con 09 y tener 10 dígitos';
     }
-  } else {
-    newErrors.identificacion = 'Cédula o RUC inválido';
-  }
 
-  // Validar teléfono
-  if (cliente.telefono1 && !/^09\d{8}$/.test(cliente.telefono1)) {
-    newErrors.telefono1 = 'El teléfono debe comenzar con 09 y tener 10 dígitos';
-  }
+    // Validar correo
+    if (cliente.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.correo)) {
+      newErrors.correo = 'Ingrese un correo electrónico válido';
+    }
 
-  // Validar correo
-  if (cliente.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.correo)) {
-    newErrors.correo = 'Ingrese un correo electrónico válido';
-  }
-
-  setErrors(newErrors);
-}, [cliente.identificacion, cliente.telefono1, cliente.correo]);
+    setErrors(newErrors);
+  }, [cliente.identificacion, cliente.telefono1, cliente.correo]);
 
   // Controlar la visibilidad del modal
   useEffect(() => {
     const dialog = document.getElementById(id) as HTMLDialogElement;
     if (isOpen) {
       dialog?.showModal();
+      // Reset the read-only state when opening the modal
+      setRazonSocialReadOnly(false);
     } else {
       dialog?.close();
     }
   }, [isOpen, id]);
+
+  // Consultar información del SRI cuando la identificación es válida
+  useEffect(() => {
+    const consultarSri = async () => {
+      // Solo consultar si la identificación tiene 10 o 13 dígitos
+      if (cliente.identificacion.length === 10 || cliente.identificacion.length === 13) {
+        // Validar cédula o RUC antes de consultar
+        let isValid = false;
+        
+        if (cliente.identificacion.length === 10) {
+          isValid = validarCedulaEcuatoriana(cliente.identificacion);
+        } else if (cliente.identificacion.length === 13) {
+          isValid = /^\d{13}$/.test(cliente.identificacion);
+        }
+        
+        if (isValid) {
+          const data = await fetchContribuyenteInfo(cliente.identificacion);
+          
+          if (data && data.nombreComercial) {
+            // Actualizar la razón social con el nombre comercial del contribuyente
+            onChange({ ...cliente, razonSocial: data.nombreComercial });
+            setRazonSocialReadOnly(true);
+          } else {
+            setRazonSocialReadOnly(false);
+          }
+        }
+      } else {
+        setRazonSocialReadOnly(false);
+      }
+    };
+    
+    consultarSri();
+  }, [cliente.identificacion, fetchContribuyenteInfo, onChange]);
 
   // Manejar el cierre del modal
   const handleCancel = () => {
@@ -121,14 +159,13 @@ export function AddClienteModal({
                 type="text"
                 className={`input input-bordered w-full ${errors.razonSocial ? 'input-error' : ''}`}
                 value={cliente.razonSocial}
-                onChange={(e) => {
-                  // Solo permitir letras y espacios
-                  const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
-                  onChange({ ...cliente, razonSocial: value });
-                }}
-                placeholder="Distribuidora Andina Cía. Ltda."
+                onChange={(e) => onChange({ ...cliente, razonSocial: e.target.value })}
+                placeholder="Juan Pérez"
+                readOnly={razonSocialReadOnly}
                 required
               />
+              {loading && <div className="text-info text-sm mt-1">Consultando información...</div>}
+              {error && <div className="text-warning text-sm mt-1">{error}</div>}
               {errors.razonSocial && (
                 <label className="label">
                   <span className="label-text-alt text-error">{errors.razonSocial}</span>

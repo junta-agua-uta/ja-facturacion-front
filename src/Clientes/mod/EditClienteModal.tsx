@@ -135,7 +135,7 @@ export function EditClienteModal({
                   onChange({ ...cliente, razonSocial: value });
                 }}
                 placeholder="Distribuidora Andina Cía. Ltda."
-                required
+                readOnly
               />
             </div>
             
