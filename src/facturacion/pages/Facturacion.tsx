@@ -173,12 +173,5 @@ export default function Facturacion() {
       </CardSlot>
     </>
   );
-
-/* CSS para el loader (puedes moverlo a tu archivo global de estilos):
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-*/
 }
 

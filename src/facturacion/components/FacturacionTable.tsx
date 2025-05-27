@@ -49,7 +49,15 @@ export default function FacturacionTable({
             header: 'Usuario',
             accessor: 'Usuario' as const
         }
-    ]
+    ];
+
+    if (data.length === 0) {
+        return (
+            <div className="flex justify-center items-center h-32 text-gray-500">
+                Aún no se han creado facturas.
+            </div>
+        );
+    }
 
     return (
         <Table
@@ -59,6 +67,5 @@ export default function FacturacionTable({
             onPageChange={onPageChange}
             showActions={false}
         />
-    )
-    
+    );
 }
