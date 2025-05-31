@@ -50,7 +50,7 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
 
   // Función para verificar si todos los campos están llenos
   const isFormValid = () => {
-    
+
 
     return (
       validarIdentificacion(formData.cedula || '') &&
@@ -68,20 +68,20 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
 
   //Funcion para validar el RUC
   function validarIdentificacion(identificacion: string): boolean {
-  const soloNumeros = /^\d{10}$/.test(identificacion);
-  const esRUC = /^\d{13}$/.test(identificacion);
+    const soloNumeros = /^\d{10}$/.test(identificacion);
+    const esRUC = /^\d{13}$/.test(identificacion);
 
-  if (soloNumeros) {
-    return validarCedulaEcuatoriana(identificacion);
+    if (soloNumeros) {
+      return validarCedulaEcuatoriana(identificacion);
+    }
+
+    if (esRUC) {
+      const sufijo = identificacion.slice(10);
+      return identificacion.length == 13 && sufijo === '001';
+    }
+
+    return false;
   }
-
-  if (esRUC) {
-    const sufijo = identificacion.slice(10);
-    return identificacion.length==13 && sufijo === '001';
-  }
-
-  return false;
-}
 
 
   return (
@@ -115,8 +115,8 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
                   onInputChange(syntheticEvent);
                 }}
                 className={`input input-bordered w-full ${formData.cedula && (formData.cedula.length < 10 || formData.cedula.length > 13)
-                    ? 'input-error border-red-500'
-                    : ''
+                  ? 'input-error border-red-500'
+                  : ''
                   }`}
                 placeholder="Ingrese CI/RUC (10-13 dígitos)"
                 minLength={10}
@@ -144,15 +144,15 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
               {clienteError && (
                 <div className="text-xs text-red-500">{clienteError}</div>
               )}
-              {showAddClienteButton && onAddCliente && (
-                <button
-                  type="button"
-                  onClick={onAddCliente}
-                  className="btn btn-sm btn-outline btn-primary w-full"
-                >
-                  + Agregar Cliente
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={onAddCliente}
+                className={`btn btn-sm btn-outline btn-primary w-full ${!clienteError ? 'btn-disabled opacity-50 pointer-events-none' : ''
+                  }`}
+                disabled={!clienteError}
+              >
+                + Agregar Cliente
+              </button>
             </div>
           </InputSlot>
 
@@ -310,7 +310,7 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
               onClick={handleOpenPrintPreview}
               disabled={saving}
             >
-              Generar...
+              Imprimir
             </button>
           </div>
         </div>

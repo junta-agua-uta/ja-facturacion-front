@@ -32,12 +32,14 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                   font-family: Arial, sans-serif; 
                   margin: 20px; 
                   background: white; 
+                  color: black;
                 }
                 .print-container {
                   max-width: 400px;
                   margin: 0 auto;
                   padding: 20px;
                   border: 2px solid #333;
+                  border: 2px solid black;
                 }
                 .header {
                   text-align: center;
@@ -46,19 +48,21 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                 .title {
                   font-size: 18px;
                   font-weight: bold;
-                  color: #2563eb;
+                  color: black;
                   margin-bottom: 10px;
                 }
                 .subtitle {
                   font-size: 14px;
                   font-weight: bold;
                   margin-bottom: 5px;
+                  color: black;
                 }
                 .info-row {
                   display: flex;
                   justify-content: space-between;
                   margin-bottom: 8px;
                   font-size: 12px;
+                  color: black;
                 }
                 .info-label {
                   font-weight: bold;
@@ -75,11 +79,13 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                   border: 1px solid #333;
                   padding: 5px;
                   text-align: center;
+                  color: black;
                 }
                 .table th {
-                  background-color: #2563eb;
-                  color: white;
+                  background-color: white;
+                  color: black;
                   font-weight: bold;
+                  border: 1px solid black;
                 }
                 .total-section {
                   margin-top: 10px;
@@ -89,8 +95,8 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                   display: inline-block;
                   border: 1px solid #333;
                   padding: 5px 10px;
-                  background-color: #2563eb;
-                  color: white;
+                  background-color: white;
+                  color: black;
                   font-weight: bold;
                   font-size: 12px;
                 }
@@ -130,10 +136,10 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
         {/* Contenido para imprimir */}
         <div className="p-6">
           <div id="print-content">
-            <div className="print-container max-w-md mx-auto p-6 border-2 border-gray-800 bg-white">
+            <div className="print-container max-w-md mx-auto p-6 border-2 border-black bg-white">
               {/* Header */}
               <div className="header text-center mb-6">
-                <div className="subtitle text-sm font-bold mb-4">
+                <div className="subtitle text-sm font-bold mb-4 text-black">
                   JUNTA<br />
                   ADMINISTRADORA DE<br />
                   AGUA POTABLE
@@ -141,7 +147,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
               </div>
 
               {/* Información de la factura */}
-              <div className="space-y-2 text-xs">
+              <div className="space-y-2 text-xs text-black">
                 <div className="info-row flex justify-between">
                   {/* <span className="info-label font-bold">"San Vicente Yaculoma y Bellavista El Rosario"</span> */}
                 </div>
@@ -192,7 +198,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                 <table className="table w-full text-xs border-collapse">
                   <thead>
                     <tr>
-                      <th className="border border-gray-800 bg-blue-600 text-white p-1">
+                      <th className=" bg-white text-black p-1">
                         Total: ${total.toFixed(2)}
                       </th>
                     </tr>

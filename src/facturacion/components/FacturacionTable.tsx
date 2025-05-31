@@ -1,12 +1,23 @@
 import Table from "../../shared/components/Table";
 import { TableProps } from "../../shared/utils/types";
 import { Factura } from "../types/factura";
+import { PrintPreviewModal } from './Ticket';
+import { useTablePrint } from '../hooks/useTablePrint';
 
 export default function FacturacionTable({
     data,
     pagination,
     onPageChange
-  }: TableProps<Factura>) {
+}: TableProps<Factura>) {
+
+    const {
+        isPrintPreviewOpen,
+        facturaToPrint,
+        totalToPrint,
+        handleOpenPrintPreview,
+        handleClosePrintPreview,
+        handlePrint
+    } = useTablePrint();
 
     const formatDate = (date: Date) => {
         const year = date.getFullYear();
@@ -14,6 +25,7 @@ export default function FacturacionTable({
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     };
+
 
     const columns = [
         {
@@ -60,12 +72,34 @@ export default function FacturacionTable({
     }
 
     return (
-        <Table
-            data={data}
-            columns={columns}
-            pagination={pagination}
-            onPageChange={onPageChange}
-            showActions={false}
-        />
+        <>
+            <Table
+                data={data}
+                columns={columns}
+                pagination={pagination}
+                onPageChange={onPageChange}
+                onPrint={handleOpenPrintPreview}
+                showActions={true}
+                showPrint={true}
+            />
+
+            <PrintPreviewModal
+                isOpen={isPrintPreviewOpen}
+                formData={facturaToPrint || {
+                    cedula: '',
+                    cliente: '',
+                    codigo: '',
+                    emision: '',
+                    vencimiento: '',
+                    serie: '',
+                    numero: '',
+                    secuencia: '',
+                    concepto: ''
+                }}
+                total={totalToPrint}
+                onClose={handleClosePrintPreview}
+                onPrint={handlePrint}
+            />
+        </>
     );
 }
