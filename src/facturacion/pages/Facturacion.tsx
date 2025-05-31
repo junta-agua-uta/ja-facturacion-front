@@ -18,23 +18,22 @@ export default function Facturacion() {
         // Array para almacenar todas las facturas de todas las páginas
         let allFacturas: any[] = [];
         let totalPages = 1;
-        
-        // Función para mapear los datos de la API al formato que espera la tabla
-        const mapFacturas = (apiFacturas: any[]) => {
-          return apiFacturas.map((item: any) => ({
-            id: item.ID?.toString() ?? '',
-            NombreComercial: item.cliente?.NOMBRE_COMERCIAL ?? '',
-            Cedula: item.cliente?.IDENTIFICACION ?? '',
+
+  // Función para mapear los datos de la API al formato que espera la tabla
+  const mapFacturas = (apiFacturas: any[]) => {
+    return apiFacturas.map((item: any) => ({
+      id: item.ID?.toString() ?? '',
+      NombreComercial: item.cliente?.NOMBRE_COMERCIAL ?? '',
+      Cedula: item.cliente?.IDENTIFICACION ?? '',
             Concepto: item.cliente?.RAZON_SOCIAL ?? '', // Puedes cambiar este campo por otro si tienes un concepto real
-            FechaEmision: item.FECHA_EMISION ? new Date(item.FECHA_EMISION) : new Date(),
-            Total: item.TOTAL ? `${item.TOTAL} $` : '0 $',
-            Estado: item.ESTADO_FACTURA ?? '',
-            // Agregar más campos si es necesario
-            Sucursal: item.sucursal?.NOMBRE ?? '',
-            Usuario: item.usuario ? `${item.usuario.NOMBRE} ${item.usuario.APELLIDO}` : ''
-          }));
-        };
-        
+      FechaEmision: item.FECHA_EMISION ? new Date(item.FECHA_EMISION) : new Date(),
+      Total: item.TOTAL ? `${item.TOTAL} $` : '0 $',
+      Estado: item.ESTADO_FACTURA ?? '',
+            // Agregar más campos si es necesario      Sucursal: item.sucursal?.NOMBRE ?? '',
+      Usuario: item.usuario ? `${item.usuario.NOMBRE} ${item.usuario.APELLIDO}` : ''
+    }));
+  };
+
         // Obtener la primera página para saber cuántas páginas hay en total
         const firstResponse = await api.get('/facturas/all', {
           params: { page: 1 }
@@ -43,7 +42,7 @@ export default function Facturacion() {
         if (firstResponse.data) {
           const { data, totalPages: apiTotalPages } = firstResponse.data;
           totalPages = apiTotalPages || 1;
-          
+      
           // Agregar los datos de la primera página
           allFacturas = [...allFacturas, ...(data || [])];
           
@@ -57,8 +56,8 @@ export default function Facturacion() {
                   params: { page }
                 })
               );
-            }
-            
+      }
+      
             // Ejecutar todas las promesas en paralelo
             const responses = await Promise.all(pagePromises);
             
@@ -74,13 +73,13 @@ export default function Facturacion() {
         // Mapear todas las facturas obtenidas
         const mappedFacturas = mapFacturas(allFacturas);
         setFacturas(mappedFacturas);
-      } catch (error) {
-        console.error('Error al obtener facturas:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
+    } catch (error) {
+      console.error('Error al obtener facturas:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
     fetchFacturas();
   }, []);
 
