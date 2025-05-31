@@ -23,12 +23,16 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
   const handlePrint = () => {
     const printContent = document.getElementById('print-content');
     if (printContent) {
+      // Generar un ID único basado en la fecha y un número aleatorio
+      const uniqueId = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const ticketNumber = formData.numero || formData.secuencia || uniqueId;
+      
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(`
           <html>
             <head>
-              <title>Factura - ${formData.numero}</title>
+              <title>Factura - ${ticketNumber}</title>
               <style>
                 body { 
                   font-family: Arial, sans-serif; 
@@ -114,6 +118,14 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
           </html>
         `);
         printWindow.document.close();
+        
+        // Establecer un nombre de archivo personalizado para la descarga
+        const fileName = `Factura-${ticketNumber}.pdf`;
+        
+        // Agregar un script para sugerir un nombre de archivo al guardar
+        printWindow.document.title = fileName;
+        
+        // Imprimir el documento
         printWindow.print();
         printWindow.close();
       }
