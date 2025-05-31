@@ -68,13 +68,6 @@ const Layout = () => {
             ]}
           />
 
-          {/* <NavItem
-            to="/junta/autorizaciones"
-            isActive={isActive('autorizaciones')}
-            icon={<AutorizacionesIcon isActive={isActive('autorizaciones')} />}
-            label="Autorizaciones"
-          /> */}
-
           <NavItem
             to="/junta/usuarios"
             isActive={isActive('usuarios')}
@@ -130,7 +123,7 @@ const Layout = () => {
         </button>
       </aside>
 
-      <main className="flex-1 overflow-auto max-w-5xl mx-auto mt-10 p-6 space-y-6 max-h-full">
+      <main className="flex-1 overflow-auto md:max-w-5xl lg:max-w-7xl mx-auto mt-10 p-6 space-y-6 max-h-full">
         <Outlet />
       </main>
     </div>
