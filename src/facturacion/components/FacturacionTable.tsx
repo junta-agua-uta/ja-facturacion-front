@@ -99,6 +99,7 @@ export default function FacturacionTable({
                 total={totalToPrint}
                 onClose={handleClosePrintPreview}
                 onPrint={handlePrint}
+                showVencimiento={false} // No mostrar fecha de vencimiento cuando se imprime desde la tabla
             />
         </>
     );

@@ -4,9 +4,10 @@ import { FacturaForm as FacturaFormType } from '../../shared/components/interfac
 interface PrintPreviewModalProps {
   isOpen: boolean;
   formData: FacturaFormType;
-  total?: number;  // Agregar esta línea
+  total?: number;
   onClose: () => void;
   onPrint: () => void;
+  showVencimiento?: boolean; // Indica si se debe mostrar la fecha de vencimiento
 }
 
 export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
@@ -14,7 +15,8 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
   formData,
   total = 0,
   onClose,
-  onPrint
+  onPrint,
+  showVencimiento = true // Por defecto se muestra, a menos que se indique lo contrario
 }) => {
   if (!isOpen) return null;
 
@@ -187,10 +189,12 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                   <span>{formData.emision || '2025-05-19'}</span>
                 </div>
                 
-                <div className="info-row flex justify-between">
-                  <span className="info-label font-bold">Vence:</span>
-                  <span>{formData.vencimiento || '2025-05-21'}</span>
-                </div>
+                {showVencimiento && (
+                  <div className="info-row flex justify-between">
+                    <span className="info-label font-bold">Vence:</span>
+                    <span>{formData.vencimiento || '2025-05-21'}</span>
+                  </div>
+                )}
               </div>
 
               {/* Tabla de consumo */}
