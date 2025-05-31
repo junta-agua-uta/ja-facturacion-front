@@ -29,7 +29,8 @@ export default function Facturacion() {
       FechaEmision: item.FECHA_EMISION ? new Date(item.FECHA_EMISION) : new Date(),
       Total: item.TOTAL ? `${item.TOTAL} $` : '0 $',
       Estado: item.ESTADO_FACTURA ?? '',
-            // Agregar más campos si es necesario      Sucursal: item.sucursal?.NOMBRE ?? '',
+      // Agregar más campos si es necesario
+      Sucursal: item.sucursal?.NOMBRE ?? '',
       Usuario: item.usuario ? `${item.usuario.NOMBRE} ${item.usuario.APELLIDO}` : ''
     }));
   };
