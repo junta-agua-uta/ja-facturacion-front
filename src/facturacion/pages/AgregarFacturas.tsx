@@ -10,12 +10,14 @@ import { AddClienteModal } from "../../Clientes/mod/AddClienteModal";
 import { Cliente } from "../../Clientes/types/cliente";
 import { useClientePorCedula } from "../hooks/useClientePorCedula";
 import api from "../../shared/api";
+import { authService } from "../../auth/Services/auth.service";
 import { useBranchSelection } from "../hooks/useBranchSelection";
 
 export default function AgregarFacturas() {
   // IMPORTANTE: Todos los hooks deben llamarse en el mismo orden en cada renderizado
   // 1. Hooks de React
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [userName, setUserName] = useState('Usuario');
   const [nuevoCliente, setNuevoCliente] = useState<Cliente>({
     id: '0',
     identificacion: '',
@@ -79,7 +81,25 @@ export default function AgregarFacturas() {
     }
   }, [branches, loadingBranches, selectedBranch]);
 
+  // Obtener el nombre del usuario actual
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        try {
+          const response = await api.get('/auth/me');
+          if (response.data) {
+            const nombreCompleto = `${response.data.NOMBRE} ${response.data.APELLIDO}`.trim();
+            setUserName(nombreCompleto || 'Usuario');
+          }
+        } catch (error) {
+          console.error('Error al obtener datos del usuario:', error);
+        }
+      }
+    };
 
+    fetchUserData();
+  }, []);
 
   // Manejar el guardado de la factura
   const handleSaveFactura = async () => {
@@ -157,7 +177,7 @@ export default function AgregarFacturas() {
       <div className="space-y-6">
         {/* Información del facturador */}
         <FacturaHeader
-          facturador="Jhon Doe"
+          facturador={userName}
           branches={branches}
           selectedBranch={selectedBranch}
           onBranchChange={handleBranchChange}
