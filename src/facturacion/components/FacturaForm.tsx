@@ -9,7 +9,6 @@ interface FacturaFormProps {
   formData: FacturaFormType;
   clienteError: string | null;
   total?: number; // Agregamos el total como prop
-  showAddClienteButton?: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onOpenCodigoModal: () => void;
   onConceptoSelect: (codigo: string, mes?: string) => void;
@@ -23,7 +22,6 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
   formData,
   clienteError,
   total = 0,
-  showAddClienteButton = false,
   onInputChange,
   onOpenCodigoModal,
   onConceptoSelect,

@@ -46,7 +46,6 @@ export default function AgregarFacturas() {
   // Obtener el estado del cliente y el modal desde el hook useClientePorCedula
   const {
     error: clienteError,
-    showAddButton,
     showAddClienteModal,
     handleAddCliente,
     handleCloseAddClienteModal,
@@ -196,7 +195,6 @@ export default function AgregarFacturas() {
             formData={formData}
             clienteError={clienteError}
             total={total}
-            showAddClienteButton={showAddButton}
             onInputChange={handleInputChange}
             onOpenCodigoModal={handleOpenCodigoModal}
             onConceptoSelect={handleConceptoSelect}
