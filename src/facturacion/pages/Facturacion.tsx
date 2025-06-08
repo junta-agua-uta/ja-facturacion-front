@@ -9,15 +9,14 @@ import { Link } from "react-router-dom";
 export default function Facturacion() {
   const [facturas, setFacturas] = useState<Factura[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-
-  // Fetch facturas desde la API y almacena la data mapeada
-  useEffect(() => {
-    const fetchFacturas = async () => {
-      setLoading(true);
-      try {
-        // Array para almacenar todas las facturas de todas las páginas
-        let allFacturas: any[] = [];
-        let totalPages = 1;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [filters, setFilters] = useState<FacturacionCedula>({});
+  const [dateFilters, setDateFilters] = useState<FacturacionFechaEmisionFilter>({
+    FechaEmisionDesde: new Date('2025-01-01'),
+    FechaEmisionHasta: new Date('2025-12-31')
+  });
 
   // Función para mapear los datos de la API al formato que espera la tabla
   const mapFacturas = (apiFacturas: any[]) => {
@@ -25,83 +24,89 @@ export default function Facturacion() {
       id: item.ID?.toString() ?? '',
       NombreComercial: item.cliente?.NOMBRE_COMERCIAL ?? '',
       Cedula: item.cliente?.IDENTIFICACION ?? '',
-            Concepto: item.cliente?.RAZON_SOCIAL ?? '', // Puedes cambiar este campo por otro si tienes un concepto real
+      Concepto: item.cliente?.RAZON_SOCIAL ?? '',
       FechaEmision: item.FECHA_EMISION ? new Date(item.FECHA_EMISION) : new Date(),
       Total: item.TOTAL ? `${item.TOTAL} $` : '0 $',
       Estado: item.ESTADO_FACTURA ?? '',
-      // Agregar más campos si es necesario
       Sucursal: item.sucursal?.NOMBRE ?? '',
       Usuario: item.usuario ? `${item.usuario.NOMBRE} ${item.usuario.APELLIDO}` : ''
     }));
   };
 
-        // Obtener la primera página para saber cuántas páginas hay en total
-        const firstResponse = await api.get('/facturas/all', {
-          params: { page: 1 }
-        });
-        
-        if (firstResponse.data) {
-          const { data, totalPages: apiTotalPages } = firstResponse.data;
-          totalPages = apiTotalPages || 1;
-      
-          // Agregar los datos de la primera página
-          allFacturas = [...allFacturas, ...(data || [])];
-          
-          // Obtener el resto de las páginas si hay más de una
-          if (totalPages > 1) {
-            // Crear un array de promesas para todas las páginas restantes
-            const pagePromises = [];
-            for (let page = 2; page <= totalPages; page++) {
-              pagePromises.push(
-                api.get('/facturas/all', {
-                  params: { page }
-                })
-              );
-      }
-      
-            // Ejecutar todas las promesas en paralelo
-            const responses = await Promise.all(pagePromises);
-            
-            // Procesar cada respuesta y agregar los datos
-            responses.forEach(response => {
-              if (response.data && response.data.data) {
-                allFacturas = [...allFacturas, ...response.data.data];
-              }
-            });
-          }
-        }
-        
-        // Mapear todas las facturas obtenidas
-        const mappedFacturas = mapFacturas(allFacturas);
-        setFacturas(mappedFacturas);
-    } catch (error) {
-      console.error('Error al obtener facturas:', error);
-    } finally {
-      setLoading(false);
-    }
+  // Función auxiliar para formatear fechas al formato YYYY-MM-DD
+  const formatDateForAPI = (date: Date) => {
+    return date.toISOString().split('T')[0];
   };
 
+  // Fetch facturas desde la API
+  useEffect(() => {
+    const fetchFacturas = async () => {
+      setLoading(true);
+      try {
+        let response;
+        
+        // Determinar qué endpoint usar basado en los filtros
+        if (filters.Cedula && filters.Cedula.trim()) {
+          // Búsqueda por cédula (sin paginación del servidor)
+          response = await api.get('/facturas/cedula', {
+            params: { 
+              cedula: filters.Cedula.trim()
+            }
+          });
+          
+          // Mapear y filtrar por fechas localmente
+          const mappedFacturas = mapFacturas(response.data || []);
+          const dateFilteredFacturas = mappedFacturas.filter(factura =>
+            (dateFilters.FechaEmisionDesde <= factura.FechaEmision &&
+              factura.FechaEmision <= dateFilters.FechaEmisionHasta)
+          );
+          
+          setFacturas(dateFilteredFacturas);
+          setTotalItems(dateFilteredFacturas.length);
+          setTotalPages(Math.ceil(dateFilteredFacturas.length / PAGE_SIZE));
+          
+        } else {
+          // Búsqueda por fechas con paginación del servidor
+          response = await api.get('/facturas/fecha', {
+            params: { 
+              fechaInicio: formatDateForAPI(dateFilters.FechaEmisionDesde),
+              fechaFin: formatDateForAPI(dateFilters.FechaEmisionHasta),
+              page: currentPage,
+              limit: PAGE_SIZE
+            }
+          });
+
+          if (response.data) {
+            const { data, totalPages: apiTotalPages, totalItems: apiTotalItems } = response.data;
+            
+            const mappedFacturas = mapFacturas(data || []);
+            setFacturas(mappedFacturas);
+            setTotalPages(apiTotalPages || 1);
+            setTotalItems(apiTotalItems || 0);
+          }
+        }
+      } catch (error) {
+        console.error('Error al obtener facturas:', error);
+        setFacturas([]);
+        setTotalPages(1);
+        setTotalItems(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchFacturas();
-  }, []);
+  }, [currentPage, filters.Cedula, dateFilters.FechaEmisionDesde, dateFilters.FechaEmisionHasta]);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState<FacturacionCedula>({});
-  const [dateFilters, setDateFilters] = useState<FacturacionFechaEmisionFilter>({
-    FechaEmisionDesde: new Date('2025-01-01'),
-    FechaEmisionHasta: new Date('2025-12-31')
-  });
+  // Resetear página cuando cambien los filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters.Cedula, dateFilters.FechaEmisionDesde, dateFilters.FechaEmisionHasta]);
 
-  const filteredFacturas = facturas.filter(factura =>
-    (filters.Cedula ? factura.Cedula.includes(filters.Cedula) : true) &&
-    (dateFilters.FechaEmisionDesde <= factura.FechaEmision && 
-     factura.FechaEmision <= dateFilters.FechaEmisionHasta)
-  );
-
-  const totalPages = Math.ceil(filteredFacturas.length / PAGE_SIZE);
-  const paginatedFacturas = filteredFacturas.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
+  // Para paginación local cuando se busca por cédula
+  const paginatedFacturas = filters.Cedula && filters.Cedula.trim() 
+    ? facturas.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : facturas;
 
   const handleClearFilters = () => {
     setFilters({});
@@ -166,7 +171,7 @@ export default function Facturacion() {
             currentPage,
             totalPages,
             pageSize: PAGE_SIZE,
-            totalItems: facturas.length
+            totalItems
           }}
           onPageChange={setCurrentPage}
         />
@@ -174,4 +179,3 @@ export default function Facturacion() {
     </>
   );
 }
-
