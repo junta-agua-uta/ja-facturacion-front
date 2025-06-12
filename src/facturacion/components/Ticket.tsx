@@ -178,7 +178,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                 
                 <div className="info-row flex justify-between">
                   <span className="info-label font-bold">Secuencia:</span>
-                  <span>{formData.secuencia || '000001219'}</span>
+                  <span>{formData.secuencia ? formData.secuencia.toString().padStart(7, '0') : '-'}</span>
                 </div>
                 
                 <div className="info-row flex justify-between">

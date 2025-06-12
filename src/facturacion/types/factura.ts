@@ -39,8 +39,7 @@ export type CodigoConcepto =
 // Valores por defecto para el formulario
 export const DEFAULTS = {
     serie: '001',
-    numero: '300',
-    secuencia: '000001219'
+    numero: '300'
 };
 
 // Objeto de configuración para diferentes tipos de conceptos

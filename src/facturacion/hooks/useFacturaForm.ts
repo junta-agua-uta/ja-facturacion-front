@@ -31,7 +31,7 @@ export const useFacturaForm = () => {
     vencimiento: '',
     serie: DEFAULTS.serie,
     numero: DEFAULTS.numero,
-    secuencia: DEFAULTS.secuencia,
+    secuencia: '', // Inicialmente vacío, se actualizará con la última secuencia
     concepto: ''
   };
   
@@ -60,6 +60,30 @@ export const useFacturaForm = () => {
       setFormData(prev => ({ ...prev, cliente }));
     }
   }, [cliente, formData.cliente]);
+
+  // Obtener la última secuencia al cargar el componente
+  useEffect(() => {
+    const fetchLastSequence = async () => {
+      try {
+        const response = await api.get('/facturas/all', {
+          params: { page: 1, limit: 1 }
+        });
+        
+        if (response.data && response.data.data && response.data.data.length > 0) {
+          const lastFactura = response.data.data[0];
+          const nextSequence = (parseInt(lastFactura.SECUENCIA) + 1).toString().padStart(7, '0');
+          setFormData(prev => ({
+            ...prev,
+            secuencia: nextSequence
+          }));
+        }
+      } catch (error) {
+        console.error('Error al obtener la última secuencia:', error);
+      }
+    };
+
+    fetchLastSequence();
+  }, []);
 
   // Manejador de cambios en el formulario
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -150,6 +174,7 @@ export const useFacturaForm = () => {
         idMedidor: 1, // Valor fijo como se solicitó
         tipoPago: 'EFECTIVO', // Valor fijo como se solicitó
         valorSinImpuesto: subtotal,
+        secuencia: parseInt(formData.secuencia),
         // iva: ,
         // total: total,
         detalles: conceptos.map(c => ({

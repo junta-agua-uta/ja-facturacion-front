@@ -25,13 +25,16 @@ export default function Facturacion() {
       id: item.ID?.toString() ?? '',
       NombreComercial: item.cliente?.NOMBRE_COMERCIAL ?? '',
       Cedula: item.cliente?.IDENTIFICACION ?? '',
-            Concepto: item.cliente?.RAZON_SOCIAL ?? '', // Puedes cambiar este campo por otro si tienes un concepto real
+      Concepto: item.cliente?.RAZON_SOCIAL ?? '', // Puedes cambiar este campo por otro si tienes un concepto real
       FechaEmision: item.FECHA_EMISION ? new Date(item.FECHA_EMISION) : new Date(),
       Total: item.TOTAL ? `${item.TOTAL} $` : '0 $',
       Estado: item.ESTADO_FACTURA ?? '',
       // Agregar más campos si es necesario
       Sucursal: item.sucursal?.NOMBRE ?? '',
-      Usuario: item.usuario ? `${item.usuario.NOMBRE} ${item.usuario.APELLIDO}` : ''
+      Usuario: item.usuario ? `${item.usuario.NOMBRE} ${item.usuario.APELLIDO}` : '',
+      Secuencia: item.SECUENCIA?.toString() ?? '', // Agregamos la secuencia
+      Serie: item.sucursal?.PUNTO_EMISION ?? '', // Agregamos la serie
+      Numero: item.sucursal?.PUNTO_EMISION ?? '' // Agregamos el número
     }));
   };
 
