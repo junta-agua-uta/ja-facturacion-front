@@ -20,8 +20,8 @@ const recalcularConcepto = (concepto: ConceptoCobro): ConceptoCobro => {
   const subtotal = (concepto.precio - concepto.descuento) * concepto.cantidad;
   return {
     ...concepto,
-    subtotal: +subtotal, // Aseguramos que el subtotal se actualice correctamente
-    total: +(subtotal)
+    subtotal: +subtotal,
+    total: +subtotal
   };
 };
 
@@ -46,11 +46,16 @@ const ConceptoRow = memo(({
           step="any"
           inputMode="decimal"
           className="input input-bordered w-20"
-          value={concepto.cantidad === 0 ? 0 : concepto.cantidad}
+          value={concepto.cantidad === 0 ? "" : concepto.cantidad}
           onChange={e => {
-            let val = parseFloat(e.target.value);
-            if (isNaN(val) || val < 0) val = 0;
-            onEdit(index, "cantidad", val);
+            const val = e.target.value;
+            if (val === "") {
+              onEdit(index, "cantidad", 0);
+              return;
+            }
+            let num = parseFloat(val);
+            if (isNaN(num) || num < 0) num = 0;
+            onEdit(index, "cantidad", num);
           }}
         />
       </td>
@@ -60,11 +65,16 @@ const ConceptoRow = memo(({
           step="any"
           inputMode="decimal"
           className="input input-bordered w-24"
-          value={concepto.precio === 0 ? 0 : concepto.precio}
+          value={concepto.precio === 0 ? "" : concepto.precio}
           onChange={e => {
-            let val = parseFloat(e.target.value);
-            if (isNaN(val) || val < 0) val = 0;
-            onEdit(index, "precio", val);
+            const val = e.target.value;
+            if (val === "") {
+              onEdit(index, "precio", 0);
+              return;
+            }
+            let num = parseFloat(val);
+            if (isNaN(num) || num < 0) num = 0;
+            onEdit(index, "precio", num);
           }}
         />
       </td>
@@ -74,11 +84,16 @@ const ConceptoRow = memo(({
           step="any"
           inputMode="decimal"
           className="input input-bordered w-20"
-          value={concepto.descuento === 0 ? 0 : concepto.descuento}
+          value={concepto.descuento === 0 ? "" : concepto.descuento}
           onChange={e => {
-            let val = parseFloat(e.target.value);
-            if (isNaN(val) || val < 0) val = 0;
-            onEdit(index, "descuento", val);
+            const val = e.target.value;
+            if (val === "") {
+              onEdit(index, "descuento", 0);
+              return;
+            }
+            let num = parseFloat(val);
+            if (isNaN(num) || num < 0) num = 0;
+            onEdit(index, "descuento", num);
           }}
         />
       </td>
