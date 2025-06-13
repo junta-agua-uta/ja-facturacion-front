@@ -42,7 +42,9 @@ const ConceptoRow = memo(({
       <td>{concepto.descripcion}</td>
       <td>
         <input
-          type="text"
+          type="number"
+          step="any"
+          inputMode="decimal"
           className="input input-bordered w-20"
           value={concepto.cantidad === 0 ? "" : concepto.cantidad}
           onChange={e => {
@@ -53,7 +55,9 @@ const ConceptoRow = memo(({
       </td>
       <td>
         <input
-          type="text"
+          type="number"
+          step="any"
+          inputMode="decimal"
           className="input input-bordered w-24"
           value={concepto.precio === 0 ? "" : concepto.precio}
           onChange={e => {
@@ -64,7 +68,9 @@ const ConceptoRow = memo(({
       </td>
       <td>
         <input
-          type="text"
+          type="number"
+          step="any"
+          inputMode="decimal"
           className="input input-bordered w-20"
           value={concepto.descuento === 0 ? "" : concepto.descuento}
           onChange={e => {
