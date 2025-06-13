@@ -46,10 +46,11 @@ const ConceptoRow = memo(({
           step="any"
           inputMode="decimal"
           className="input input-bordered w-20"
-          value={concepto.cantidad === 0 ? "" : concepto.cantidad}
+          value={concepto.cantidad === 0 ? 0 : concepto.cantidad}
           onChange={e => {
-            const val = parseFloat(e.target.value);
-            onEdit(index, "cantidad", isNaN(val) ? 0 : val);
+            let val = parseFloat(e.target.value);
+            if (isNaN(val) || val < 0) val = 0;
+            onEdit(index, "cantidad", val);
           }}
         />
       </td>
@@ -59,10 +60,11 @@ const ConceptoRow = memo(({
           step="any"
           inputMode="decimal"
           className="input input-bordered w-24"
-          value={concepto.precio === 0 ? "" : concepto.precio}
+          value={concepto.precio === 0 ? 0 : concepto.precio}
           onChange={e => {
-            const val = parseFloat(e.target.value);
-            onEdit(index, "precio", isNaN(val) ? 0 : val);
+            let val = parseFloat(e.target.value);
+            if (isNaN(val) || val < 0) val = 0;
+            onEdit(index, "precio", val);
           }}
         />
       </td>
@@ -72,10 +74,11 @@ const ConceptoRow = memo(({
           step="any"
           inputMode="decimal"
           className="input input-bordered w-20"
-          value={concepto.descuento === 0 ? "" : concepto.descuento}
+          value={concepto.descuento === 0 ? 0 : concepto.descuento}
           onChange={e => {
-            const val = parseFloat(e.target.value);
-            onEdit(index, "descuento", isNaN(val) ? 0 : val);
+            let val = parseFloat(e.target.value);
+            if (isNaN(val) || val < 0) val = 0;
+            onEdit(index, "descuento", val);
           }}
         />
       </td>
