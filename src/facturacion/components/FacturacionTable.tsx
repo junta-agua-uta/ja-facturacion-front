@@ -4,11 +4,14 @@ import { Factura } from "../types/factura";
 import { PrintPreviewModal } from './Ticket';
 import { useTablePrint } from '../hooks/useTablePrint';
 
+type FacturacionTableProps = TableProps<Factura> & { loading?: boolean };
+
 export default function FacturacionTable({
     data,
     pagination,
-    onPageChange
-}: TableProps<Factura>) {
+    onPageChange,
+    loading = false
+}: FacturacionTableProps) {
 
     const {
         isPrintPreviewOpen,
@@ -20,50 +23,48 @@ export default function FacturacionTable({
     } = useTablePrint();
 
     const formatDate = (date: Date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     };
 
-
     const columns = [
-        {
-            header: 'Nombre Comercial',
-            accessor: 'NombreComercial' as const
-        },
-        {
-            header: 'Cédula',
-            accessor: 'Cedula' as const
-        },
-        {
-            header: 'Concepto',
-            accessor: 'Concepto' as const
-        },
+        { header: 'Nombre Comercial', accessor: 'NombreComercial' as const },
+        { header: 'Cédula', accessor: 'Cedula' as const },
+        { header: 'Concepto', accessor: 'Concepto' as const },
         {
             header: 'Fecha Emisión',
             accessor: 'FechaEmision' as const,
             Cell: ({ value }: { value: Date }) => formatDate(value)
         },
-        {
-            header: 'Total',
-            accessor: 'Total' as const
-        },
-        {
-            header: 'Estado',
-            accessor: 'Estado' as const
-        },
-        {
-            header: 'Sucursal',
-            accessor: 'Sucursal' as const
-        },
-        {
-            header: 'Usuario',
-            accessor: 'Usuario' as const
-        }
+        { header: 'Total', accessor: 'Total' as const },
+        { header: 'Estado', accessor: 'Estado' as const },
+        { header: 'Sucursal', accessor: 'Sucursal' as const },
+        { header: 'Usuario', accessor: 'Usuario' as const }
     ];
 
-    if (data.length === 0) {
+    // Loader dentro de la tabla
+    if (loading) {
+        return (
+            <div className="flex flex-col justify-center items-center h-32">
+                <div className="loader mb-2"
+                    style={{
+                        border: '4px solid #f3f3f3',
+                        borderRadius: '50%',
+                        borderTop: '4px solid #3498db',
+                        width: '32px',
+                        height: '32px',
+                        animation: 'spin 1s linear infinite'
+                    }}
+                />
+                <span>Cargando facturas...</span>
+            </div>
+        );
+    }
+
+
+    if (data.length === 0 && !loading) {
         return (
             <div className="flex justify-center items-center h-32 text-gray-500">
                 Aún no se han creado facturas.
@@ -99,7 +100,7 @@ export default function FacturacionTable({
                 total={totalToPrint}
                 onClose={handleClosePrintPreview}
                 onPrint={handlePrint}
-                showVencimiento={false} // No mostrar fecha de vencimiento cuando se imprime desde la tabla
+                showVencimiento={false}
             />
         </>
     );
