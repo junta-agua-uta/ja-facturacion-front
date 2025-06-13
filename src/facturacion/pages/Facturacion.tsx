@@ -41,7 +41,10 @@ export default function Facturacion() {
       Total: item.TOTAL ? `${item.TOTAL} $` : '0 $',
       Estado: item.ESTADO_FACTURA ?? '',
       Sucursal: item.sucursal?.NOMBRE ?? '',
-      Usuario: item.usuario ? `${item.usuario.NOMBRE} ${item.usuario.APELLIDO}` : ''
+      Usuario: item.usuario ? `${item.usuario.NOMBRE} ${item.usuario.APELLIDO}` : '',
+      Secuencia: item.SECUENCIA?.toString() ?? '', // Agregamos la secuencia
+      Serie: item.sucursal?.PUNTO_EMISION ?? '', // Agregamos la serie
+      Numero: item.sucursal?.PUNTO_EMISION ?? ''
     }));
   };
 
