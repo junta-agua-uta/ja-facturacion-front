@@ -69,6 +69,10 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
     const soloNumeros = /^\d{10}$/.test(identificacion);
     const esRUC = /^\d{13}$/.test(identificacion);
 
+    if (identificacion === '9999999999' || identificacion === '9999999999999') {
+      return true;
+    }
+
     if (soloNumeros) {
       return validarCedulaEcuatoriana(identificacion);
     }
