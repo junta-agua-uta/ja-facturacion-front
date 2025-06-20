@@ -2,7 +2,7 @@
 
 ## Descripción General
 
-Este sistema web está diseñado para la gestión integral de cobros de agua potable para la Junta de Agua de Santa Rosa. La aplicación permite administrar clientes, facturas, mediciones de consumo, sucursales y usuarios del sistema, ofreciendo una solución completa para la administración del servicio de agua potable. 
+Este sistema web está diseñado para la gestión integral de cobros de agua potable para la Junta de Agua de Santa Rosa. La aplicación permite administrar clientes, facturas, mediciones de consumo, sucursales y usuarios del sistema, ofreciendo una solución completa para la administración del servicio de agua potable. Proyecto 
 
 ## Características Principales
 
