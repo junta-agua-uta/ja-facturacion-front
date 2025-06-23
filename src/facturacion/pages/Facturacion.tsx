@@ -5,6 +5,7 @@ import { FacturacionCedulaFilter, FacturacionFechaFilter, FacturacionTable } fro
 import { PAGE_SIZE } from "../../shared/utils/constants";
 import api from '../../shared/api';
 import { Link } from "react-router-dom";
+import axios from "axios";
 
 export default function Facturacion() {
   const [facturas, setFacturas] = useState<Factura[]>([]);
@@ -131,7 +132,7 @@ export default function Facturacion() {
 
   const handleClearFilters = () => {
     setFilters({});
-    setDebouncedCedula(''); 
+    setDebouncedCedula('');
     setDateFilters({
       FechaEmisionDesde: new Date('2025-01-01'),
       FechaEmisionHasta: new Date('2025-12-31')
@@ -139,9 +140,32 @@ export default function Facturacion() {
     setCurrentPage(1);
   };
 
-  const handleExportToExcel = () => {
-    // Implementar la lógica para exportar a Excel
-    console.log("Exportar a Excel no implementado aún");
+  const handleExportToExcel = async () => {
+    try {
+      const response = await axios.get(
+        'https://juntaagua-sjro.onrender.com/apiV2/facturas/reporte/fecha',
+        {
+          params: {
+            fechaInicio: formatDateForAPI(dateFilters.FechaEmisionDesde),
+            fechaFin: formatDateForAPI(dateFilters.FechaEmisionHasta),
+            page: currentPage,
+            limit: PAGE_SIZE
+          },
+          responseType: 'blob' // Para manejar la respuesta como un archivo
+        }
+      );
+
+      // Crear un enlace para descargar el archivo
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'facturas.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error al exportar a Excel:', error);
+    }
   }
 
 
@@ -193,7 +217,7 @@ export default function Facturacion() {
           </Link>
           <button
             className="btn btn-accent ml-2 hover:bg-green-500 hover:border-green-500"
-            onClick={handleClearFilters}
+            onClick={handleExportToExcel}
           >
             Exportar a Excel
           </button>
