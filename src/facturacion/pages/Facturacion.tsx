@@ -131,13 +131,47 @@ export default function Facturacion() {
 
   const handleClearFilters = () => {
     setFilters({});
-    setDebouncedCedula(''); 
+    setDebouncedCedula('');
     setDateFilters({
       FechaEmisionDesde: new Date('2025-01-01'),
       FechaEmisionHasta: new Date('2025-12-31')
     });
     setCurrentPage(1);
   };
+
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportToExcel = async () => {
+    setIsExporting(true);
+    try {
+      const response = await api.get(
+        '/facturas/reporte/fecha',
+        {
+          params: {
+            fechaInicio: formatDateForAPI(dateFilters.FechaEmisionDesde),
+            fechaFin: formatDateForAPI(dateFilters.FechaEmisionHasta),
+            page: currentPage,
+            limit: PAGE_SIZE
+          },
+          responseType: 'blob' // Para manejar la respuesta como un archivo
+        }
+      );
+
+      // Crear un enlace para descargar el archivo
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'facturas.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error al exportar a Excel:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
 
   return (
     <>
@@ -171,6 +205,23 @@ export default function Facturacion() {
               Añadir factura
             </button>
           </Link>
+          <button
+            className="btn btn-accent ml-2 hover:bg-green-500 hover:border-green-500"
+            onClick={handleExportToExcel}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <>
+                <span className="loader mr-2" style={{border: '2px solid #fff', borderRadius: '50%', width: '1em', height: '1em', display: 'inline-block', borderTop: '2px solid transparent', animation: 'spin 1s linear infinite'}}></span>
+                Exportando...
+              </>
+            ) : (
+              'Exportar a Excel'
+            )}
+          </button>
+          <style>{`
+            @keyframes spin { 100% { transform: rotate(360deg); } }
+          `}</style>
         </EndSlot>
 
         <FacturacionTable
