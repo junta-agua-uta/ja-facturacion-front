@@ -4,9 +4,10 @@ import { FacturaForm as FacturaFormType } from '../../shared/components/interfac
 interface PrintPreviewModalProps {
   isOpen: boolean;
   formData: FacturaFormType;
-  total?: number;  // Agregar esta línea
+  total?: number;
   onClose: () => void;
   onPrint: () => void;
+  showVencimiento?: boolean; // Indica si se debe mostrar la fecha de vencimiento
 }
 
 export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
@@ -14,19 +15,24 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
   formData,
   total = 0,
   onClose,
-  onPrint
+  onPrint,
+  showVencimiento = true // Por defecto se muestra, a menos que se indique lo contrario
 }) => {
   if (!isOpen) return null;
 
   const handlePrint = () => {
     const printContent = document.getElementById('print-content');
     if (printContent) {
+      // Generar un ID único basado en la fecha y un número aleatorio
+      const uniqueId = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const ticketNumber = formData.numero || formData.secuencia || uniqueId;
+      
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(`
           <html>
             <head>
-              <title>Factura - ${formData.numero}</title>
+              <title>Factura - ${ticketNumber}</title>
               <style>
                 body { 
                   font-family: Arial, sans-serif; 
@@ -112,6 +118,14 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
           </html>
         `);
         printWindow.document.close();
+        
+        // Establecer un nombre de archivo personalizado para la descarga
+        const fileName = `Factura-${ticketNumber}.pdf`;
+        
+        // Agregar un script para sugerir un nombre de archivo al guardar
+        printWindow.document.title = fileName;
+        
+        // Imprimir el documento
         printWindow.print();
         printWindow.close();
       }
@@ -164,7 +178,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                 
                 <div className="info-row flex justify-between">
                   <span className="info-label font-bold">Secuencia:</span>
-                  <span>{formData.secuencia || '000001219'}</span>
+                  <span>{formData.secuencia ? formData.secuencia.toString().padStart(7, '0') : '-'}</span>
                 </div>
                 
                 <div className="info-row flex justify-between">
@@ -187,10 +201,12 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                   <span>{formData.emision || '2025-05-19'}</span>
                 </div>
                 
-                <div className="info-row flex justify-between">
-                  <span className="info-label font-bold">Vence:</span>
-                  <span>{formData.vencimiento || '2025-05-21'}</span>
-                </div>
+                {showVencimiento && (
+                  <div className="info-row flex justify-between">
+                    <span className="info-label font-bold">Vence:</span>
+                    <span>{formData.vencimiento || '2025-05-21'}</span>
+                  </div>
+                )}
               </div>
 
               {/* Tabla de consumo */}

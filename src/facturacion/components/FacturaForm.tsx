@@ -9,7 +9,6 @@ interface FacturaFormProps {
   formData: FacturaFormType;
   clienteError: string | null;
   total?: number; // Agregamos el total como prop
-  showAddClienteButton?: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onOpenCodigoModal: () => void;
   onConceptoSelect: (codigo: string, mes?: string) => void;
@@ -23,7 +22,6 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
   formData,
   clienteError,
   total = 0,
-  showAddClienteButton = false,
   onInputChange,
   onOpenCodigoModal,
   onConceptoSelect,
@@ -70,6 +68,10 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
   function validarIdentificacion(identificacion: string): boolean {
     const soloNumeros = /^\d{10}$/.test(identificacion);
     const esRUC = /^\d{13}$/.test(identificacion);
+
+    if (identificacion === '9999999999' || identificacion === '9999999999999') {
+      return true;
+    }
 
     if (soloNumeros) {
       return validarCedulaEcuatoriana(identificacion);

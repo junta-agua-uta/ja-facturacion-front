@@ -28,18 +28,18 @@ export const useTablePrint = () => {
       cliente: factura.NombreComercial || '',
       emision: factura.FechaEmision ? formatDate(factura.FechaEmision) : '',
       concepto: factura.Concepto || '',
-      serie: '', // Valor por defecto ya que no podemos acceder a factura.Serie
-      numero: '', // Valor por defecto
-      secuencia: '', // Valor por defecto
-      vencimiento: '', // Valor por defecto
-      codigo: '' // Valor por defecto
+      serie: factura.Serie || '',
+      numero: factura.Numero || '',
+      secuencia: factura.Secuencia || '',
+      vencimiento: '', // No tenemos este dato en la lista
+      codigo: '' // No necesitamos este dato para la impresión
     };
 
     setPrintState({
       isPrintPreviewOpen: true,
       facturaToPrint: facturaForm,
       totalToPrint: typeof factura.Total === 'string' 
-        ? parseFloat(factura.Total) || 0 
+        ? parseFloat(factura.Total.replace('$', '').trim()) || 0 
         : factura.Total || 0
     });
   };
