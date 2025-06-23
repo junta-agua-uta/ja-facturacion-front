@@ -112,6 +112,12 @@ export default function Facturacion() {
     setCurrentPage(1);
   };
 
+  const handleExportToExcel = () => {
+    // Implementar la lógica para exportar a Excel
+    console.log("Exportar a Excel no implementado aún");
+  }
+
+
   if (loading) {
     return (
       <>
@@ -158,6 +164,12 @@ export default function Facturacion() {
               Añadir factura
             </button>
           </Link>
+          <button
+            className="btn btn-accent ml-2 hover:bg-green-500 hover:border-green-500"
+            onClick={handleClearFilters}
+          >
+            Exportar a Excel
+          </button>
         </EndSlot>
 
         <FacturacionTable
