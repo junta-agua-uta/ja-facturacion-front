@@ -4,7 +4,7 @@ type CardSlotProps = {
 
   const CardSlot = ({ children }: CardSlotProps) => {
     return (
-      <div className="card bg-base-100 shadow-lg p-6">
+      <div className="card bg-base-100 shadow-lg p-6 mb-3">
         {children}
       </div>
     );

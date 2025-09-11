@@ -4,9 +4,10 @@ import { FacturaForm as FacturaFormType } from '../../shared/components/interfac
 interface PrintPreviewModalProps {
   isOpen: boolean;
   formData: FacturaFormType;
-  total?: number;  // Agregar esta línea
+  total?: number;
   onClose: () => void;
   onPrint: () => void;
+  showVencimiento?: boolean; // Indica si se debe mostrar la fecha de vencimiento
 }
 
 export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
@@ -14,30 +15,37 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
   formData,
   total = 0,
   onClose,
-  onPrint
+  onPrint,
+  showVencimiento = true // Por defecto se muestra, a menos que se indique lo contrario
 }) => {
   if (!isOpen) return null;
 
   const handlePrint = () => {
     const printContent = document.getElementById('print-content');
     if (printContent) {
+      // Generar un ID único basado en la fecha y un número aleatorio
+      const uniqueId = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const ticketNumber = formData.numero || formData.secuencia || uniqueId;
+      
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(`
           <html>
             <head>
-              <title>Factura - ${formData.numero}</title>
+              <title>Factura - ${ticketNumber}</title>
               <style>
                 body { 
                   font-family: Arial, sans-serif; 
                   margin: 20px; 
                   background: white; 
+                  color: black;
                 }
                 .print-container {
                   max-width: 400px;
                   margin: 0 auto;
                   padding: 20px;
                   border: 2px solid #333;
+                  border: 2px solid black;
                 }
                 .header {
                   text-align: center;
@@ -46,19 +54,21 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                 .title {
                   font-size: 18px;
                   font-weight: bold;
-                  color: #2563eb;
+                  color: black;
                   margin-bottom: 10px;
                 }
                 .subtitle {
                   font-size: 14px;
                   font-weight: bold;
                   margin-bottom: 5px;
+                  color: black;
                 }
                 .info-row {
                   display: flex;
                   justify-content: space-between;
                   margin-bottom: 8px;
                   font-size: 12px;
+                  color: black;
                 }
                 .info-label {
                   font-weight: bold;
@@ -75,11 +85,13 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                   border: 1px solid #333;
                   padding: 5px;
                   text-align: center;
+                  color: black;
                 }
                 .table th {
-                  background-color: #2563eb;
-                  color: white;
+                  background-color: white;
+                  color: black;
                   font-weight: bold;
+                  border: 1px solid black;
                 }
                 .total-section {
                   margin-top: 10px;
@@ -89,8 +101,8 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                   display: inline-block;
                   border: 1px solid #333;
                   padding: 5px 10px;
-                  background-color: #2563eb;
-                  color: white;
+                  background-color: white;
+                  color: black;
                   font-weight: bold;
                   font-size: 12px;
                 }
@@ -106,6 +118,14 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
           </html>
         `);
         printWindow.document.close();
+        
+        // Establecer un nombre de archivo personalizado para la descarga
+        const fileName = `Factura-${ticketNumber}.pdf`;
+        
+        // Agregar un script para sugerir un nombre de archivo al guardar
+        printWindow.document.title = fileName;
+        
+        // Imprimir el documento
         printWindow.print();
         printWindow.close();
       }
@@ -118,7 +138,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
         {/* Header del modal */}
         <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-800">Vista Previa - Contenido de la Imprimir</h2>
+          <h2 className="text-xl font-bold text-gray-800">Vista Previa </h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
@@ -130,13 +150,10 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
         {/* Contenido para imprimir */}
         <div className="p-6">
           <div id="print-content">
-            <div className="print-container max-w-md mx-auto p-6 border-2 border-gray-800 bg-white">
+            <div className="print-container max-w-md mx-auto p-6 border-2 border-black bg-white">
               {/* Header */}
               <div className="header text-center mb-6">
-                <div className="title text-lg font-bold text-blue-600 mb-2">
-                  Contenido de la Imprimir
-                </div>
-                <div className="subtitle text-sm font-bold mb-4">
+                <div className="subtitle text-sm font-bold mb-4 text-black">
                   JUNTA<br />
                   ADMINISTRADORA DE<br />
                   AGUA POTABLE
@@ -144,7 +161,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
               </div>
 
               {/* Información de la factura */}
-              <div className="space-y-2 text-xs">
+              <div className="space-y-2 text-xs text-black">
                 <div className="info-row flex justify-between">
                   {/* <span className="info-label font-bold">"San Vicente Yaculoma y Bellavista El Rosario"</span> */}
                 </div>
@@ -161,7 +178,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                 
                 <div className="info-row flex justify-between">
                   <span className="info-label font-bold">Secuencia:</span>
-                  <span>{formData.secuencia || '000001219'}</span>
+                  <span>{formData.secuencia ? formData.secuencia.toString().padStart(7, '0') : '-'}</span>
                 </div>
                 
                 <div className="info-row flex justify-between">
@@ -184,10 +201,12 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                   <span>{formData.emision || '2025-05-19'}</span>
                 </div>
                 
-                <div className="info-row flex justify-between">
-                  <span className="info-label font-bold">Vence:</span>
-                  <span>{formData.vencimiento || '2025-05-21'}</span>
-                </div>
+                {showVencimiento && (
+                  <div className="info-row flex justify-between">
+                    <span className="info-label font-bold">Vence:</span>
+                    <span>{formData.vencimiento || '2025-05-21'}</span>
+                  </div>
+                )}
               </div>
 
               {/* Tabla de consumo */}
@@ -195,7 +214,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
                 <table className="table w-full text-xs border-collapse">
                   <thead>
                     <tr>
-                      <th className="border border-gray-800 bg-blue-600 text-white p-1">
+                      <th className=" bg-white text-black p-1">
                         Total: ${total.toFixed(2)}
                       </th>
                     </tr>

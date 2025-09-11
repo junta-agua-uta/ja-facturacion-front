@@ -94,7 +94,6 @@ export default function MedicionesPage() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [medicionToDelete, setMedicionToDelete] = useState<Medicion | null>(null);
-  const [medicionToEdit, setMedicionToEdit] = useState<Medicion | null>(null);
   const [editForm, setEditForm] = useState<Medicion | null>(null);
 
   const [newMedicion, setNewMedicion] = useState<Medicion>({
@@ -166,13 +165,11 @@ export default function MedicionesPage() {
       setMediciones(prev =>
         prev.map(m => (m.id === editForm.id ? { ...editForm } : m))
       );
-      setMedicionToEdit(null);
       setEditForm(null);
     }
   };
 
   const handleCancelEdit = () => {
-    setMedicionToEdit(null);
     setEditForm(null);
   };
 
@@ -217,7 +214,6 @@ export default function MedicionesPage() {
           }}
           onPageChange={setCurrentPage}
           onEdit={(medicion) => {
-            setMedicionToEdit(medicion);
             setEditForm({ ...medicion });
           }}
           onDelete={(medicionId) => {

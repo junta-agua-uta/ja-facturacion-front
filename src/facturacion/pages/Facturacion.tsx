@@ -9,102 +9,129 @@ import { Link } from "react-router-dom";
 export default function Facturacion() {
   const [facturas, setFacturas] = useState<Factura[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-
-  // Fetch facturas desde la API y almacena la data mapeada
-  useEffect(() => {
-    const fetchFacturas = async () => {
-      setLoading(true);
-      try {
-        // Array para almacenar todas las facturas de todas las páginas
-        let allFacturas: any[] = [];
-        let totalPages = 1;
-        
-        // Función para mapear los datos de la API al formato que espera la tabla
-        const mapFacturas = (apiFacturas: any[]) => {
-          return apiFacturas.map((item: any) => ({
-            id: item.ID?.toString() ?? '',
-            NombreComercial: item.cliente?.NOMBRE_COMERCIAL ?? '',
-            Cedula: item.cliente?.IDENTIFICACION ?? '',
-            Concepto: item.cliente?.RAZON_SOCIAL ?? '', // Puedes cambiar este campo por otro si tienes un concepto real
-            FechaEmision: item.FECHA_EMISION ? new Date(item.FECHA_EMISION) : new Date(),
-            Total: item.TOTAL ? `${item.TOTAL} $` : '0 $',
-            Estado: item.ESTADO_FACTURA ?? '',
-            // Agregar más campos si es necesario
-            Sucursal: item.sucursal?.NOMBRE ?? '',
-            Usuario: item.usuario ? `${item.usuario.NOMBRE} ${item.usuario.APELLIDO}` : ''
-          }));
-        };
-        
-        // Obtener la primera página para saber cuántas páginas hay en total
-        const firstResponse = await api.get('/facturas/all', {
-          params: { page: 1 }
-        });
-        
-        if (firstResponse.data) {
-          const { data, totalPages: apiTotalPages } = firstResponse.data;
-          totalPages = apiTotalPages || 1;
-          
-          // Agregar los datos de la primera página
-          allFacturas = [...allFacturas, ...(data || [])];
-          
-          // Obtener el resto de las páginas si hay más de una
-          if (totalPages > 1) {
-            // Crear un array de promesas para todas las páginas restantes
-            const pagePromises = [];
-            for (let page = 2; page <= totalPages; page++) {
-              pagePromises.push(
-                api.get('/facturas/all', {
-                  params: { page }
-                })
-              );
-            }
-            
-            // Ejecutar todas las promesas en paralelo
-            const responses = await Promise.all(pagePromises);
-            
-            // Procesar cada respuesta y agregar los datos
-            responses.forEach(response => {
-              if (response.data && response.data.data) {
-                allFacturas = [...allFacturas, ...response.data.data];
-              }
-            });
-          }
-        }
-        
-        // Mapear todas las facturas obtenidas
-        const mappedFacturas = mapFacturas(allFacturas);
-        setFacturas(mappedFacturas);
-      } catch (error) {
-        console.error('Error al obtener facturas:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchFacturas();
-  }, []);
-
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [filters, setFilters] = useState<FacturacionCedula>({});
   const [dateFilters, setDateFilters] = useState<FacturacionFechaEmisionFilter>({
     FechaEmisionDesde: new Date('2025-01-01'),
     FechaEmisionHasta: new Date('2025-12-31')
   });
 
-  const filteredFacturas = facturas.filter(factura =>
-    (filters.Cedula ? factura.Cedula.includes(filters.Cedula) : true) &&
-    (dateFilters.FechaEmisionDesde <= factura.FechaEmision && 
-     factura.FechaEmision <= dateFilters.FechaEmisionHasta)
-  );
+  // Estado para el debounce de la cédula
+  const [debouncedCedula, setDebouncedCedula] = useState(filters.Cedula || "");
 
-  const totalPages = Math.ceil(filteredFacturas.length / PAGE_SIZE);
-  const paginatedFacturas = filteredFacturas.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
+  // Actualiza debouncedCedula con debounce
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedCedula(filters.Cedula || "");
+    }, 1500);
+
+    return () => clearTimeout(handler);
+  }, [filters.Cedula]);
+
+  // Función para mapear los datos de la API al formato que espera la tabla
+  const mapFacturas = (apiFacturas: any[]) => {
+    return apiFacturas.map((item: any) => ({
+      id: item.ID?.toString() ?? '',
+      NombreComercial: item.cliente?.NOMBRE_COMERCIAL ?? '',
+      Cedula: item.cliente?.IDENTIFICACION ?? '',
+      Concepto: item.cliente?.RAZON_SOCIAL ?? '',
+      FechaEmision: item.FECHA_EMISION ? new Date(item.FECHA_EMISION) : new Date(),
+      Total: item.TOTAL ? `${item.TOTAL} $` : '0 $',
+      Estado: item.ESTADO_FACTURA ?? '',
+      Sucursal: item.sucursal?.NOMBRE ?? '',
+      Usuario: item.usuario ? `${item.usuario.NOMBRE} ${item.usuario.APELLIDO}` : '',
+      Secuencia: item.SECUENCIA?.toString() ?? '', // Agregamos la secuencia
+      Serie: item.sucursal?.PUNTO_EMISION ?? '', // Agregamos la serie
+      Numero: item.sucursal?.PUNTO_EMISION ?? ''
+    }));
+  };
+
+  const mapFacturasCedula = (facturas: any[]) => {
+    return facturas.map((item: any, idx: number) => ({
+      id: idx.toString(),
+      NombreComercial: "Sin Nombre Comercial",
+      Cedula: item.identificacionComprador,
+      Concepto: item.razonSocialComprador,
+      FechaEmision: item.fechaEmision ? new Date(item.fechaEmision) : new Date(),
+      Total: item.importeTotal ? `${item.importeTotal} $` : '0 $',
+      Estado: '',
+      Sucursal: item.pto_emision ?? '',
+      Usuario: '',
+      detalles: item.detalles ?? []
+    }));
+  };
+
+  const formatDateForAPI = (date: Date) => {
+    return date.toISOString().split('T')[0];
+  };
+
+  useEffect(() => {
+    const fetchFacturas = async () => {
+      setLoading(true);
+      try {
+        let response;
+
+        if (debouncedCedula && debouncedCedula.trim()) {
+          response = await api.get('/facturas/cedula', {
+            params: {
+              cedula: debouncedCedula.trim()
+            }
+          });
+
+          const mappedFacturas = mapFacturasCedula(response.data || []);
+          const dateFilteredFacturas = mappedFacturas.filter(factura =>
+          (dateFilters.FechaEmisionDesde <= factura.FechaEmision &&
+            factura.FechaEmision <= dateFilters.FechaEmisionHasta)
+          );
+
+          setFacturas(dateFilteredFacturas);
+          setTotalItems(dateFilteredFacturas.length);
+          setTotalPages(Math.ceil(dateFilteredFacturas.length / PAGE_SIZE));
+
+        } else {
+          response = await api.get('/facturas/fecha', {
+            params: {
+              fechaInicio: formatDateForAPI(dateFilters.FechaEmisionDesde),
+              fechaFin: formatDateForAPI(dateFilters.FechaEmisionHasta),
+              page: currentPage,
+              limit: PAGE_SIZE
+            }
+          });
+
+          if (response.data) {
+            const { data, totalPages: apiTotalPages, totalItems: apiTotalItems } = response.data;
+            const mappedFacturas = mapFacturas(data || []);
+            setFacturas(mappedFacturas);
+            setTotalPages(apiTotalPages || 1);
+            setTotalItems(apiTotalItems || 0);
+          }
+        }
+      } catch (error) {
+        console.error('Error al obtener facturas:', error);
+        setFacturas([]);
+        setTotalPages(1);
+        setTotalItems(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFacturas();
+  }, [currentPage, debouncedCedula, dateFilters.FechaEmisionDesde, dateFilters.FechaEmisionHasta]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedCedula, dateFilters.FechaEmisionDesde, dateFilters.FechaEmisionHasta]);
+
+  const paginatedFacturas = debouncedCedula && debouncedCedula.trim()
+    ? facturas.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : facturas;
 
   const handleClearFilters = () => {
     setFilters({});
+    setDebouncedCedula('');
     setDateFilters({
       FechaEmisionDesde: new Date('2025-01-01'),
       FechaEmisionHasta: new Date('2025-12-31')
@@ -112,19 +139,39 @@ export default function Facturacion() {
     setCurrentPage(1);
   };
 
-  if (loading) {
-    return (
-      <>
-        <Title title="Facturas" />
-        <CardSlot>
-          <div className="flex flex-col justify-center items-center h-32">
-            <div className="loader mb-2" style={{ border: '4px solid #f3f3f3', borderRadius: '50%', borderTop: '4px solid #3498db', width: '32px', height: '32px', animation: 'spin 1s linear infinite' }} />
-            <span>Cargando facturas...</span>
-          </div>
-        </CardSlot>
-      </>
-    );
-  }
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportToExcel = async () => {
+    setIsExporting(true);
+    try {
+      const response = await api.get(
+        '/facturas/reporte/fecha',
+        {
+          params: {
+            fechaInicio: formatDateForAPI(dateFilters.FechaEmisionDesde),
+            fechaFin: formatDateForAPI(dateFilters.FechaEmisionHasta),
+            page: currentPage,
+            limit: PAGE_SIZE
+          },
+          responseType: 'blob' // Para manejar la respuesta como un archivo
+        }
+      );
+
+      // Crear un enlace para descargar el archivo
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'facturas.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error al exportar a Excel:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
 
   return (
     <>
@@ -158,27 +205,37 @@ export default function Facturacion() {
               Añadir factura
             </button>
           </Link>
+          <button
+            className="btn btn-accent ml-2 hover:bg-green-500 hover:border-green-500"
+            onClick={handleExportToExcel}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <>
+                <span className="loader mr-2" style={{border: '2px solid #fff', borderRadius: '50%', width: '1em', height: '1em', display: 'inline-block', borderTop: '2px solid transparent', animation: 'spin 1s linear infinite'}}></span>
+                Exportando...
+              </>
+            ) : (
+              'Exportar a Excel'
+            )}
+          </button>
+          <style>{`
+            @keyframes spin { 100% { transform: rotate(360deg); } }
+          `}</style>
         </EndSlot>
 
         <FacturacionTable
           data={paginatedFacturas}
+          loading={loading}
           pagination={{
             currentPage,
             totalPages,
             pageSize: PAGE_SIZE,
-            totalItems: facturas.length
+            totalItems
           }}
           onPageChange={setCurrentPage}
         />
       </CardSlot>
     </>
   );
-
-/* CSS para el loader (puedes moverlo a tu archivo global de estilos):
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
-*/
-}
-

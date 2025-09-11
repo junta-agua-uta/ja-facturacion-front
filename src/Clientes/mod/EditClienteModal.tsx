@@ -1,6 +1,7 @@
 // src/components/modals/EditClienteModal.tsx
 import { useState, useEffect } from "react";
 import { Cliente } from "../types/cliente";
+import { validarCedulaEcuatoriana } from "../../shared/utils/validateCedula";
 
 
 type EditClienteModalProps = {
@@ -25,7 +26,8 @@ export function EditClienteModal({
     telefono2: "",
     correo: "",
     razonSocial: "",
-    direccion: ""
+    direccion: "",
+    identificacion: ""
   });
 
   // Resetear errores cuando cambie el cliente
@@ -36,7 +38,8 @@ export function EditClienteModal({
         telefono2: "",
         correo: "",
         razonSocial: "",
-        direccion: ""
+        direccion: "",
+        identificacion: ""
       });
     }
   }, [cliente]);
@@ -51,7 +54,8 @@ export function EditClienteModal({
       telefono2: "",
       correo: "",
       razonSocial: "",
-      direccion: ""
+      direccion: "",
+      identificacion: ""
     };
     
     // Validate phone (must start with 09 and be 10 digits)
@@ -62,6 +66,20 @@ export function EditClienteModal({
     // Validate email format
     if (cliente.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.correo)) {
       newErrors.correo = 'Ingrese un correo electrónico válido';
+    }
+
+    // Validar identificación si tiene 10 digitos sino comprobar con 13
+    const id = cliente.identificacion;
+    if (id.length === 10) {
+      if (!validarCedulaEcuatoriana(id)) {
+        newErrors.identificacion = 'Cédula de identidad inválida';
+      }
+    } else if (id.length === 13) {
+      if (!/^\d{13}$/.test(id)) {
+        newErrors.identificacion = 'La identificación debe tener 10 o 13 dígitos';
+      }
+    } else {
+      newErrors.identificacion = 'La identificación debe tener 10 o 13 dígitos';
     }
     
     setErrors(newErrors);
@@ -86,11 +104,21 @@ export function EditClienteModal({
                 type="text"
                 className="input input-bordered w-full"
                 value={cliente.identificacion}
-                onChange={(e) => onChange({ ...cliente, identificacion: e.target.value })}
+                onChange={(e) => {
+                  // Solo permitir números y limitar a 13 caracteres
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 13);
+                  onChange({ ...cliente, identificacion: value });
+                }}
                 pattern="\d{10}(\d{3})?"
                 title="La identificación debe tener 10 o 13 dígitos"
+                minLength={10}
+                maxLength={13}
                 required
+                readOnly
               />
+              {errors.identificacion && (
+                <div className="text-error text-sm mt-1">{errors.identificacion}</div>
+              )}
             </div>
             
             <div>
@@ -101,9 +129,13 @@ export function EditClienteModal({
                 type="text"
                 className="input input-bordered w-full"
                 value={cliente.razonSocial}
-                onChange={(e) => onChange({ ...cliente, razonSocial: e.target.value })}
+                onChange={(e) => {
+                  // Solo permitir letras y espacios
+                  const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
+                  onChange({ ...cliente, razonSocial: value });
+                }}
                 placeholder="Distribuidora Andina Cía. Ltda."
-                required
+                readOnly
               />
             </div>
             
@@ -142,13 +174,18 @@ export function EditClienteModal({
                 type="text"
                 className={`input input-bordered w-full`}
                 value={cliente.telefono1 || ''}
-                onChange={(e) => onChange({ 
-                  ...cliente, 
-                  telefono1: e.target.value,
-                  telefonoNro1: e.target.value
-                })}
+                onChange={(e) => {
+                  // Solo permitir números y limitar a 10 caracteres
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  onChange({ 
+                    ...cliente, 
+                    telefono1: value,
+                    telefonoNro1: value
+                  });
+                }}
                 pattern="09\d{8}"
                 title="El teléfono debe comenzar con 09 y tener 10 dígitos"
+                maxLength={10}
                 required
               />
             </div>

@@ -3,22 +3,35 @@ import { TablaConceptos } from "../components/TablaConceptos";
 import { FacturaHeader } from "../components/FacturaHeader";
 import { FacturaFormContent } from "../components/FacturaForm";
 import { useFacturaForm } from "../hooks/useFacturaForm";
-import { useBranchSelection } from "../hooks/useBranchSelection";
 import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
+import { AddClienteModal } from "../../Clientes/mod/AddClienteModal";
+import { Cliente } from "../../Clientes/types/cliente";
+import { useClientePorCedula } from "../hooks/useClientePorCedula";
+import api from "../../shared/api";
+import { authService } from "../../auth/Services/auth.service";
+import { useBranchSelection } from "../hooks/useBranchSelection";
 
 export default function AgregarFacturas() {
   // IMPORTANTE: Todos los hooks deben llamarse en el mismo orden en cada renderizado
   // 1. Hooks de React
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [userName, setUserName] = useState('Usuario');
+  const [nuevoCliente, setNuevoCliente] = useState<Cliente>({
+    id: '0',
+    identificacion: '',
+    razonSocial: '',
+    direccion: '',
+    telefono1: '',
+    correo: ''
+  });
 
   // 2. Hooks personalizados
   // Usar los hooks personalizados para manejar el estado y la lógica
   const {
     formData,
     conceptos,
-    clienteError,
     saving,
     saveError,
     handleInputChange,
@@ -30,13 +43,30 @@ export default function AgregarFacturas() {
     resetForm
   } = useFacturaForm();
 
-  // Usar el hook para manejar la selección de sucursales
+  // Obtener el estado del cliente y el modal desde el hook useClientePorCedula
   const {
-    branches,
-    selectedBranch,
-    loadingBranches,
-    branchesError,
-    handleBranchChange
+    error: clienteError,
+    showAddClienteModal,
+    handleAddCliente,
+    handleCloseAddClienteModal,
+    handleClienteAdded // <-- importar del hook
+  } = useClientePorCedula(formData.cedula);
+
+  // Actualizar la cédula del nuevo cliente cuando cambia el formulario
+  useEffect(() => {
+    setNuevoCliente((prev: Cliente) => ({
+      ...prev,
+      identificacion: formData.cedula
+    }));
+  }, [formData.cedula]);
+
+  // Usar el hook para manejar la selección de sucursales
+  const { 
+    branches, 
+    selectedBranch, 
+    loadingBranches, 
+    branchesError, 
+    handleBranchChange 
   } = useBranchSelection();
 
   // Seleccionar automáticamente la primera sucursal si no hay ninguna seleccionada
@@ -48,7 +78,27 @@ export default function AgregarFacturas() {
       } as React.ChangeEvent<HTMLSelectElement>;
       handleBranchChange(event);
     }
-  }, [branches, loadingBranches, selectedBranch, handleBranchChange]);
+  }, [branches, loadingBranches, selectedBranch]);
+
+  // Obtener el nombre del usuario actual
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        try {
+          const response = await api.get('/auth/me');
+          if (response.data) {
+            const nombreCompleto = `${response.data.NOMBRE} ${response.data.APELLIDO}`.trim();
+            setUserName(nombreCompleto || 'Usuario');
+          }
+        } catch (error) {
+          console.error('Error al obtener datos del usuario:', error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   // Manejar el guardado de la factura
   const handleSaveFactura = async () => {
@@ -87,14 +137,27 @@ export default function AgregarFacturas() {
     setErrorMessage(null);
   };
 
-  // Calcular totales
-  const { subtotal, iva, total } = useMemo(() => {
-    const sub = conceptos.reduce((sum, concepto) => sum + (concepto.subtotal || 0), 0);
-    const ivaCalculado = conceptos.reduce((sum, concepto) => sum + (concepto.iva || 0), 0);
+  // Calcular totales incluyendo descuento total
+  const { subtotal, descuentoTotal, total } = useMemo(() => {
+    // Calcular subtotal sin descuentos (precio * cantidad)
+    const subtotalSinDescuento = conceptos.reduce((sum, concepto) => 
+      sum + (concepto.precio * concepto.cantidad), 0
+    );
+    
+    // Calcular descuento total aplicado
+    const descuento = conceptos.reduce((sum, concepto) => 
+      sum + (concepto.descuento * concepto.cantidad), 0
+    );
+    
+    // Calcular subtotal con descuentos aplicados
+    const subtotalConDescuento = conceptos.reduce((sum, concepto) => 
+      sum + (concepto.subtotal || 0), 0
+    );
+
     return {
-      subtotal: sub,
-      iva: ivaCalculado,
-      total: sub + ivaCalculado
+      subtotal: subtotalSinDescuento,
+      descuentoTotal: descuento,
+      total: subtotalConDescuento 
     };
   }, [conceptos]);
 
@@ -113,7 +176,7 @@ export default function AgregarFacturas() {
       <div className="space-y-6">
         {/* Información del facturador */}
         <FacturaHeader
-          facturador="Jhon Doe"
+          facturador={userName}
           branches={branches}
           selectedBranch={selectedBranch}
           onBranchChange={handleBranchChange}
@@ -135,6 +198,15 @@ export default function AgregarFacturas() {
             onInputChange={handleInputChange}
             onOpenCodigoModal={handleOpenCodigoModal}
             onConceptoSelect={handleConceptoSelect}
+            onAddCliente={() => {
+              // Actualizar la cédula en el estado del nuevo cliente
+              setNuevoCliente(prev => ({
+                ...prev,
+                identificacion: formData.cedula
+              }));
+              // Abrir el modal
+              handleAddCliente();
+            }}
             onSave={handleSaveFactura}
             onCancel={handleCancel}
             saving={saving}
@@ -161,10 +233,12 @@ export default function AgregarFacturas() {
                     <span>Subtotal:</span>
                     <span>${subtotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>IVA (15%):</span>
-                    <span>${iva.toFixed(2)}</span>
-                  </div>
+                  {descuentoTotal > 0 && (
+                    <div className="flex justify-between text-red-600">
+                      <span>Descuento total:</span>
+                      <span>-${descuentoTotal.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="border-t border-gray-200 my-2"></div>
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total:</span>
@@ -176,6 +250,85 @@ export default function AgregarFacturas() {
           </div>
         </div>
       </div>
+
+      {/* Modal para agregar cliente */}
+      <AddClienteModal
+        id="add_cliente_modal"
+        isOpen={showAddClienteModal}
+        cliente={nuevoCliente}
+        onChange={(updatedCliente) => {
+          setNuevoCliente(updatedCliente);
+        }}
+        onCancel={() => {
+          handleCloseAddClienteModal();
+          setNuevoCliente({
+            id: '0',
+            identificacion: formData.cedula,
+            razonSocial: '',
+            direccion: '',
+            telefono1: '',
+            correo: ''
+          });
+        }}
+        onSave={async () => {
+          try {
+            // Formatear los datos del cliente para la API
+            const formatClienteForAPI = (cliente: Cliente) => ({
+              identificacion: cliente.identificacion,
+              razonSocial: cliente.razonSocial,
+              nombreComercial: cliente.nombreComercial || 'Sin Nombre Comercial',
+              direccion: cliente.direccion,
+              telefono1: cliente.telefono1 || '',
+              telefono2: cliente.telefono2 || '',
+              correo: cliente.correo || '',
+              tarifa: cliente.tarifa || '',
+              grupo: cliente.grupo || '',
+              zona: cliente.zona || '',
+              ruta: cliente.ruta || '',
+              vendedor: cliente.vendedor || '',
+              cobrador: cliente.cobrador || '',
+              provincia: cliente.provincia || '',
+              ciudad: cliente.ciudad || '',
+              parroquia: cliente.parroquia || ''
+            });
+
+            const formattedCliente = formatClienteForAPI(nuevoCliente);
+            
+            // Enviar la petición para guardar el cliente
+            await api.post('/clientes', formattedCliente);
+            
+            // Mostrar mensaje de éxito
+            alert('Cliente agregado exitosamente');
+            
+            // Cerrar el modal y limpiar el formulario
+            handleCloseAddClienteModal();
+            setNuevoCliente({
+              id: '0',
+              identificacion: formData.cedula,
+              razonSocial: '',
+              direccion: '',
+              telefono1: '',
+              correo: ''
+            });
+            
+            // Actualizar el formulario con los datos del nuevo cliente
+            handleInputChange({
+              target: {
+                name: 'cliente',
+                value: nuevoCliente.razonSocial
+              }
+            } as React.ChangeEvent<HTMLInputElement>);
+
+            // Llamar a handleClienteAdded para refrescar el estado y ocultar el botón
+            if (typeof handleClienteAdded === 'function') {
+              handleClienteAdded();
+            }
+          } catch (error) {
+            console.error('Error al guardar el cliente:', error);
+            alert('No se pudo guardar el cliente');
+          }
+        }}
+      />
     </>
   );
 }

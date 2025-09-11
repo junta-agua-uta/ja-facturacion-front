@@ -1,54 +1,91 @@
-# React + TypeScript + Vite
+# Sistema de Gestión de Cobros de Agua - Santa Rosa
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Descripción General
 
-Currently, two official plugins are available:
+Este sistema web está diseñado para la gestión integral de cobros de agua potable para la Junta de Agua de Santa Rosa. La aplicación permite administrar clientes, facturas, mediciones de consumo, sucursales y usuarios del sistema, ofreciendo una solución completa para la administración del servicio de agua potable. Proyecto 
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Características Principales
 
-## Expanding the ESLint configuration
+### Gestión de Facturas
+- Creación y visualización de facturas
+- Búsqueda por cédula/RUC del cliente
+- Filtrado por fechas de emisión
+- Impresión de tickets de factura
+- Paginación para manejo eficiente de grandes volúmenes de datos
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Gestión de Clientes
+- Registro de clientes con validación de cédula/RUC ecuatoriano
+- Búsqueda rápida por número de identificación
+- Almacenamiento de datos completos (razón social, nombre comercial, dirección, teléfono, email)
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### Gestión de Mediciones
+- Registro de lecturas de medidores
+- Cálculo automático de consumo
+- Historial de mediciones por cliente
+
+### Administración de Sucursales
+- Registro y gestión de múltiples sucursales
+- Asignación de facturas a sucursales específicas
+
+### Gestión de Usuarios
+- Control de acceso basado en roles
+- Perfiles de usuario personalizables
+- Autenticación segura
+
+## Tecnologías Utilizadas
+
+- **Frontend**: React 19 con TypeScript
+- **Estilizado**: Tailwind CSS y DaisyUI
+- **Construcción**: Vite
+- **Enrutamiento**: React Router v7
+- **Peticiones HTTP**: Axios
+- **Iconos**: Heroicons y React Icons
+
+## Estructura del Proyecto
+
+```
+src/
+├── assets/           # Recursos estáticos (imágenes, iconos)
+├── auth/             # Autenticación y autorización
+├── Clientes/         # Módulo de gestión de clientes
+├── core/             # Componentes y utilidades principales
+├── facturacion/      # Módulo de facturación
+├── medicion/         # Módulo de mediciones
+├── profile/          # Gestión de perfil de usuario
+├── shared/           # Componentes y utilidades compartidas
+└── sucursales/       # Gestión de sucursales
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Instalación y Ejecución
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# Instalar dependencias
+npm install
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+# Ejecutar en modo desarrollo
+npm run dev
+
+# Compilar para producción
+npm run build
+
+# Previsualizar la versión de producción
+npm run preview
 ```
+
+## Convenciones del API
+
+- La API devuelve datos con nombres de campos en MAYÚSCULAS (ID, IDENTIFICACION, etc.)
+- La API espera recibir datos con nombres de campos en minúsculas (identificacion, razonSocial, etc.)
+- Ruta base de la API: "/apiV2"
+- Búsqueda de clientes por cédula: "/apiV2/clientes/buscarCedula?cedula=valor"
+
+## Requisitos del Sistema
+
+- Node.js 18 o superior
+- Conexión a internet para acceso a la API
+- Navegador web moderno (Chrome, Firefox, Edge, Safari)
+
+## Contribución
+
+Este proyecto fue desarrollado como parte de un proyecto de vinculación con la comunidad de Santa Rosa para mejorar la gestión administrativa de su Junta de Agua Potable.
+

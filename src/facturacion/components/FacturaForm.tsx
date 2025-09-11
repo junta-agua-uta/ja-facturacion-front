@@ -3,6 +3,7 @@ import { InputSlot } from '../components';
 import { SelectCodigoModal } from '../modals/SelectCodigoModal';
 import { PrintPreviewModal } from './Ticket';
 import { FacturaForm as FacturaFormType } from '../../shared/components/interfaces/factura.interface';
+import { validarCedulaEcuatoriana } from '../../shared/utils/validateCedula';
 
 interface FacturaFormProps {
   formData: FacturaFormType;
@@ -11,6 +12,7 @@ interface FacturaFormProps {
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onOpenCodigoModal: () => void;
   onConceptoSelect: (codigo: string, mes?: string) => void;
+  onAddCliente?: () => void;
   onSave?: () => void;
   onCancel?: () => void;
   saving?: boolean;
@@ -23,6 +25,7 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
   onInputChange,
   onOpenCodigoModal,
   onConceptoSelect,
+  onAddCliente,
   onSave,
   onCancel,
   saving = false
@@ -40,13 +43,15 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
 
   const handlePrint = () => {
     // Aquí puedes agregar lógica adicional después de imprimir si es necesario
-    console.log('Documento enviado a imprimir');
     setIsPrintPreviewOpen(false);
   };
 
   // Función para verificar si todos los campos están llenos
   const isFormValid = () => {
+
+
     return (
+      validarIdentificacion(formData.cedula || '') &&
       formData.cedula?.trim() !== '' &&
       formData.cliente?.trim() !== '' &&
       formData.emision?.trim() !== '' &&
@@ -59,20 +64,72 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
     );
   };
 
+  //Funcion para validar el RUC
+  function validarIdentificacion(identificacion: string): boolean {
+    const soloNumeros = /^\d{10}$/.test(identificacion);
+    const esRUC = /^\d{13}$/.test(identificacion);
+
+    if (identificacion === '9999999999' || identificacion === '9999999999999') {
+      return true;
+    }
+
+    if (soloNumeros) {
+      return validarCedulaEcuatoriana(identificacion);
+    }
+
+    if (esRUC) {
+      const sufijo = identificacion.slice(10);
+      return identificacion.length == 13 && sufijo === '001';
+    }
+
+    return false;
+  }
+
+
   return (
     <>
       <form className="grid grid-cols-3 gap-6">
         {/* Primera columna */}
         <div className="space-y-4">
           <InputSlot label="C.I/RUC">
-            <input
-              type="text"
-              name="cedula"
-              value={formData.cedula}
-              onChange={onInputChange}
-              className="input input-bordered w-full"
-              placeholder="Ingrese CI/RUC"
-            />
+            <div className="w-full">
+              <input
+                type="text"
+                name="cedula"
+                value={formData.cedula}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Solo permitir números
+                  const numericValue = value.replace(/\D/g, '');
+                  // Limitar a máximo 13 caracteres
+                  const limitedValue = numericValue.slice(0, 13);
+
+                  // Crear evento sintético con el valor validado
+                  const syntheticEvent = {
+                    ...e,
+                    target: {
+                      ...e.target,
+                      name: 'cedula',
+                      value: limitedValue
+                    }
+                  };
+
+                  onInputChange(syntheticEvent);
+                }}
+                className={`input input-bordered w-full ${formData.cedula && (formData.cedula.length < 10 || formData.cedula.length > 13)
+                  ? 'input-error border-red-500'
+                  : ''
+                  }`}
+                placeholder="Ingrese CI/RUC (10-13 dígitos)"
+                minLength={10}
+                maxLength={13}
+              />
+              {formData.cedula && formData.cedula.length > 0 && formData.cedula.length < 10 && (
+                <span className="text-red-500 text-sm mt-1 block">
+                  La cédula/RUC debe tener al menos 10 dígitos
+                </span>
+              )}
+            </div>
           </InputSlot>
 
           <InputSlot label="Cliente">
@@ -85,9 +142,20 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
               placeholder="Nombre del cliente"
               readOnly
             />
-            {clienteError && (
-              <div className="text-xs text-red-500 mt-1">{clienteError}</div>
-            )}
+            <div className="flex flex-col gap-2 mt-1">
+              {clienteError && (
+                <div className="text-xs text-red-500">{clienteError}</div>
+              )}
+              <button
+                type="button"
+                onClick={onAddCliente}
+                className={`btn btn-sm btn-outline btn-primary w-full ${!clienteError ? 'btn-disabled opacity-50 pointer-events-none' : ''
+                  }`}
+                disabled={!clienteError}
+              >
+                + Agregar Cliente
+              </button>
+            </div>
           </InputSlot>
 
           <InputSlot label="Código">
@@ -103,7 +171,7 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
             <SelectCodigoModal
               id="select_codigo_modal"
               onSelect={onConceptoSelect}
-              onCancel={() => {}}
+              onCancel={() => { }}
             />
           </InputSlot>
         </div>
@@ -125,7 +193,19 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
               type="text"
               name="serie"
               value={formData.serie}
-              onChange={onInputChange}
+              onChange={(e) => {
+                const value = e.target.value;
+                const numericValue = value.replace(/\D/g, '');
+                const syntheticEvent = {
+                  ...e,
+                  target: {
+                    ...e.target,
+                    name: 'serie',
+                    value: numericValue
+                  }
+                };
+                onInputChange(syntheticEvent);
+              }}
               className="input input-bordered w-full"
               placeholder="Serie"
             />
@@ -161,7 +241,19 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
                 type="text"
                 name="numero"
                 value={formData.numero}
-                onChange={onInputChange}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const numericValue = value.replace(/\D/g, '');
+                  const syntheticEvent = {
+                    ...e,
+                    target: {
+                      ...e.target,
+                      name: 'numero',
+                      value: numericValue
+                    }
+                  };
+                  onInputChange(syntheticEvent);
+                }}
                 className="input input-bordered w-full"
                 placeholder="Número"
               />
@@ -172,7 +264,19 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
                 type="text"
                 name="secuencia"
                 value={formData.secuencia}
-                onChange={onInputChange}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const numericValue = value.replace(/\D/g, '');
+                  const syntheticEvent = {
+                    ...e,
+                    target: {
+                      ...e.target,
+                      name: 'secuencia',
+                      value: numericValue
+                    }
+                  };
+                  onInputChange(syntheticEvent);
+                }}
                 className="input input-bordered w-full"
                 placeholder="Secuencia"
               />
@@ -181,16 +285,16 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
 
           {/* Botones de acción */}
           <div className="flex justify-end gap-4 pt-8">
-            <button 
-              className="btn btn-outline" 
+            <button
+              className="btn btn-outline"
               type="button"
               onClick={onCancel}
               disabled={saving}
             >
               Cancelar
             </button>
-            <button 
-              className="btn btn-primary hover:bg-blue-600 hover:border-blue-600" 
+            <button
+              className="btn btn-primary hover:bg-blue-600 hover:border-blue-600"
               type="button"
               onClick={onSave}
               disabled={saving}
@@ -202,13 +306,13 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
                 </>
               ) : 'Guardar'}
             </button>
-            <button 
+            <button
               className={`btn btn-secondary ${!isFormValid() ? 'btn-disabled' : ''}`}
               type="button"
               onClick={handleOpenPrintPreview}
-              disabled={saving }
+              disabled={saving}
             >
-              Generar...
+              Imprimir
             </button>
           </div>
         </div>

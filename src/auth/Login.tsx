@@ -21,9 +21,12 @@ const Login = () => {
         setError('');
 
         try {
-            const result = await authService.login({ cedula, password });
-            console.log('Resultado del login:', result);
-
+            // Llamar al servicio de autenticación
+            await authService.login({
+                cedula,
+                password
+            });
+            
             // Verificación adicional del almacenamiento
             const storedToken = authService.getToken();
             if (!storedToken) {
@@ -37,6 +40,7 @@ const Login = () => {
         } finally {
             setIsLoading(false);
         }
+        
     };
 
     return (

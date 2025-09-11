@@ -31,7 +31,7 @@ export const useFacturaForm = () => {
     vencimiento: '',
     serie: DEFAULTS.serie,
     numero: DEFAULTS.numero,
-    secuencia: DEFAULTS.secuencia,
+    secuencia: '', // Inicialmente vacío, se actualizará con la última secuencia
     concepto: ''
   };
   
@@ -46,7 +46,13 @@ export const useFacturaForm = () => {
   const [conceptos, setConceptos] = useState<ConceptoCobro[]>([]);
 
   // Obtener cliente por cédula
-  const { cliente, clienteId, error: clienteError, resetCliente } = useClientePorCedula(formData.cedula);
+  const { 
+    cliente, 
+    clienteId, 
+    error: clienteError, 
+    resetCliente, 
+    showAddButton 
+  } = useClientePorCedula(formData.cedula);
 
   // Actualizar cliente automáticamente cuando cambia el resultado del hook
   useEffect(() => {
@@ -54,6 +60,30 @@ export const useFacturaForm = () => {
       setFormData(prev => ({ ...prev, cliente }));
     }
   }, [cliente, formData.cliente]);
+
+  // Obtener la última secuencia al cargar el componente
+  useEffect(() => {
+    const fetchLastSequence = async () => {
+      try {
+        const response = await api.get('/facturas/all', {
+          params: { page: 1, limit: 1 }
+        });
+        
+        if (response.data && response.data.data && response.data.data.length > 0) {
+          const lastFactura = response.data.data[0];
+          const nextSequence = (parseInt(lastFactura.SECUENCIA) + 1).toString().padStart(7, '0');
+          setFormData(prev => ({
+            ...prev,
+            secuencia: nextSequence
+          }));
+        }
+      } catch (error) {
+        console.error('Error al obtener la última secuencia:', error);
+      }
+    };
+
+    fetchLastSequence();
+  }, []);
 
   // Manejador de cambios en el formulario
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -132,8 +162,6 @@ export const useFacturaForm = () => {
 
     // Calcular totales
     const subtotal = conceptos.reduce((sum, concepto) => sum + (concepto.subtotal || 0), 0);
-    const iva = conceptos.reduce((sum, concepto) => sum + (concepto.iva || 0), 0);
-    const total = subtotal + iva;
 
     try {
       setSaving(true);
@@ -146,21 +174,21 @@ export const useFacturaForm = () => {
         idMedidor: 1, // Valor fijo como se solicitó
         tipoPago: 'EFECTIVO', // Valor fijo como se solicitó
         valorSinImpuesto: subtotal,
-        iva: iva,
-        total: total,
-        conceptos: conceptos.map(c => ({
-          codigo: c.codigo,
+        secuencia: parseInt(formData.secuencia),
+        // iva: ,
+        // total: total,
+        detalles: conceptos.map(c => ({
           descripcion: c.descripcion,
+          // codigo: c.codigo,
+          idRazon:1,
           cantidad: c.cantidad,
-          precioUnitario: c.precio,
-          descuento: c.descuento,
+          // precioUnitario: c.precio,
           subtotal: c.subtotal,
-          iva: c.iva
+          descuento: c.descuento,
         }))
       };
 
-      const response = await api.post('/facturas/crear', facturaData);
-      console.log('Factura creada:', response.data);
+      await api.post('/facturas/crear', facturaData);
       
       // Redireccionar a la lista de facturas
       navigate('/junta/facturas');
@@ -187,11 +215,33 @@ export const useFacturaForm = () => {
     setSaveError(null);
   }, [initialFormState, resetCliente]);
 
+  // Estado para controlar la visibilidad del modal de agregar cliente
+  const [showAddClienteModal, setShowAddClienteModal] = useState(false);
+
+  // Función para manejar el clic en el botón de agregar cliente
+  const handleAddClienteClick = useCallback(() => {
+    setShowAddClienteModal(true);
+  }, []);
+
+  // Función para manejar el cierre del modal
+  const handleCloseAddClienteModal = useCallback(() => {
+    setShowAddClienteModal(false);
+  }, []);
+
+  // Función para manejar el guardado exitoso del cliente
+  const handleClienteAdded = useCallback(() => {
+    // Cerrar el modal
+    setShowAddClienteModal(false);
+    // Aquí podrías implementar lógica adicional después de agregar un cliente
+    // como por ejemplo, volver a buscar el cliente por cédula
+  }, []);
+
   return {
     formData,
-    setFormData,
     conceptos,
     clienteError,
+    showAddButton,
+    showAddClienteModal,
     saving,
     saveError,
     handleInputChange,
@@ -199,6 +249,9 @@ export const useFacturaForm = () => {
     handleConceptoChange,
     handleConceptoDelete,
     handleOpenCodigoModal,
+    handleAddCliente: handleAddClienteClick,
+    handleCloseAddClienteModal,
+    handleClienteAdded,
     saveFactura,
     resetForm
   };

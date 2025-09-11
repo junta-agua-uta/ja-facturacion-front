@@ -46,6 +46,29 @@ export default function ClientesPage() {
   const [ ,setClienteToEdit] = useState<Cliente | null>(null);
   const [editForm, setEditForm] = useState<Cliente | null>(null);
   const [clienteToDelete, setClienteToDelete] = useState<Cliente | null>(null);
+  const [newCliente, setNewCliente] = useState<Cliente>({
+    id: '',
+    identificacion: '',
+    razonSocial: '',
+    nombreComercial: '',
+    direccion: '',
+    telefono1: '',
+    telefono2: '',
+    correo: '',
+    tarifa: '',
+    grupo: '',
+    zona: '',
+    ruta: '',
+    vendedor: '',
+    cobrador: '',
+    provincia: '',
+    ciudad: '',
+    parroquia: '',
+    telefonoNro1: '',
+    telefonoNro2: '',
+    correoElectronico: ''
+  });
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
 
   const defaultNewCliente: Cliente = {
@@ -71,33 +94,30 @@ export default function ClientesPage() {
     correoElectronico: ''
   };
 
-  const [newCliente, setNewCliente] = useState<Cliente>(defaultNewCliente);
-
-
-const convertApiToCliente = (apiCliente: ApiCliente): Cliente => {
-  return {
-    id: apiCliente.ID.toString(),
-    identificacion: apiCliente.IDENTIFICACION,
-    razonSocial: apiCliente.RAZON_SOCIAL,
-    nombreComercial: apiCliente.NOMBRE_COMERCIAL,
-    direccion: apiCliente.DIRECCION,
-    telefono1: apiCliente.TELEFONO1,
-    telefono2: apiCliente.TELEFONO2,
-    correo: apiCliente.CORREO,
-    tarifa: apiCliente.TARIFA,
-    grupo: apiCliente.GRUPO,
-    zona: apiCliente.ZONA,
-    ruta: apiCliente.RUTA,
-    vendedor: apiCliente.VENDEDOR,
-    cobrador: apiCliente.COBRADOR,
-    provincia: apiCliente.PROVINCIA,
-    ciudad: apiCliente.CIUDAD,
-    parroquia: apiCliente.PARROQUIA,
-    telefonoNro1: apiCliente.TELEFONO1,
-    telefonoNro2: apiCliente.TELEFONO2,
-    correoElectronico: apiCliente.CORREO
+  const convertApiToCliente = (apiCliente: ApiCliente): Cliente => {
+    return {
+      id: apiCliente.ID.toString(),
+      identificacion: apiCliente.IDENTIFICACION,
+      razonSocial: apiCliente.RAZON_SOCIAL,
+      nombreComercial: apiCliente.NOMBRE_COMERCIAL,
+      direccion: apiCliente.DIRECCION,
+      telefono1: apiCliente.TELEFONO1,
+      telefono2: apiCliente.TELEFONO2,
+      correo: apiCliente.CORREO,
+      tarifa: apiCliente.TARIFA,
+      grupo: apiCliente.GRUPO,
+      zona: apiCliente.ZONA,
+      ruta: apiCliente.RUTA,
+      vendedor: apiCliente.VENDEDOR,
+      cobrador: apiCliente.COBRADOR,
+      provincia: apiCliente.PROVINCIA,
+      ciudad: apiCliente.CIUDAD,
+      parroquia: apiCliente.PARROQUIA,
+      telefonoNro1: apiCliente.TELEFONO1,
+      telefonoNro2: apiCliente.TELEFONO2,
+      correoElectronico: apiCliente.CORREO
+    };
   };
-};
 
   useEffect(() => {
     const fetchClientes = async () => {
@@ -130,10 +150,13 @@ const convertApiToCliente = (apiCliente: ApiCliente): Cliente => {
         
         setClientes(convertedClientes);
         
-        // Si la API no devuelve paginación, calcular manualmente
-        setTotalItems(response.data.totalItems || convertedClientes.length);
-        setTotalPages(response.data.totalPages || Math.ceil(convertedClientes.length / PAGE_SIZE));
-        setCurrentPage(response.data.currentPage || 1);
+        // Calcular paginación localmente
+        const totalItems = convertedClientes.length;
+        const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+        
+        setTotalItems(totalItems);
+        setTotalPages(totalPages);
+        setCurrentPage(1); // Resetear a la primera página cuando cambien los filtros
       } catch (error) {
         console.error('Error fetching clientes:', error);
         setError('No se pudo cargar la lista de clientes');
@@ -143,7 +166,14 @@ const convertApiToCliente = (apiCliente: ApiCliente): Cliente => {
     };
 
     fetchClientes();
-  }, [currentPage, filters]);
+  }, [filters]);
+
+  // Obtener datos para la página actual
+  const getCurrentPageData = () => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const endIndex = startIndex + PAGE_SIZE;
+    return clientes.slice(startIndex, endIndex);
+  };
 
   const handleClearFilters = () => {
     setFilters({});
@@ -174,7 +204,7 @@ const convertApiToCliente = (apiCliente: ApiCliente): Cliente => {
   };
 
   // Handle adding a new cliente
-const handleAddCliente = async () => {
+  const handleAddCliente = async () => {
     if (newCliente.identificacion && newCliente.razonSocial && newCliente.direccion) {
       setIsLoading(true);
       setError(null);
@@ -189,7 +219,7 @@ const handleAddCliente = async () => {
         setClientes(convertedClientes);
         
         setNewCliente(defaultNewCliente);
-        (document.getElementById('add_modal') as HTMLDialogElement)?.close();
+        setIsAddModalOpen(false);
       } catch (error) {
         console.error('Error adding cliente:', error);
         setError('No se pudo agregar el cliente');
@@ -251,6 +281,32 @@ const handleAddCliente = async () => {
     setEditForm(null);
   };
 
+  const handleAddClick = () => {
+    setNewCliente({
+      id: '',
+      identificacion: '',
+      razonSocial: '',
+      nombreComercial: '',
+      direccion: '',
+      telefono1: '',
+      telefono2: '',
+      correo: '',
+      tarifa: '',
+      grupo: '',
+      zona: '',
+      ruta: '',
+      vendedor: '',
+      cobrador: '',
+      provincia: '',
+      ciudad: '',
+      parroquia: '',
+      telefonoNro1: '',
+      telefonoNro2: '',
+      correoElectronico: ''
+    });
+    setIsAddModalOpen(true);
+  };
+
   return (
     <>
       <Title title="CLIENTES" />
@@ -263,10 +319,7 @@ const handleAddCliente = async () => {
         <EndSlot>
           <button
             className="btn btn-primary"
-            onClick={() => {
-              const dialog = document.getElementById('add_modal') as HTMLDialogElement;
-              dialog?.showModal();
-            }}
+            onClick={handleAddClick}
           >
             Añadir cliente
           </button>
@@ -284,7 +337,7 @@ const handleAddCliente = async () => {
           </div>
         ) : (
           <ClienteTable
-            data={clientes}
+            data={getCurrentPageData()}
             pagination={{
               currentPage,
               totalPages,
@@ -327,8 +380,9 @@ const handleAddCliente = async () => {
         id="add_modal"
         cliente={newCliente}
         onChange={setNewCliente}
-        onCancel={() => setNewCliente(defaultNewCliente)}
+        onCancel={() => setIsAddModalOpen(false)}
         onSave={handleAddCliente}
+        isOpen={isAddModalOpen}
       />
     </>
   );
