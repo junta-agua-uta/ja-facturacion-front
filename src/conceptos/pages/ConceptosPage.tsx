@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import api from "../../shared/api";
 import { Title, EndSlot, CardSlot } from "../../shared/components";
 import AddConceptoModal from "../modals/AddConceptoModal";
-import { Concepto, generarCodigos} from "../types/concepto";
+import { Concepto, generarCodigos } from "../types/concepto";
+import ConceptosTable from "../components/ConceptosTable";
+import { PAGE_SIZE } from '../../shared/utils/constants';
 
 interface ApiConcepto {
   ID: number;
@@ -17,6 +19,9 @@ export default function ConceptosPage() {
   const [conceptos, setConceptos] = useState<Concepto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1); //
+  const [totalItems, setTotalItems] = useState(0); //
+  const [totalPages, setTotalPages] = useState(1); //
 
   // Estado inicial según la nueva interfaz Concepto
   const [newConcepto, setNewConcepto] = useState<Concepto>({
@@ -100,37 +105,37 @@ export default function ConceptosPage() {
   // };
 
   const handleAddConcepto = () => {
-  // Generar código y código interno en base a la descripción
-  const { codigo, codInterno } = generarCodigos(
-    newConcepto.desc,
-    conceptos.map(c => c.codInterno) // comprobamos codigos existentes
-  );
+    // Generar código y código interno en base a la descripción
+    const { codigo, codInterno } = generarCodigos(
+      newConcepto.desc,
+      conceptos.map(c => c.codInterno) // comprobamos codigos existentes
+    );
 
-  // Crear un objeto concepto completo
-  const conceptoPrueba: Concepto = {
-    ...newConcepto,
-    codigo,
-    codInterno,
+    // Crear un objeto concepto completo
+    const conceptoPrueba: Concepto = {
+      ...newConcepto,
+      codigo,
+      codInterno,
+    };
+
+    // Mostrar en consola para probar
+    console.log("Concepto que se guardaría:", conceptoPrueba);
+
+    // Opcional: agregarlo localmente para ver cómo se ve en la tabla sin enviar a la API
+    setConceptos(prev => [...prev, conceptoPrueba]);
+
+    // Limpiar el modal
+    setNewConcepto({
+      id: "",
+      codigo: "",
+      codInterno: "",
+      desc: "",
+      precioBase: undefined,
+      requiereMes: false,
+    });
+
+    (document.getElementById("add_modal") as HTMLDialogElement)?.close();
   };
-
-  // Mostrar en consola para probar
-  console.log("Concepto que se guardaría:", conceptoPrueba);
-
-  // Opcional: agregarlo localmente para ver cómo se ve en la tabla sin enviar a la API
-  setConceptos(prev => [...prev, conceptoPrueba]);
-
-  // Limpiar el modal
-  setNewConcepto({
-    id: "",
-    codigo: "",
-    codInterno: "",
-    desc: "",
-    precioBase: undefined,
-    requiereMes: false,
-  });
-
-  (document.getElementById("add_modal") as HTMLDialogElement)?.close();
-};
 
 
 
@@ -162,10 +167,18 @@ export default function ConceptosPage() {
             <span className="loading loading-spinner loading-lg"></span>
           </div>
         ) : (
-          <div>
-            {/* Aquí pondrías <ConceptosTable conceptos={conceptos} /> cuando lo tengas */}
-            <pre>{JSON.stringify(conceptos, null, 2)}</pre>
-          </div>
+          <ConceptosTable
+            data={conceptos}
+            pagination={{
+              currentPage,
+              totalPages,
+              pageSize: PAGE_SIZE,
+              totalItems,
+            }}
+           // onEdit={handleEditConcepto}
+            //onDelete={handleDeleteConcepto}
+            onPageChange={setCurrentPage}
+          />
         )}
       </CardSlot>
 

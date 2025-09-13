@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Concepto, generarCodigos } from "../types/concepto";
+import { Concepto } from "../types/concepto";
 
 type AddConceptoModalProps = {
   id: string;
