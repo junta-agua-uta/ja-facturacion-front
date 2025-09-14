@@ -4,12 +4,12 @@ import { useConceptos } from "../hooks/useConceptos";
 
 interface SelectCodigoModalProps {
   id: string;
-  onSelect: (codigo: string, mes?: string) => void;
+  onSelect: (concepto: any, mes?: string) => void;
   onCancel: () => void;
 }
 
 export const SelectCodigoModal: React.FC<SelectCodigoModalProps> = ({ id, onSelect, onCancel }) => {
-  const [codigoSeleccionado, setCodigoSeleccionado] = useState<string | null>(null);
+  const [conceptoSeleccionado, setConceptoSeleccionado] = useState<any>(null);
   const [mesSeleccionado, setMesSeleccionado] = useState<string>("ninguno");
 
   // const handleCodigoClick = (codigo: string) => {
@@ -24,19 +24,24 @@ export const SelectCodigoModal: React.FC<SelectCodigoModalProps> = ({ id, onSele
   // carga de conceptos desde el hook
   const { conceptos, loading, error } = useConceptos();
 
-  const handleCodigoClick = (codigo: string, requiereMes?: boolean) => {
-    setCodigoSeleccionado(codigo);
+  const handleCodigoClick = (concepto: any) => {
+    console.log("🖱️ Click en concepto:", concepto);
+    setConceptoSeleccionado(concepto);
     setMesSeleccionado("ninguno");
-    if (!requiereMes) {
-      onSelect(codigo);
+    if (!concepto.requiereMes) {
+      console.log("✅ Concepto sin mes, seleccionando directamente:", concepto);
+      onSelect(concepto);
       (document.getElementById(id) as HTMLDialogElement)?.close();
+    } else {
+      console.log("⏳ Concepto requiere mes, esperando selección de mes");
     }
   };
 
 
   const handleMesSelect = () => {
-    if (codigoSeleccionado) {
-      onSelect(codigoSeleccionado, mesSeleccionado);
+    if (conceptoSeleccionado) {
+      console.log("📅 Seleccionando concepto con mes:", { conceptoSeleccionado, mesSeleccionado });
+      onSelect(conceptoSeleccionado, mesSeleccionado);
       (document.getElementById(id) as HTMLDialogElement)?.close();
     }
   };
@@ -54,13 +59,13 @@ export const SelectCodigoModal: React.FC<SelectCodigoModalProps> = ({ id, onSele
             {conceptos.map((c) => (
               <div key={c.id}>
                 <button
-                  className={`btn w-full ${codigoSeleccionado === c.codigo ? "btn-primary" : "btn-outline"}`}
-                  onClick={() => handleCodigoClick(c.codigo, c.requiereMes)}
+                  className={`btn w-full ${conceptoSeleccionado?.codigo === c.codigo ? "btn-primary" : "btn-outline"}`}
+                  onClick={() => handleCodigoClick(c)}
                   type="button"
                 >
-                  {c.desc}
+                  {c.desc} {c.requiereMes ? "(Requiere mes)" : ""} {c.precioBase ? `- $${c.precioBase}` : ""}
                 </button>
-                {c.requiereMes && codigoSeleccionado === c.codigo && (
+                {c.requiereMes && conceptoSeleccionado?.codigo === c.codigo && (
                   <div className="mt-2 flex gap-2 items-center">
                     <label className="label">Mes:</label>
                     <select

@@ -66,32 +66,35 @@ export default function Table<T extends { id: string }>({
                   ))}
                   {showActions && (onEdit || onDelete || onPrint) && (
                     <td className="align-middle">
-                      <div className="flex gap-2 justify-center items-center"></div>
-                      {onEdit && (
-                        <button
-                          className="btn btn-xs btn-circle btn-outline"
-                          onClick={() => onEdit(item)}
-                        >
-                          <FaEdit />
-                        </button>
-                      )}
-                      {onPrint && showPrint && (
-                        <button
-                          className="btn btn-xs btn-circle btn-outline btn-info"
-                          onClick={() => onPrint(item)}
-                          title="Imprimir"
-                        >
-                          <FaPrint />
-                        </button>
-                      )}
-                      {onDelete && showDelete && (
-                        <button
-                          className="btn btn-xs btn-circle btn-outline btn-error"
-                          onClick={() => onDelete(item.id)}
-                        >
-                          <FaTrash />
-                        </button>
-                      )}
+                      <div className="flex gap-2 justify-center items-center">
+                        {onEdit && (
+                          <button
+                            className="btn btn-xs btn-circle btn-outline"
+                            onClick={() => onEdit(item)}
+                            title="Editar"
+                          >
+                            <FaEdit />
+                          </button>
+                        )}
+                        {onPrint && showPrint && (
+                          <button
+                            className="btn btn-xs btn-circle btn-outline btn-info"
+                            onClick={() => onPrint(item)}
+                            title="Imprimir"
+                          >
+                            <FaPrint />
+                          </button>
+                        )}
+                        {onDelete && showDelete && (
+                          <button
+                            className="btn btn-xs btn-circle btn-outline btn-error"
+                            onClick={() => onDelete(item.id)}
+                            title="Eliminar"
+                          >
+                            <FaTrash />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>

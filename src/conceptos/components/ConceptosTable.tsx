@@ -34,8 +34,8 @@ export default function ConceptosTable({
       onEdit={onEdit}
       onDelete={onDelete}
       onPageChange={onPageChange}
-      showDelete={true} 
-      
+      showActions={true}
+      showDelete={true}
     />
   );
 }

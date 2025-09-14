@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Concepto } from "../types/concepto";
 
-type AddConceptoModalProps = {
+type ConceptoModalProps = {
   id: string;
   concepto: Concepto;
   onChange: (concepto: Concepto) => void;
   onCancel: () => void;
   onSave: () => void;
+  isEditing?: boolean;
 };
 
 export default function AddConceptoModal({
@@ -15,7 +16,8 @@ export default function AddConceptoModal({
   onChange,
   onCancel,
   onSave,
-}: AddConceptoModalProps) {
+  isEditing = false,
+}: ConceptoModalProps) {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const validate = () => {
@@ -44,7 +46,7 @@ export default function AddConceptoModal({
   return (
     <dialog id={id} className="modal">
       <div className="modal-box">
-        <h3 className="font-bold text-lg">Nuevo Concepto</h3>
+        <h3 className="font-bold text-lg">{isEditing ? "Editar Concepto" : "Nuevo Concepto"}</h3>
         <form className="space-y-4 mt-4">
           <div>
             <label className="label">Descripción</label>

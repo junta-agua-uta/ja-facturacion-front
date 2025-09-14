@@ -7,6 +7,12 @@ export interface Concepto {
   requiereMes?: boolean;
 }
 
+export interface ConceptoFilter {
+  desc?: string;
+  codigo?: string;
+  codInterno?: string;
+}
+
 export const generarCodigos = (descripcion: string, existentes: string[]) => {
   if (!descripcion || !descripcion.trim()) {
     throw new Error("La descripción no puede estar vacía");

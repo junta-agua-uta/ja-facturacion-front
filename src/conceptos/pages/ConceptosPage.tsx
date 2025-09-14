@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import api from "../../shared/api";
 import { Title, EndSlot, CardSlot } from "../../shared/components";
 import AddConceptoModal from "../modals/AddConceptoModal";
-import { Concepto, generarCodigos } from "../types/concepto";
-import ConceptosTable from "../components/ConceptosTable";
+import { Concepto, ConceptoFilter, generarCodigos } from "../types/concepto";
+import { ConceptosTable, ConceptoFilters } from "../components";
+import { conceptosService } from "../services";
 import { PAGE_SIZE } from '../../shared/utils/constants';
 
 
@@ -26,6 +26,20 @@ export default function ConceptosPage() {
     requiereMes: false,
   });
 
+  // Estado para edición
+  const [editingConcepto, setEditingConcepto] = useState<Concepto>({
+    id: "",
+    codigo: "",
+    codInterno: "",
+    desc: "",
+    precioBase: undefined,
+    requiereMes: false,
+  });
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Estado para filtros de búsqueda
+  const [filters, setFilters] = useState<ConceptoFilter>({});
+
   // Cargar conceptos desde API
   useEffect(() => {
     const fetchConceptos = async () => {
@@ -33,28 +47,31 @@ export default function ConceptosPage() {
       setError(null);
 
       try {
-        const response = await api.get("/conceptos", {
-          params: { page: currentPage, limit: PAGE_SIZE }
-        });
+        // Si hay filtros activos, usar la búsqueda con filtros
+        const hasActiveFilters = filters.desc || filters.codigo || filters.codInterno;
+        
+        console.log("🔍 Estado de filtros:", filters);
+        console.log("🔍 Hay filtros activos:", hasActiveFilters);
+        
+        const result = hasActiveFilters 
+          ? await conceptosService.buscarConFiltros(filters, currentPage, PAGE_SIZE)
+          : await conceptosService.listar(currentPage, PAGE_SIZE);
+        
+        console.log("📊 Resultado obtenido:", result);
 
-        console.log(response.data);
-
-        // Usar los datos ya mapeados desde el backend
-        const dataArray: Concepto[] = response.data.data || [];
-        setConceptos(dataArray);
-
-        setTotalItems(response.data.totalItems || 0);
-        setTotalPages(response.data.totalPages || 1);
+        setConceptos(result.data);
+        setTotalItems(result.totalItems);
+        setTotalPages(result.totalPages);
       } catch (err) {
         console.error("Error fetching conceptos:", err);
-        setError("No se pudo cargar la lista de conceptos");
+        setError(err instanceof Error ? err.message : "No se pudo cargar la lista de conceptos");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchConceptos();
-  }, [currentPage]);
+  }, [currentPage, filters]);
 
 
   // Agregar concepto
@@ -84,8 +101,8 @@ export default function ConceptosPage() {
     };
     console.log("Payload to send:", payload);
 
-    // Guardar en la base de datos
-    const added: Concepto = await api.post("/conceptos", payload).then(res => res.data);
+      // Guardar en la base de datos usando el servicio
+      const added = await conceptosService.crear(payload);
 
     // Ya viene mapeado desde el backend, solo agregar al estado
     setConceptos(prev => [...prev, added]);
@@ -100,12 +117,109 @@ export default function ConceptosPage() {
       requiereMes: false,
     });
 
-    (document.getElementById("add_modal") as HTMLDialogElement)?.close();
+      (document.getElementById("concepto_modal") as HTMLDialogElement)?.close();
   } catch (err) {
     console.error("Error adding concepto:", err);
-    setError("No se pudo agregar el concepto");
+      setError(err instanceof Error ? err.message : "No se pudo agregar el concepto");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Editar concepto
+  const handleEditConcepto = (concepto: Concepto) => {
+    console.log("Editar concepto:", concepto);
+    setEditingConcepto(concepto);
+    setIsEditing(true);
+    const dialog = document.getElementById("concepto_modal") as HTMLDialogElement;
+    dialog?.showModal();
+  };
+
+  // Guardar cambios de edición
+  const handleUpdateConcepto = async () => {
+    if (!editingConcepto.desc) {
+      setError("La descripción es obligatoria");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Preparar objeto a enviar a la API (sin generar nuevos códigos)
+      const payload = {
+        codigo: editingConcepto.codigo,
+        codInterno: editingConcepto.codInterno,
+        desc: editingConcepto.desc,
+        precioBase: editingConcepto.precioBase,
+        requiereMes: editingConcepto.requiereMes,
+      };
+      console.log("Payload to update:", payload);
+
+      // Actualizar en la base de datos usando el servicio
+      const updated = await conceptosService.actualizar(editingConcepto.id, payload);
+
+      // Actualizar en el estado local
+      setConceptos(prev => prev.map(c => c.id === editingConcepto.id ? updated : c));
+
+      // Limpiar estado de edición
+      setEditingConcepto({
+        id: "",
+        codigo: "",
+        codInterno: "",
+        desc: "",
+        precioBase: undefined,
+        requiereMes: false,
+      });
+      setIsEditing(false);
+
+      (document.getElementById("concepto_modal") as HTMLDialogElement)?.close();
+    } catch (err) {
+      console.error("Error updating concepto:", err);
+      setError(err instanceof Error ? err.message : "No se pudo actualizar el concepto");
   } finally {
     setIsLoading(false);
+  }
+};
+
+  // Cancelar edición
+  const handleCancelEdit = () => {
+    setEditingConcepto({
+      id: "",
+      codigo: "",
+      codInterno: "",
+      desc: "",
+      precioBase: undefined,
+      requiereMes: false,
+    });
+    setIsEditing(false);
+  };
+
+  // Manejar cambios en filtros
+  const handleFiltersChange = (newFilters: ConceptoFilter) => {
+    console.log("🔄 Cambio de filtros:", newFilters);
+    setFilters(newFilters);
+    setCurrentPage(1); // Resetear a la primera página cuando se cambian los filtros
+  };
+
+  // Limpiar filtros
+  const handleClearFilters = () => {
+    console.log("🧹 Limpiando filtros");
+    setFilters({});
+    setCurrentPage(1);
+  };
+
+  // Eliminar concepto
+  const handleDeleteConcepto = async (id: string) => {
+    if (confirm("¿Estás seguro de que deseas eliminar este concepto?")) {
+      try {
+        await conceptosService.eliminar(id);
+        setConceptos(prev => prev.filter(c => c.id !== id));
+        console.log("Concepto eliminado:", id);
+      } catch (err) {
+        console.error("Error deleting concepto:", err);
+        setError(err instanceof Error ? err.message : "No se pudo eliminar el concepto");
+      }
   }
 };
 
@@ -154,7 +268,8 @@ export default function ConceptosPage() {
           <button
             className="btn btn-primary"
             onClick={() => {
-              const dialog = document.getElementById("add_modal") as HTMLDialogElement;
+              setIsEditing(false);
+              const dialog = document.getElementById("concepto_modal") as HTMLDialogElement;
               dialog?.showModal();
             }}
           >
@@ -167,6 +282,13 @@ export default function ConceptosPage() {
             <span>{error}</span>
           </div>
         )}
+
+        {/* Filtros de búsqueda */}
+        <ConceptoFilters
+          filters={filters}
+          onChange={handleFiltersChange}
+          onClear={handleClearFilters}
+        />
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
@@ -181,18 +303,21 @@ export default function ConceptosPage() {
               pageSize: PAGE_SIZE,
               totalItems,
             }}
-            // onEdit={handleEditConcepto}
-            //onDelete={handleDeleteConcepto}
+            onEdit={handleEditConcepto}
+            onDelete={handleDeleteConcepto}
             onPageChange={setCurrentPage}
           />
         )}
       </CardSlot>
 
       <AddConceptoModal
-        id="add_modal"
-        concepto={newConcepto}
-        onChange={setNewConcepto}
-        onCancel={() =>
+        id="concepto_modal"
+        concepto={isEditing ? editingConcepto : newConcepto}
+        onChange={isEditing ? setEditingConcepto : setNewConcepto}
+        onCancel={() => {
+          if (isEditing) {
+            handleCancelEdit();
+          } else {
           setNewConcepto({
             id: "",
             codigo: "",
@@ -200,9 +325,11 @@ export default function ConceptosPage() {
             desc: "",
             precioBase: undefined,
             requiereMes: false,
-          })
+            });
         }
-        onSave={handleAddConcepto}
+        }}
+        onSave={isEditing ? handleUpdateConcepto : handleAddConcepto}
+        isEditing={isEditing}
       />
     </>
   );
