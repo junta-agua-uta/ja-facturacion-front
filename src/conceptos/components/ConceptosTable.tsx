@@ -24,6 +24,7 @@ export default function ConceptosTable({
       accessor: "precioBase" as const
     }
   ];
+  
 
   return (
     <Table
@@ -33,7 +34,8 @@ export default function ConceptosTable({
       onEdit={onEdit}
       onDelete={onDelete}
       onPageChange={onPageChange}
-      showDelete={true} // Puedes ajustarlo según tus necesidades
+      showDelete={true} 
+      
     />
   );
 }

@@ -6,14 +6,7 @@ import { Concepto, generarCodigos } from "../types/concepto";
 import ConceptosTable from "../components/ConceptosTable";
 import { PAGE_SIZE } from '../../shared/utils/constants';
 
-interface ApiConcepto {
-  ID: number;
-  CODIGO: string;
-  COD_INTERNO: string;
-  DESCRIPCION: string;
-  PRECIO_BASE: number;
-  REQUIERE_MES: boolean;
-}
+
 
 export default function ConceptosPage() {
   const [conceptos, setConceptos] = useState<Concepto[]>([]);
@@ -38,18 +31,20 @@ export default function ConceptosPage() {
     const fetchConceptos = async () => {
       setIsLoading(true);
       setError(null);
+
       try {
-        const response = await api.get("/conceptos");
-        const data: ApiConcepto[] = response.data;
-        const mapped = data.map((c) => ({
-          id: c.ID.toString(),
-          codigo: c.CODIGO,
-          codInterno: c.COD_INTERNO,
-          desc: c.DESCRIPCION,
-          precioBase: c.PRECIO_BASE,
-          requiereMes: c.REQUIERE_MES,
-        }));
-        setConceptos(mapped);
+        const response = await api.get("/conceptos", {
+          params: { page: currentPage, limit: PAGE_SIZE }
+        });
+
+        console.log(response.data);
+
+        // Usar los datos ya mapeados desde el backend
+        const dataArray: Concepto[] = response.data.data || [];
+        setConceptos(dataArray);
+
+        setTotalItems(response.data.totalItems || 0);
+        setTotalPages(response.data.totalPages || 1);
       } catch (err) {
         console.error("Error fetching conceptos:", err);
         setError("No se pudo cargar la lista de conceptos");
@@ -57,74 +52,45 @@ export default function ConceptosPage() {
         setIsLoading(false);
       }
     };
+
     fetchConceptos();
-  }, []);
+  }, [currentPage]);
+
 
   // Agregar concepto
-  // const handleAddConcepto = async () => {
-  //   if (!newConcepto.codigo || !newConcepto.codInterno || !newConcepto.desc) return;
+ const handleAddConcepto = async () => {
+  if (!newConcepto.desc) {
+    setError("La descripción es obligatoria");
+    return;
+  }
 
-  //   setIsLoading(true);
-  //   setError(null);
-  //   try {
-  //     const response = await api.post("/conceptos", {
-  //       codigo: newConcepto.codigo,
-  //       codInterno: newConcepto.codInterno,
-  //       descripcion: newConcepto.desc,
-  //       precioBase: newConcepto.precioBase,
-  //       requiereMes: newConcepto.requiereMes,
-  //     });
+  setIsLoading(true);
+  setError(null);
 
-  //     const added = response.data;
-  //     const conceptoObj: Concepto = {
-  //       id: added.ID.toString(),
-  //       codigo: added.CODIGO,
-  //       codInterno: added.COD_INTERNO,
-  //       desc: added.DESCRIPCION,
-  //       precioBase: added.PRECIO_BASE,
-  //       requiereMes: added.REQUIERE_MES,
-  //     };
-
-  //     setConceptos((prev) => [...prev, conceptoObj]);
-  //     setNewConcepto({
-  //       id: "",
-  //       codigo: "",
-  //       codInterno: "",
-  //       desc: "",
-  //       precioBase: 0,
-  //       requiereMes: false,
-  //     });
-
-  //     (document.getElementById("add_modal") as HTMLDialogElement)?.close();
-  //   } catch (err) {
-  //     console.error("Error adding concepto:", err);
-  //     setError("No se pudo agregar el concepto");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  const handleAddConcepto = () => {
-    // Generar código y código interno en base a la descripción
+  try {
+    // Generar código y código interno automáticamente
     const { codigo, codInterno } = generarCodigos(
       newConcepto.desc,
-      conceptos.map(c => c.codInterno) // comprobamos codigos existentes
+      conceptos.map(c => c.codInterno) // comprobamos códigos existentes
     );
 
-    // Crear un objeto concepto completo
-    const conceptoPrueba: Concepto = {
-      ...newConcepto,
+    // Preparar objeto a enviar a la API
+    const payload = {
       codigo,
       codInterno,
+      desc: newConcepto.desc,
+      precioBase: newConcepto.precioBase,
+      requiereMes: newConcepto.requiereMes,
     };
+    console.log("Payload to send:", payload);
 
-    // Mostrar en consola para probar
-    console.log("Concepto que se guardaría:", conceptoPrueba);
+    // Guardar en la base de datos
+    const added: Concepto = await api.post("/conceptos", payload).then(res => res.data);
 
-    // Opcional: agregarlo localmente para ver cómo se ve en la tabla sin enviar a la API
-    setConceptos(prev => [...prev, conceptoPrueba]);
+    // Ya viene mapeado desde el backend, solo agregar al estado
+    setConceptos(prev => [...prev, added]);
 
-    // Limpiar el modal
+    // Limpiar modal
     setNewConcepto({
       id: "",
       codigo: "",
@@ -135,7 +101,47 @@ export default function ConceptosPage() {
     });
 
     (document.getElementById("add_modal") as HTMLDialogElement)?.close();
-  };
+  } catch (err) {
+    console.error("Error adding concepto:", err);
+    setError("No se pudo agregar el concepto");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+  // const handleAddConcepto = () => {
+  //   // Generar código y código interno en base a la descripción
+  //   const { codigo, codInterno } = generarCodigos(
+  //     newConcepto.desc,
+  //     conceptos.map(c => c.codInterno) // comprobamos codigos existentes
+  //   );
+
+  //   // Crear un objeto concepto completo
+  //   const conceptoPrueba: Concepto = {
+  //     ...newConcepto,
+  //     codigo,
+  //     codInterno,
+  //   };
+
+  //   // Mostrar en consola para probar
+  //   console.log("Concepto que se guardaría:", conceptoPrueba);
+
+  //   // Opcional: agregarlo localmente para ver cómo se ve en la tabla sin enviar a la API
+  //   setConceptos(prev => [...prev, conceptoPrueba]);
+
+  //   // Limpiar el modal
+  //   setNewConcepto({
+  //     id: "",
+  //     codigo: "",
+  //     codInterno: "",
+  //     desc: "",
+  //     precioBase: undefined,
+  //     requiereMes: false,
+  //   });
+
+  //   (document.getElementById("add_modal") as HTMLDialogElement)?.close();
+  // };
 
 
 
@@ -175,7 +181,7 @@ export default function ConceptosPage() {
               pageSize: PAGE_SIZE,
               totalItems,
             }}
-           // onEdit={handleEditConcepto}
+            // onEdit={handleEditConcepto}
             //onDelete={handleDeleteConcepto}
             onPageChange={setCurrentPage}
           />

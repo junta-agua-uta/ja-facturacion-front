@@ -48,47 +48,55 @@ export default function Table<T extends { id: string }>({
             </tr>
           </thead>
           <tbody>
-            {data.map(item => (
-              <tr key={item.id}>
-                {columns.map((column, index) => (
-                  <td key={index}>
-                    {column.Cell
-                      ? column.Cell({ value: item[column.accessor] })
-                      : String(item[column.accessor])}
-                  </td>
-                ))}
-                {showActions && (onEdit || onDelete || onPrint) && (
-                  <td className="align-middle">
-                    <div className="flex gap-2 justify-center items-center"></div>
-                    {onEdit && (
-                      <button
-                        className="btn btn-xs btn-circle btn-outline"
-                        onClick={() => onEdit(item)}
-                      >
-                        <FaEdit />
-                      </button>
-                    )}
-                    {onPrint && showPrint && (
-                      <button
-                        className="btn btn-xs btn-circle btn-outline btn-info"
-                        onClick={() => onPrint(item)}
-                        title="Imprimir"
-                      >
-                        <FaPrint />
-                      </button>
-                    )}
-                    {onDelete && showDelete && (
-                      <button
-                        className="btn btn-xs btn-circle btn-outline btn-error"
-                        onClick={() => onDelete(item.id)}
-                      >
-                        <FaTrash />
-                      </button>
-                    )}
-                  </td>
-                )}
+            {data.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length + (showActions && (onEdit || onDelete || onPrint) ? 1 : 0)} className="text-center py-8 text-gray-500">
+                  No hay datos para mostrar.
+                </td>
               </tr>
-            ))}
+            ) : (
+              data.map(item => (
+                <tr key={item.id}>
+                  {columns.map((column, index) => (
+                    <td key={index}>
+                      {column.Cell
+                        ? column.Cell({ value: item[column.accessor] })
+                        : String(item[column.accessor])}
+                    </td>
+                  ))}
+                  {showActions && (onEdit || onDelete || onPrint) && (
+                    <td className="align-middle">
+                      <div className="flex gap-2 justify-center items-center"></div>
+                      {onEdit && (
+                        <button
+                          className="btn btn-xs btn-circle btn-outline"
+                          onClick={() => onEdit(item)}
+                        >
+                          <FaEdit />
+                        </button>
+                      )}
+                      {onPrint && showPrint && (
+                        <button
+                          className="btn btn-xs btn-circle btn-outline btn-info"
+                          onClick={() => onPrint(item)}
+                          title="Imprimir"
+                        >
+                          <FaPrint />
+                        </button>
+                      )}
+                      {onDelete && showDelete && (
+                        <button
+                          className="btn btn-xs btn-circle btn-outline btn-error"
+                          onClick={() => onDelete(item.id)}
+                        >
+                          <FaTrash />
+                        </button>
+                      )}
+                    </td>
+                  )}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
