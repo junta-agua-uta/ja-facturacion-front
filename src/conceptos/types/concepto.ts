@@ -12,7 +12,10 @@ export const generarCodigos = (descripcion: string, existentes: string[]) => {
     throw new Error("La descripción no puede estar vacía");
   }
 
-  const codigo = descripcion.trim().toUpperCase();
+  const codigo = descripcion
+    .normalize("NFD")            // separa caracteres + tildes
+    .replace(/[\u0300-\u036f]/g, "") // elimina tildes
+    .toUpperCase()  
   const palabras = codigo.split(/\s+/);
   
 
