@@ -7,23 +7,20 @@ type Props = Readonly<{
 }>;
 
 export default function ConceptoFilters({ filters, onChange, onClear }: Props) {
-  // Limpiar los otros campos cuando se ingresa texto en un campo
+  // Permitir filtros combinados
   const handleDescripcionChange = (value: string) => {
-    onChange({ ...filters, desc: value, codigo: '', codInterno: '' });
+    onChange({ ...filters, desc: value });
   };
 
   const handleCodigoChange = (value: string) => {
-    onChange({ ...filters, codigo: value, desc: '', codInterno: '' });
+    onChange({ ...filters, codigo: value });
   };
 
-  const handleCodInternoChange = (value: string) => {
-    onChange({ ...filters, codInterno: value, desc: '', codigo: '' });
-  };
 
   return (
     <form className="form-control space-y-4">
       <br />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-blue-900">Descripción:</label>
           <div className="mt-2">
@@ -38,11 +35,11 @@ export default function ConceptoFilters({ filters, onChange, onClear }: Props) {
         </div>
 
         <div>
-          <label className="block text-blue-900">Código:</label>
+          <label className="block text-blue-900">Código Interno:</label>
           <div className="mt-2">
             <input
               type="text"
-              placeholder="Buscar por código"
+              placeholder="Buscar por código interno"
               className="input border border-gray-300 input-md w-full"
               value={filters.codigo ?? ''}
               onChange={(e) => handleCodigoChange(e.target.value)}
@@ -50,18 +47,6 @@ export default function ConceptoFilters({ filters, onChange, onClear }: Props) {
           </div>
         </div>
 
-        <div>
-          <label className="block text-blue-900">Código Interno:</label>
-          <div className="mt-2">
-            <input
-              type="text"
-              placeholder="Buscar por código interno"
-              className="input border border-gray-300 input-md w-full"
-              value={filters.codInterno ?? ''}
-              onChange={(e) => handleCodInternoChange(e.target.value)}
-            />
-          </div>
-        </div>
       </div>
 
       <div className="flex justify-end">

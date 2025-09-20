@@ -10,7 +10,6 @@ export interface Concepto {
 export interface ConceptoFilter {
   desc?: string;
   codigo?: string;
-  codInterno?: string;
 }
 
 export const generarCodigos = (descripcion: string, existentes: string[]) => {

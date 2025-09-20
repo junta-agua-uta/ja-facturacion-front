@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Title, EndSlot, CardSlot } from "../../shared/components";
 import AddConceptoModal from "../modals/AddConceptoModal";
+import { ConfirmModal } from "../modals";
 import { Concepto, ConceptoFilter, generarCodigos } from "../types/concepto";
 import { ConceptosTable, ConceptoFilters } from "../components";
 import { conceptosService } from "../services";
@@ -40,6 +41,9 @@ export default function ConceptosPage() {
   // Estado para filtros de búsqueda
   const [filters, setFilters] = useState<ConceptoFilter>({});
 
+  // Estado para el modal de confirmación
+  const [conceptoToDelete, setConceptoToDelete] = useState<Concepto | null>(null);
+
   // Cargar conceptos desde API
   useEffect(() => {
     const fetchConceptos = async () => {
@@ -48,7 +52,7 @@ export default function ConceptosPage() {
 
       try {
         // Si hay filtros activos, usar la búsqueda con filtros
-        const hasActiveFilters = filters.desc || filters.codigo || filters.codInterno;
+        const hasActiveFilters = filters.desc || filters.codigo;
         
         console.log("🔍 Estado de filtros:", filters);
         console.log("🔍 Hay filtros activos:", hasActiveFilters);
@@ -209,19 +213,38 @@ export default function ConceptosPage() {
     setCurrentPage(1);
   };
 
-  // Eliminar concepto
-  const handleDeleteConcepto = async (id: string) => {
-    if (confirm("¿Estás seguro de que deseas eliminar este concepto?")) {
+  // Desactivar concepto (eliminado lógico)
+  const handleDelete = async () => {
+    if (conceptoToDelete) {
+      setIsLoading(true);
+      setError(null);
       try {
-        await conceptosService.eliminar(id);
-        setConceptos(prev => prev.filter(c => c.id !== id));
-        console.log("Concepto eliminado:", id);
-      } catch (err) {
-        console.error("Error deleting concepto:", err);
-        setError(err instanceof Error ? err.message : "No se pudo eliminar el concepto");
+        await conceptosService.desactivar(conceptoToDelete.id);
+        setConceptos(prev => prev.filter(c => c.id !== conceptoToDelete.id));
+        setConceptoToDelete(null);
+        (document.getElementById('delete_modal') as HTMLDialogElement)?.close();
+      } catch (error) {
+        console.error('Error deactivating concepto:', error);
+        setError('No se pudo desactivar el concepto');
+      } finally {
+        setIsLoading(false);
       }
-  }
-};
+    }
+  };
+
+  // Eliminar concepto - COMENTADO TEMPORALMENTE
+  // const handleDeleteConcepto = async (id: string) => {
+  //   if (confirm("¿Estás seguro de que deseas eliminar este concepto?")) {
+  //     try {
+  //       await conceptosService.eliminar(id);
+  //       setConceptos(prev => prev.filter(c => c.id !== id));
+  //       console.log("Concepto eliminado:", id);
+  //     } catch (err) {
+  //       console.error("Error deleting concepto:", err);
+  //       setError(err instanceof Error ? err.message : "No se pudo eliminar el concepto");
+  //     }
+  // }
+  // };
 
 
   // const handleAddConcepto = () => {
@@ -304,7 +327,11 @@ export default function ConceptosPage() {
               totalItems,
             }}
             onEdit={handleEditConcepto}
-            onDelete={handleDeleteConcepto}
+            onDelete={(conceptoId) => {
+              const concepto = conceptos.find(c => c.id === conceptoId);
+              setConceptoToDelete(concepto ?? null);
+              (document.getElementById('delete_modal') as HTMLDialogElement)?.showModal();
+            }}
             onPageChange={setCurrentPage}
           />
         )}
@@ -330,6 +357,14 @@ export default function ConceptosPage() {
         }}
         onSave={isEditing ? handleUpdateConcepto : handleAddConcepto}
         isEditing={isEditing}
+      />
+
+      <ConfirmModal
+        id="delete_modal"
+        title="Confirmar desactivación"
+        message={`¿Estás seguro de que deseas desactivar el concepto "${conceptoToDelete?.desc}"?`}
+        onConfirm={handleDelete}
+        onCancel={() => setConceptoToDelete(null)}
       />
     </>
   );
