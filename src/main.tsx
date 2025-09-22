@@ -11,6 +11,8 @@ import MedicionesPage from './medicion/pages/MedicionPage.tsx'
 import ClientesPage from './Clientes/pages/ClientesPage.tsx'
 import ProtectedRoute from './core/ProtectedRoute.tsx'
 import Profile from './profile/Profile.tsx'
+import AgregarLiquidacion from './liquidacion/pages/AgregarLiquidacion.tsx'
+import Liquidacion from './liquidacion/pages/Liquidacion.tsx'
 
 const router = createBrowserRouter([
   {
@@ -44,6 +46,19 @@ const router = createBrowserRouter([
               {
                 path: 'crear',
                 element: <AgregarFacturas />
+              }
+            ]
+          },
+           {
+            path: 'liquidacion',
+            children: [
+              {
+                path: '',
+                element: <Liquidacion/>
+              },
+              {
+                path: 'crear',
+                element: <AgregarLiquidacion />
               }
             ]
           },

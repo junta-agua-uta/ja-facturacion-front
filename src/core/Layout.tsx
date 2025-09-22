@@ -72,6 +72,22 @@ const Layout = () => {
               }
             ]}
           />
+           <NavItem
+            to="/junta/liquidacion"
+            isActive={isActive('liquidacion')}
+            icon={<FacturasIcon isActive={isActive('liquidacion')} />}
+            label="Liquidación de compras"
+            children={[
+              {
+                label: "Ver todas las liquidaciones de compras",
+                to: "/junta/liquidacion"
+              },
+              {
+                label: "Crear liquidación de compra",
+                to: "/junta/liquidacion/crear"
+              }
+            ]}
+          />
 
           <NavItem
             to="/junta/usuarios"
