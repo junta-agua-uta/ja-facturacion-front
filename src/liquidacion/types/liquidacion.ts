@@ -1,11 +1,14 @@
 export interface LiquidacionForm {
-  fechaEmision: string;
-  dirEstablecimiento: string;
-  tipoIdentificacionProveedor: string;
-  razonSocialProveedor: string;
-  identificacionProveedor: string;
-  moneda: string;
+  id?: number;
+  fechaEmision?: string;
+  dirEstablecimiento?: string;
+  tipoIdentificacionProveedor?: string;
+  razonSocialProveedor?: string;
+  identificacionProveedor?: string;
+  moneda?: string;
   direccionProveedor?: string;
+  importeTotal?: number;
+  estadoSri?: string;
 }
 
 export interface ConceptoCobro {
