@@ -6,56 +6,27 @@ import { useLiquidacionForm } from "../hooks/useLiquidacionForm";
 import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
-import { AddClienteModal } from "../../Clientes/mod/AddClienteModal";
-import { Cliente } from "../../Clientes/types/cliente";
-import { useClientePorCedula } from "../hooks/useClientePorCedula";
 import api from "../../shared/api";
 import { authService } from "../../auth/Services/auth.service";
 import { useBranchSelection } from "../hooks/useBranchSelection";
 
 export default function AgregarLiquidacion() {
-  // IMPORTANTE: Todos los hooks deben llamarse en el mismo orden en cada renderizado
-  // 1. Hooks de React
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [userName, setUserName] = useState("Usuario");
-  const [nuevoCliente, setNuevoCliente] = useState<Cliente>({
-    id: "0",
-    identificacion: "",
-    razonSocial: "",
-    direccion: "",
-    telefono1: "",
-    correo: "",
-  });
 
-  // 2. Hooks personalizados
   const {
     formData,
     conceptos,
     saving,
     saveError,
     handleInputChange,
-    handleConceptoSelect,
     handleConceptoChange,
     handleConceptoDelete,
+    handleAddConcepto,
     handleOpenCodigoModal,
     saveLiquidacion,
     resetForm,
   } = useLiquidacionForm();
-
-  const {
-    error: clienteError,
-    showAddClienteModal,
-    handleAddCliente,
-    handleCloseAddClienteModal,
-    handleClienteAdded,
-  } = useClientePorCedula(formData.cedula);
-
-  useEffect(() => {
-    setNuevoCliente((prev: Cliente) => ({
-      ...prev,
-      identificacion: formData.cedula,
-    }));
-  }, [formData.cedula]);
 
   const {
     branches,
@@ -72,7 +43,7 @@ export default function AgregarLiquidacion() {
       } as React.ChangeEvent<HTMLSelectElement>;
       handleBranchChange(event);
     }
-  }, [branches, loadingBranches, selectedBranch]);
+  }, [branches, loadingBranches, selectedBranch, handleBranchChange]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -89,13 +60,11 @@ export default function AgregarLiquidacion() {
         }
       }
     };
-
     fetchUserData();
   }, []);
 
   const handleSaveLiquidacion = async () => {
     setErrorMessage(null);
-
     if (!selectedBranch && branches.length > 0) {
       const event = {
         target: { value: branches[0].id },
@@ -106,9 +75,7 @@ export default function AgregarLiquidacion() {
       return;
     }
 
-    const selectedBranchObj = branches.find(
-      (branch) => branch.id === selectedBranch
-    );
+    const selectedBranchObj = branches.find((branch) => branch.id === selectedBranch);
     if (!selectedBranchObj) {
       setErrorMessage("Sucursal no válida");
       return;
@@ -127,24 +94,22 @@ export default function AgregarLiquidacion() {
 
   const { subtotal, descuentoTotal, total } = useMemo(() => {
     const subtotalSinDescuento = conceptos.reduce(
-      (sum, concepto) => sum + concepto.precio * concepto.cantidad,
+      (sum, concepto) => sum + concepto.precioUnitario * concepto.cantidad,
       0
     );
-
     const descuento = conceptos.reduce(
       (sum, concepto) => sum + concepto.descuento * concepto.cantidad,
       0
     );
-
-    const subtotalConDescuento = conceptos.reduce(
-      (sum, concepto) => sum + (concepto.subtotal || 0),
+    const totalConImpuestos = conceptos.reduce(
+      (sum, concepto) => sum + concepto.precioTotalSinImpuesto + concepto.valorImpuesto,
       0
     );
 
     return {
       subtotal: subtotalSinDescuento,
       descuentoTotal: descuento,
-      total: subtotalConDescuento,
+      total: totalConImpuestos,
     };
   }, [conceptos]);
 
@@ -178,18 +143,10 @@ export default function AgregarLiquidacion() {
           )}
           <LiquidacionFormContent
             formData={formData}
-            proveedorError={clienteError}
             total={total}
             onInputChange={handleInputChange}
+            onAddConcepto={handleAddConcepto}
             onOpenCodigoModal={handleOpenCodigoModal}
-            onConceptoSelect={handleConceptoSelect}
-            onAddProveedor={() => {
-              setNuevoCliente((prev) => ({
-                ...prev,
-                identificacion: formData.cedula,
-              }));
-              handleAddCliente();
-            }}
             onSave={handleSaveLiquidacion}
             onCancel={handleCancel}
             saving={saving}
@@ -234,77 +191,26 @@ export default function AgregarLiquidacion() {
         </div>
       </div>
 
-      <AddClienteModal
-        id="add_cliente_modal"
-        isOpen={showAddClienteModal}
-        cliente={nuevoCliente}
-        onChange={(updatedCliente) => {
-          setNuevoCliente(updatedCliente);
-        }}
-        onCancel={() => {
-          handleCloseAddClienteModal();
-          setNuevoCliente({
-            id: "0",
-            identificacion: formData.cedula,
-            razonSocial: "",
-            direccion: "",
-            telefono1: "",
-            correo: "",
-          });
-        }}
-        onSave={async () => {
-          try {
-            const formatClienteForAPI = (cliente: Cliente) => ({
-              identificacion: cliente.identificacion,
-              razonSocial: cliente.razonSocial,
-              nombreComercial: cliente.nombreComercial || "Sin Nombre Comercial",
-              direccion: cliente.direccion,
-              telefono1: cliente.telefono1 || "",
-              telefono2: cliente.telefono2 || "",
-              correo: cliente.correo || "",
-              tarifa: cliente.tarifa || "",
-              grupo: cliente.grupo || "",
-              zona: cliente.zona || "",
-              ruta: cliente.ruta || "",
-              vendedor: cliente.vendedor || "",
-              cobrador: cliente.cobrador || "",
-              provincia: cliente.provincia || "",
-              ciudad: cliente.ciudad || "",
-              parroquia: cliente.parroquia || "",
-            });
-
-            const formattedCliente = formatClienteForAPI(nuevoCliente);
-
-            await api.post("/clientes", formattedCliente);
-
-            alert("Cliente agregado exitosamente");
-
-            handleCloseAddClienteModal();
-            setNuevoCliente({
-              id: "0",
-              identificacion: formData.cedula,
-              razonSocial: "",
-              direccion: "",
-              telefono1: "",
-              correo: "",
-            });
-
-            handleInputChange({
-              target: {
-                name: "cliente",
-                value: nuevoCliente.razonSocial,
-              },
-            } as React.ChangeEvent<HTMLInputElement>);
-
-            if (typeof handleClienteAdded === "function") {
-              handleClienteAdded();
-            }
-          } catch (error) {
-            console.error("Error al guardar el cliente:", error);
-            alert("No se pudo guardar el cliente");
-          }
-        }}
-      />
+      <dialog id="select_codigo_modal" className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Agregar Concepto</h3>
+          <p className="py-4">Haz clic en "Agregar Concepto" para añadir un nuevo concepto manualmente.</p>
+          <div className="modal-action">
+            <button onClick={handleAddConcepto} className="btn btn-primary">
+              Agregar Concepto
+            </button>
+            <button
+              onClick={() => {
+                const dialog = document.getElementById("select_codigo_modal") as HTMLDialogElement;
+                dialog?.close();
+              }}
+              className="btn btn-secondary"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </dialog>
     </>
   );
-}
+};

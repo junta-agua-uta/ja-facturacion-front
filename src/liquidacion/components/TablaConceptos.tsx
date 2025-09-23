@@ -1,176 +1,147 @@
-import React, { useCallback, memo } from "react";
-
-export interface ConceptoCobro {
-  codigo: string;
-  descripcion: string;
-  cantidad: number;
-  precio: number;
-  descuento: number;
-  subtotal: number;
-  total: number;
-}
+import { ConceptoCobro } from "../types/liquidacion";
 
 interface TablaConceptosProps {
   conceptos: ConceptoCobro[];
-  onChange: (index: number, updated: ConceptoCobro) => void;
-  onDelete: (index: number) => void;
+  onChange: (idx: number, updated: ConceptoCobro) => void;
+  onDelete: (idx: number) => void;
 }
 
-const recalcularConcepto = (concepto: ConceptoCobro): ConceptoCobro => {
-  const subtotal = (concepto.precio - concepto.descuento) * concepto.cantidad;
-  return {
-    ...concepto,
-    subtotal: +subtotal,
-    total: +subtotal
-  };
-};
-
-const ConceptoRow = memo(({ 
-  concepto, 
-  index, 
-  onEdit, 
-  onDelete 
-}: { 
-  concepto: ConceptoCobro; 
-  index: number; 
-  onEdit: (index: number, field: keyof ConceptoCobro, value: number) => void; 
-  onDelete: (index: number) => void; 
+export const TablaConceptos: React.FC<TablaConceptosProps> = ({
+  conceptos,
+  onChange,
+  onDelete,
 }) => {
-  return (
-    <tr>
-      <td>{concepto.codigo}</td>
-      <td>{concepto.descripcion}</td>
-      <td>
-        <input
-          type="number"
-          step="any"
-          inputMode="decimal"
-          className="input input-bordered w-20"
-          value={concepto.cantidad === 0 ? "" : concepto.cantidad}
-          onChange={e => {
-            const val = e.target.value;
-            if (val === "") {
-              onEdit(index, "cantidad", 0);
-              return;
-            }
-            let num = parseFloat(val);
-            if (isNaN(num) || num < 0) num = 0;
-            onEdit(index, "cantidad", num);
-          }}
-        />
-      </td>
-      <td>
-        <input
-          type="number"
-          step="any"
-          inputMode="decimal"
-          className="input input-bordered w-24"
-          value={concepto.precio === 0 ? "" : concepto.precio}
-          onChange={e => {
-            const val = e.target.value;
-            if (val === "") {
-              onEdit(index, "precio", 0);
-              return;
-            }
-            let num = parseFloat(val);
-            if (isNaN(num) || num < 0) num = 0;
-            onEdit(index, "precio", num);
-          }}
-        />
-      </td>
-      <td>
-        <input
-          type="number"
-          step="any"
-          inputMode="decimal"
-          className="input input-bordered w-20"
-          value={concepto.descuento === 0 ? "" : concepto.descuento}
-          onChange={e => {
-            const val = e.target.value;
-            if (val === "") {
-              onEdit(index, "descuento", 0);
-              return;
-            }
-            let num = parseFloat(val);
-            if (isNaN(num) || num < 0) num = 0;
-            onEdit(index, "descuento", num);
-          }}
-        />
-      </td>
-      <td>{concepto.total.toFixed(2)}</td>
-      <td>
-        <button
-          type="button"
-          className="btn btn-error btn-xs text-white"
-          onClick={() => onDelete(index)}
-        >
-          Eliminar
-        </button>
-      </td>
-    </tr>
-  );
-});
-
-ConceptoRow.displayName = 'ConceptoRow';
-
-const EmptyRow = () => (
-  <tr>
-    <td colSpan={8} className="text-center text-gray-400">No hay conceptos agregados</td>
-  </tr>
-);
-
-const TableHeader = () => (
-  <thead className="sticky top-0 bg-base-200 z-10">
-    <tr>
-      <th>Código</th>
-      <th>Descripción</th>
-      <th>Cantidad</th>
-      <th>Precio</th>
-      <th>Descuento</th>
-      <th>Total</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-);
-
-export const TablaConceptos: React.FC<TablaConceptosProps> = ({ conceptos, onChange, onDelete }) => {
-  const handleEdit = useCallback((index: number, field: keyof ConceptoCobro, value: number) => {
-    const concepto = conceptos[index];
-    const updated = { ...concepto, [field]: value };
-
-    if (field === "cantidad" || field === "precio" || field === "descuento") {
-      onChange(index, recalcularConcepto(updated));
-    } else {
-      onChange(index, updated);
-    }
-  }, [conceptos, onChange]);
+  const handleInputChange = (
+    idx: number,
+    field: keyof ConceptoCobro,
+    value: any
+  ) => {
+    const updated = { ...conceptos[idx], [field]: value };
+    updated.precioTotalSinImpuesto = (updated.precioUnitario - updated.descuento) * updated.cantidad;
+    updated.baseImponible = updated.precioTotalSinImpuesto;
+    updated.valorImpuesto = updated.baseImponible * (updated.tarifaImpuesto / 100);
+    onChange(idx, updated);
+  };
 
   return (
-    <div className="mt-8 w-full">
-      <div className="max-h-[280px] overflow-y-auto">
-        <div className="min-w-full inline-block align-middle">
-          <table className="table w-full">
-            <TableHeader />
-            <tbody>
-              {conceptos.length === 0 ? (
-                <EmptyRow />
-              ) : (
-                conceptos.map((concepto, idx) => (
-                  <ConceptoRow 
-                    key={`${concepto.codigo}-${idx}`}
-                    concepto={concepto}
-                    index={idx}
-                    onEdit={handleEdit}
-                    onDelete={onDelete}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código Principal</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código Auxiliar</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidad Medida</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Unitario</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descuento</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Total Sin Imp.</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código Impuesto</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cód. % Impuesto</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarifa Impuesto</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Base Imponible</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor Impuesto</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {conceptos.map((concepto, idx) => (
+            <tr key={idx} className="hover:bg-gray-100">
+              <td className="px-6 py-4 whitespace-nowrap">
+                <input
+                  type="text"
+                  value={concepto.codigoPrincipal}
+                  onChange={(e) => handleInputChange(idx, "codigoPrincipal", e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <input
+                  type="text"
+                  value={concepto.codigoAuxiliar || ""}
+                  onChange={(e) => handleInputChange(idx, "codigoAuxiliar", e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <input
+                  type="text"
+                  value={concepto.descripcion}
+                  onChange={(e) => handleInputChange(idx, "descripcion", e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <input
+                  type="text"
+                  value={concepto.unidadMedida || ""}
+                  onChange={(e) => handleInputChange(idx, "unidadMedida", e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <input
+                  type="number"
+                  value={concepto.cantidad}
+                  onChange={(e) => handleInputChange(idx, "cantidad", +e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <input
+                  type="number"
+                  value={concepto.precioUnitario}
+                  onChange={(e) => handleInputChange(idx, "precioUnitario", +e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <input
+                  type="number"
+                  value={concepto.descuento}
+                  onChange={(e) => handleInputChange(idx, "descuento", +e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-gray-700">{concepto.precioTotalSinImpuesto.toFixed(2)}</td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <input
+                  type="text"
+                  value={concepto.codigoImpuesto}
+                  onChange={(e) => handleInputChange(idx, "codigoImpuesto", e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <input
+                  type="text"
+                  value={concepto.codigoPorcentajeImpuesto}
+                  onChange={(e) => handleInputChange(idx, "codigoPorcentajeImpuesto", e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <input
+                  type="number"
+                  value={concepto.tarifaImpuesto}
+                  onChange={(e) => handleInputChange(idx, "tarifaImpuesto", +e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-gray-700">{concepto.baseImponible.toFixed(2)}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-gray-700">{concepto.valorImpuesto.toFixed(2)}</td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <button
+                  onClick={() => onDelete(idx)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
-
-export default memo(TablaConceptos);
