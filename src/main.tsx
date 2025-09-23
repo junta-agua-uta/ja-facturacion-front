@@ -11,6 +11,7 @@ import MedicionesPage from './medicion/pages/MedicionPage.tsx'
 import ClientesPage from './Clientes/pages/ClientesPage.tsx'
 import ProtectedRoute from './core/ProtectedRoute.tsx'
 import Profile from './profile/Profile.tsx'
+import ConceptosPage from './conceptos/pages/ConceptosPage';
 
 const router = createBrowserRouter([
   {
@@ -63,6 +64,10 @@ const router = createBrowserRouter([
             path: 'mediciones',
             element: <MedicionesPage />
           },
+            {
+              path: 'conceptos',
+              element: <ConceptosPage />
+            },
           {
             path: 'perfil',
             element:<Profile/>
