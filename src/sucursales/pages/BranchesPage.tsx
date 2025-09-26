@@ -23,9 +23,9 @@ interface ApiResponse {
 export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [filters, setFilters] = useState<BranchFilter>({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1); //
+  const [totalItems, setTotalItems] = useState(0); //
+  const [totalPages, setTotalPages] = useState(1); //
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

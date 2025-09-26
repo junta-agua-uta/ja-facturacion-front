@@ -72,6 +72,22 @@ const Layout = () => {
               }
             ]}
           />
+           <NavItem
+            to="/junta/liquidacion"
+            isActive={isActive('liquidacion')}
+            icon={<FacturasIcon isActive={isActive('liquidacion')} />}
+            label="Liquidación de compras"
+            children={[
+              {
+                label: "Ver todas las liquidaciones de compras",
+                to: "/junta/liquidacion"
+              },
+              {
+                label: "Crear liquidación de compra",
+                to: "/junta/liquidacion/crear"
+              }
+            ]}
+          />
 
           <NavItem
             to="/junta/usuarios"
@@ -95,11 +111,19 @@ const Layout = () => {
           />
 
           <NavItem
+            to="/junta/conceptos"
+            isActive={isActive('conceptos')}
+            icon={<FacturasIcon isActive={isActive('conceptos')} />} // Puedes cambiar el icono si tienes uno específico
+            label="Conceptos de Facturación"
+          />
+
+          <NavItem
             to="/junta/perfil"
             isActive={isActive('perfil')}
             icon={<PerfilIcon isActive={isActive('perfil')} />}
             label="Perfil"
           />
+          
         </nav>
 
         <div className="p-4 flex flex-col items-center">
@@ -159,7 +183,7 @@ const Layout = () => {
           </svg>
         </button>
         <div className='mt-10'>
-        <Outlet />
+          <Outlet />
 
         </div>
       </main>

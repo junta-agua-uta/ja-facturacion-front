@@ -94,36 +94,39 @@ export const useFacturaForm = () => {
     }));
   }, []);
 
-  // Manejador para selección de conceptos
-  const handleConceptoSelect = useCallback((codigo: string, mes?: string) => {
-    // Verificar si el código existe en nuestra configuración
-    const tipoConcepto = codigo as CodigoConcepto;
-    const config = CONFIGURACION_CONCEPTOS[tipoConcepto];
+  // Manejador para selección de conceptos (solo dinámicos de la API)
+  const handleConceptoSelect = useCallback((conceptoData: any, mes?: string) => {
+    console.log("🎯 Seleccionando concepto dinámico:", { conceptoData, mes });
     
-    if (!config) return;
+    // Buscar cuántos conceptos ya existen con ese código base
+    const count = conceptos.filter(c => c.codigo === conceptoData.codigo).length;
+    console.log("📊 Conceptos existentes con el mismo código:", count);
     
-    // Verificar si requiere mes
-    if (config.requiereMes && (!mes || mes === 'ninguno')) return;
+    // Generar código único si hay duplicados
+    const codigoFinal = count > 0 ? `${conceptoData.codigo}_${count + 1}` : conceptoData.codigo;
     
-    // Buscar cuántos conceptos ya existen con ese tipo base
-    const count = conceptos.filter(c => c.codigo.startsWith(config.codInterno.slice(0, 3))).length;
-    // Generar el nuevo código incremental (ej: VER001, VER002, ...)
-    const codigoIncremental = `${config.codInterno.slice(0, 3)}${String(count + 1).padStart(3, '0')}`;
-
     // Crear descripción con mes si es necesario
-    const descripcion = config.requiereMes 
-      ? `${config.desc} - ${mes}` 
-      : config.desc;
+    const descripcion = mes && mes !== 'ninguno' 
+      ? `${conceptoData.desc} - ${mes}` 
+      : conceptoData.desc;
     
-    // Crear nuevo concepto usando la función factory
+    console.log("📝 Descripción final:", descripcion);
+    
+    // Crear nuevo concepto dinámico con precio base de la API
     const nuevoConcepto = crearConcepto(
-      codigoIncremental,
+      codigoFinal,
       descripcion,
-      config.precioBase || 0
+      conceptoData.precioBase || 0 // Usar precio base de la API
     );
     
+    console.log("🆕 Nuevo concepto dinámico creado:", nuevoConcepto);
+    
     // Agregar a la lista de conceptos
-    setConceptos(prev => [...prev, nuevoConcepto]);
+    setConceptos(prev => {
+      const updated = [...prev, nuevoConcepto];
+      console.log("📋 Lista actualizada de conceptos:", updated);
+      return updated;
+    });
   }, [conceptos]);
 
   // Manejador para actualizar conceptos

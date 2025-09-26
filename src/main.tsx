@@ -11,6 +11,9 @@ import MedicionesPage from './medicion/pages/MedicionPage.tsx'
 import ClientesPage from './Clientes/pages/ClientesPage.tsx'
 import ProtectedRoute from './core/ProtectedRoute.tsx'
 import Profile from './profile/Profile.tsx'
+import AgregarLiquidacion from './liquidacion/pages/AgregarLiquidacion.tsx'
+import Liquidacion from './liquidacion/pages/Liquidacion.tsx'
+import ConceptosPage from './conceptos/pages/ConceptosPage';
 
 const router = createBrowserRouter([
   {
@@ -47,6 +50,19 @@ const router = createBrowserRouter([
               }
             ]
           },
+           {
+            path: 'liquidacion',
+            children: [
+              {
+                path: '',
+                element: <Liquidacion/>
+              },
+              {
+                path: 'crear',
+                element: <AgregarLiquidacion />
+              }
+            ]
+          },
           {
             path: 'autorizaciones',
             element: <div>Autorizaciones Page</div>
@@ -63,6 +79,10 @@ const router = createBrowserRouter([
             path: 'mediciones',
             element: <MedicionesPage />
           },
+            {
+              path: 'conceptos',
+              element: <ConceptosPage />
+            },
           {
             path: 'perfil',
             element:<Profile/>

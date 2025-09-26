@@ -69,7 +69,35 @@ export default function ClientesPage() {
     correoElectronico: ''
   });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  // Estado para exportar clientes a Excel
+  const [isExporting, setIsExporting] = useState(false);
 
+  const handleExportToExcel = async () => {
+    setIsExporting(true);
+    try {
+      const token = localStorage.getItem('userToken');
+      const response = await api.get(
+        '/clientes/reporte',
+        {
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'clientes.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error al exportar a Excel:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const defaultNewCliente: Cliente = {
     id: '',
@@ -323,6 +351,20 @@ export default function ClientesPage() {
           >
             Añadir cliente
           </button>
+          <button
+  className="btn btn-accent ml-2 hover:bg-green-500 hover:border-green-500"
+  onClick={handleExportToExcel}
+  disabled={isExporting}
+>
+  {isExporting ? (
+    <>
+      <span className="loader mr-2" style={{border: '2px solid #fff', borderRadius: '50%', width: '1em', height: '1em', display: 'inline-block', borderTop: '2px solid transparent', animation: 'spin 1s linear infinite'}}></span>
+      Exportando...
+    </>
+  ) : (
+    'Exportar a Excel'
+  )}
+</button>
         </EndSlot>
         
         {error && (
