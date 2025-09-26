@@ -1,8 +1,8 @@
-import { LiquidacionCedula } from "../types/liquidacion";
+import { FacturacionCedula } from "../../facturacion/types/factura";
 
 type Props = Readonly<{
-    filters: LiquidacionCedula;
-    onChange: (filters: LiquidacionCedula) => void;
+    filters: FacturacionCedula;
+    onChange: (filters: FacturacionCedula) => void;
 }>;
 
 export default function LiquidacionCedulaFilter({ filters, onChange }: Props) {

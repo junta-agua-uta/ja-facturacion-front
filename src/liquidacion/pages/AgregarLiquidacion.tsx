@@ -81,7 +81,7 @@ export default function AgregarLiquidacion() {
       return;
     }
 
-    const success = await saveLiquidacion(parseInt(selectedBranchObj.id));
+    const success = await saveLiquidacion();
     if (!success && saveError) {
       setErrorMessage(saveError);
     }

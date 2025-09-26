@@ -15,7 +15,7 @@ interface UseLiquidacionFormReturn {
   handleConceptoDelete: (idx: number) => void;
   handleAddConcepto: () => void;
   handleOpenCodigoModal: () => void;
-  saveLiquidacion: (idSucursal: number) => Promise<boolean>;
+  saveLiquidacion: () => Promise<boolean>;
   resetForm: () => void;
 }
 
@@ -78,7 +78,7 @@ export const useLiquidacionForm = (): UseLiquidacionFormReturn => {
   }, []);
 
   const saveLiquidacion = useCallback(
-    async (idSucursal: number) => {
+    async () => {
       if (!formData.identificacionProveedor) {
         setSaveError("Debe ingresar la identificación del proveedor");
         return false;
@@ -151,9 +151,14 @@ export const useLiquidacionForm = (): UseLiquidacionFormReturn => {
         await api.post("/liquidacion-compra/crear", liquidacionData);
         navigate("/junta/liquidaciones");
         return true;
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error al guardar liquidación:", error);
-        setSaveError(error.response?.data?.message || "Error al guardar la liquidación");
+        if (typeof error === "object" && error !== null && "response" in error) {
+          const err = error as { response?: { data?: { message?: string } } };
+          setSaveError(err.response?.data?.message || "Error al guardar la liquidación");
+        } else {
+          setSaveError("Error al guardar la liquidación");
+        }
         return false;
       } finally {
         setSaving(false);

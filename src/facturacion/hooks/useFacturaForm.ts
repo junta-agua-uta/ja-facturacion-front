@@ -3,17 +3,14 @@ import { FacturaForm } from "../../shared/components/interfaces/factura.interfac
 import { useClientePorCedula } from "./useClientePorCedula";
 import { DEFAULTS } from "../types/factura";
 import { ConceptoCobro } from "../components/TablaConceptos";
-import { CodigoConcepto, CONFIGURACION_CONCEPTOS, crearConcepto } from "../types/factura";
+import { crearConcepto } from "../types/factura";
 import api from "../../shared/api";
 import { authService } from "../../auth/Services/auth.service";
 import { useNavigate } from "react-router-dom";
 
 export const useFacturaForm = () => {
-  // IMPORTANTE: Todos los hooks deben llamarse en el mismo orden en cada renderizado
-  // 1. Hooks de React
   const navigate = useNavigate();
   
-  // Función para obtener la fecha actual en formato YYYY-MM-DD
   const getCurrentDate = () => {
     const today = new Date();
     const year = today.getFullYear();

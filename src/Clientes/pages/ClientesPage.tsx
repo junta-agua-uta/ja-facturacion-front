@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
- 
-import { Cliente, ClienteFilter } from '../types/cliente';
-import { ClienteFilters, ClienteTable } from '../components';
-import { AddClienteModal, EditClienteModal, ConfirmModal } from '../mod';
-import { PAGE_SIZE } from '../../shared/utils/constants';
-import { Title, SubTitle, EndSlot, CardSlot } from '../../shared/components';
-import api from '../../shared/api';
+import { useEffect, useState } from "react";
+
+import { Cliente, ClienteFilter } from "../types/cliente";
+import { ClienteFilters, ClienteTable } from "../components";
+import { AddClienteModal, EditClienteModal, ConfirmModal } from "../mod";
+import { PAGE_SIZE } from "../../shared/utils/constants";
+import { Title, SubTitle, EndSlot, CardSlot } from "../../shared/components";
+import api from "../../shared/api";
 
 interface ApiCliente {
   ID: number;
@@ -43,83 +43,79 @@ export default function ClientesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [ ,setClienteToEdit] = useState<Cliente | null>(null);
+  const [, setClienteToEdit] = useState<Cliente | null>(null);
   const [editForm, setEditForm] = useState<Cliente | null>(null);
   const [clienteToDelete, setClienteToDelete] = useState<Cliente | null>(null);
   const [newCliente, setNewCliente] = useState<Cliente>({
-    id: '',
-    identificacion: '',
-    razonSocial: '',
-    nombreComercial: '',
-    direccion: '',
-    telefono1: '',
-    telefono2: '',
-    correo: '',
-    tarifa: '',
-    grupo: '',
-    zona: '',
-    ruta: '',
-    vendedor: '',
-    cobrador: '',
-    provincia: '',
-    ciudad: '',
-    parroquia: '',
-    telefonoNro1: '',
-    telefonoNro2: '',
-    correoElectronico: ''
+    id: "",
+    identificacion: "",
+    razonSocial: "",
+    nombreComercial: "",
+    direccion: "",
+    telefono1: "",
+    telefono2: "",
+    correo: "",
+    tarifa: "",
+    grupo: "",
+    zona: "",
+    ruta: "",
+    vendedor: "",
+    cobrador: "",
+    provincia: "",
+    ciudad: "",
+    parroquia: "",
+    telefonoNro1: "",
+    telefonoNro2: "",
+    correoElectronico: "",
   });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  // Estado para exportar clientes a Excel
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExportToExcel = async () => {
     setIsExporting(true);
     try {
-      const token = localStorage.getItem('userToken');
-      const response = await api.get(
-        '/clientes/reporte',
-        {
-          responseType: 'blob',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const token = localStorage.getItem("userToken");
+      const response = await api.get("/clientes/reporte", {
+        responseType: "blob",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', 'clientes.xlsx');
+      link.setAttribute("download", "clientes.xlsx");
       document.body.appendChild(link);
       link.click();
       link.remove();
     } catch (error) {
-      console.error('Error al exportar a Excel:', error);
+      console.error("Error al exportar a Excel:", error);
     } finally {
       setIsExporting(false);
     }
   };
 
   const defaultNewCliente: Cliente = {
-    id: '',
-    identificacion: '',
-    razonSocial: '',
-    nombreComercial: '',
-    direccion: '',
-    telefono1: '',
-    telefono2: '',
-    correo: '',
-    tarifa: '',
-    grupo: '',
-    zona: '',
-    ruta: '',
-    vendedor: '',
-    cobrador: '',
-    provincia: '',
-    ciudad: '',
-    parroquia: '',
-    telefonoNro1: '',
-    telefonoNro2: '',
-    correoElectronico: ''
+    id: "",
+    identificacion: "",
+    razonSocial: "",
+    nombreComercial: "",
+    direccion: "",
+    telefono1: "",
+    telefono2: "",
+    correo: "",
+    tarifa: "",
+    grupo: "",
+    zona: "",
+    ruta: "",
+    vendedor: "",
+    cobrador: "",
+    provincia: "",
+    ciudad: "",
+    parroquia: "",
+    telefonoNro1: "",
+    telefonoNro2: "",
+    correoElectronico: "",
   };
 
   const convertApiToCliente = (apiCliente: ApiCliente): Cliente => {
@@ -143,7 +139,7 @@ export default function ClientesPage() {
       parroquia: apiCliente.PARROQUIA,
       telefonoNro1: apiCliente.TELEFONO1,
       telefonoNro2: apiCliente.TELEFONO2,
-      correoElectronico: apiCliente.CORREO
+      correoElectronico: apiCliente.CORREO,
     };
   };
 
@@ -156,38 +152,42 @@ export default function ClientesPage() {
         let apiData;
 
         // Si hay un filtro por identificación, usar el endpoint de búsqueda por cédula
-        if (filters.identificacion && filters.identificacion.trim() !== '') {
-          response = await api.get(`/clientes/buscarCedula?cedula=${filters.identificacion.trim()}`);
+        if (filters.identificacion && filters.identificacion.trim() !== "") {
+          response = await api.get(
+            `/clientes/buscarCedula?cedula=${filters.identificacion.trim()}`
+          );
           apiData = response.data; // Este endpoint devuelve un array directamente
-        } 
+        }
         // Si hay un filtro por razón social, usar el endpoint de búsqueda por nombre
-        else if (filters.razonSocial && filters.razonSocial.trim() !== '') {
-          response = await api.get(`/clientes/buscar?nombre=${filters.razonSocial.trim()}`);
+        else if (filters.razonSocial && filters.razonSocial.trim() !== "") {
+          response = await api.get(
+            `/clientes/buscar?nombre=${filters.razonSocial.trim()}`
+          );
           apiData = response.data; // Este endpoint devuelve un array directamente
-        } 
+        }
         // Si no hay filtros, obtener todos los clientes
         else {
-          response = await api.get<ApiResponse>('/clientes');
+          response = await api.get<ApiResponse>("/clientes");
           apiData = response.data.data; // Este endpoint devuelve {data: [...], totalItems, etc.}
         }
-        
+
         // Convertir los datos de la API al formato interno
-        const convertedClientes = Array.isArray(apiData) 
+        const convertedClientes = Array.isArray(apiData)
           ? apiData.map(convertApiToCliente)
           : [];
-        
+
         setClientes(convertedClientes);
-        
+
         // Calcular paginación localmente
         const totalItems = convertedClientes.length;
         const totalPages = Math.ceil(totalItems / PAGE_SIZE);
-        
+
         setTotalItems(totalItems);
         setTotalPages(totalPages);
         setCurrentPage(1); // Resetear a la primera página cuando cambien los filtros
       } catch (error) {
-        console.error('Error fetching clientes:', error);
-        setError('No se pudo cargar la lista de clientes');
+        console.error("Error fetching clientes:", error);
+        setError("No se pudo cargar la lista de clientes");
       } finally {
         setIsLoading(false);
       }
@@ -213,44 +213,51 @@ export default function ClientesPage() {
     return {
       identificacion: cliente.identificacion,
       razonSocial: cliente.razonSocial,
-      nombreComercial: cliente.nombreComercial || 'Sin Nombre Comercial',
+      nombreComercial: cliente.nombreComercial || "Sin Nombre Comercial",
       direccion: cliente.direccion,
-      telefono1: cliente.telefono1 || cliente.telefonoNro1 || '',
-      telefono2: cliente.telefono2 || cliente.telefonoNro2 || '',
-      correo: cliente.correo || cliente.correoElectronico || '',
-      tarifa: cliente.tarifa || '',
-      grupo: cliente.grupo || '',
-      zona: cliente.zona || '',
-      ruta: cliente.ruta || '',
-      vendedor: cliente.vendedor || '',
-      cobrador: cliente.cobrador || '',
-      provincia: cliente.provincia || '',
-      ciudad: cliente.ciudad || '',
-      parroquia: cliente.parroquia || '',
-      ...(cliente.id && !isNaN(parseInt(cliente.id)) ? { id: parseInt(cliente.id) } : {})
+      telefono1: cliente.telefono1 || cliente.telefonoNro1 || "",
+      telefono2: cliente.telefono2 || cliente.telefonoNro2 || "",
+      correo: cliente.correo || cliente.correoElectronico || "",
+      tarifa: cliente.tarifa || "",
+      grupo: cliente.grupo || "",
+      zona: cliente.zona || "",
+      ruta: cliente.ruta || "",
+      vendedor: cliente.vendedor || "",
+      cobrador: cliente.cobrador || "",
+      provincia: cliente.provincia || "",
+      ciudad: cliente.ciudad || "",
+      parroquia: cliente.parroquia || "",
+      ...(cliente.id && !isNaN(parseInt(cliente.id))
+        ? { id: parseInt(cliente.id) }
+        : {}),
     };
   };
 
   // Handle adding a new cliente
   const handleAddCliente = async () => {
-    if (newCliente.identificacion && newCliente.razonSocial && newCliente.direccion) {
+    if (
+      newCliente.identificacion &&
+      newCliente.razonSocial &&
+      newCliente.direccion
+    ) {
       setIsLoading(true);
       setError(null);
       try {
         const formattedCliente = formatClienteForAPI(newCliente);
-        
-        await api.post('/clientes', formattedCliente);
-        
+
+        await api.post("/clientes", formattedCliente);
+
         // Refetch the data to get the updated list
-        const fetchResponse = await api.get<ApiResponse>('/clientes');
-        const convertedClientes = fetchResponse.data.data.map(convertApiToCliente);
+        const fetchResponse = await api.get<ApiResponse>("/clientes");
+        const convertedClientes =
+          fetchResponse.data.data.map(convertApiToCliente);
         setClientes(convertedClientes);
-        
+
         setNewCliente(defaultNewCliente);
         setIsAddModalOpen(false);
       } catch (error) {
-        console.error('Error adding cliente:', error);
-        setError('No se pudo agregar el cliente');
+        console.error("Error adding cliente:", error);
+        setError("No se pudo agregar el cliente");
       } finally {
         setIsLoading(false);
       }
@@ -264,20 +271,20 @@ export default function ClientesPage() {
       setError(null);
       try {
         const formattedCliente = formatClienteForAPI(editForm);
-        
+
         await api.put(`/clientes/${editForm.id}`, formattedCliente);
 
         // Update local state
-        setClientes(prev =>
-          prev.map(c => (c.id === editForm.id ? { ...editForm } : c))
+        setClientes((prev) =>
+          prev.map((c) => (c.id === editForm.id ? { ...editForm } : c))
         );
-        
+
         setClienteToEdit(null);
         setEditForm(null);
-        (document.getElementById('edit_modal') as HTMLDialogElement)?.close();
+        (document.getElementById("edit_modal") as HTMLDialogElement)?.close();
       } catch (error) {
-        console.error('Error updating cliente:', error);
-        setError('No se pudo actualizar el cliente');
+        console.error("Error updating cliente:", error);
+        setError("No se pudo actualizar el cliente");
       } finally {
         setIsLoading(false);
       }
@@ -292,12 +299,12 @@ export default function ClientesPage() {
       try {
         await api.delete(`/clientes/${clienteToDelete.id}`);
 
-        setClientes(prev => prev.filter(c => c.id !== clienteToDelete.id));
+        setClientes((prev) => prev.filter((c) => c.id !== clienteToDelete.id));
         setClienteToDelete(null);
-        (document.getElementById('delete_modal') as HTMLDialogElement)?.close();
+        (document.getElementById("delete_modal") as HTMLDialogElement)?.close();
       } catch (error) {
-        console.error('Error deleting cliente:', error);
-        setError('No se pudo eliminar el cliente');
+        console.error("Error deleting cliente:", error);
+        setError("No se pudo eliminar el cliente");
       } finally {
         setIsLoading(false);
       }
@@ -311,26 +318,26 @@ export default function ClientesPage() {
 
   const handleAddClick = () => {
     setNewCliente({
-      id: '',
-      identificacion: '',
-      razonSocial: '',
-      nombreComercial: '',
-      direccion: '',
-      telefono1: '',
-      telefono2: '',
-      correo: '',
-      tarifa: '',
-      grupo: '',
-      zona: '',
-      ruta: '',
-      vendedor: '',
-      cobrador: '',
-      provincia: '',
-      ciudad: '',
-      parroquia: '',
-      telefonoNro1: '',
-      telefonoNro2: '',
-      correoElectronico: ''
+      id: "",
+      identificacion: "",
+      razonSocial: "",
+      nombreComercial: "",
+      direccion: "",
+      telefono1: "",
+      telefono2: "",
+      correo: "",
+      tarifa: "",
+      grupo: "",
+      zona: "",
+      ruta: "",
+      vendedor: "",
+      cobrador: "",
+      provincia: "",
+      ciudad: "",
+      parroquia: "",
+      telefonoNro1: "",
+      telefonoNro2: "",
+      correoElectronico: "",
     });
     setIsAddModalOpen(true);
   };
@@ -340,33 +347,45 @@ export default function ClientesPage() {
       <Title title="CLIENTES" />
       <CardSlot>
         <SubTitle title="Filtros de búsqueda" />
-        <ClienteFilters filters={filters} onChange={setFilters} onClear={handleClearFilters} />
+        <ClienteFilters
+          filters={filters}
+          onChange={setFilters}
+          onClear={handleClearFilters}
+        />
       </CardSlot>
 
       <CardSlot>
         <EndSlot>
-          <button
-            className="btn btn-primary"
-            onClick={handleAddClick}
-          >
+          <button className="btn btn-primary" onClick={handleAddClick}>
             Añadir cliente
           </button>
           <button
-  className="btn btn-accent ml-2 hover:bg-green-500 hover:border-green-500"
-  onClick={handleExportToExcel}
-  disabled={isExporting}
->
-  {isExporting ? (
-    <>
-      <span className="loader mr-2" style={{border: '2px solid #fff', borderRadius: '50%', width: '1em', height: '1em', display: 'inline-block', borderTop: '2px solid transparent', animation: 'spin 1s linear infinite'}}></span>
-      Exportando...
-    </>
-  ) : (
-    'Exportar a Excel'
-  )}
-</button>
+            className="btn btn-accent ml-2 hover:bg-green-500 hover:border-green-500"
+            onClick={handleExportToExcel}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <>
+                <span
+                  className="loader mr-2"
+                  style={{
+                    border: "2px solid #fff",
+                    borderRadius: "50%",
+                    width: "1em",
+                    height: "1em",
+                    display: "inline-block",
+                    borderTop: "2px solid transparent",
+                    animation: "spin 1s linear infinite",
+                  }}
+                ></span>
+                Exportando...
+              </>
+            ) : (
+              "Exportar a Excel"
+            )}
+          </button>
         </EndSlot>
-        
+
         {error && (
           <div className="alert alert-error mb-4">
             <span>{error}</span>
@@ -390,12 +409,16 @@ export default function ClientesPage() {
             onEdit={(cliente) => {
               setClienteToEdit(cliente);
               setEditForm({ ...cliente });
-              (document.getElementById('edit_modal') as HTMLDialogElement)?.showModal();
+              (
+                document.getElementById("edit_modal") as HTMLDialogElement
+              )?.showModal();
             }}
             onDelete={(clienteId) => {
-              const cliente = clientes.find(c => c.id === clienteId);
+              const cliente = clientes.find((c) => c.id === clienteId);
               setClienteToDelete(cliente ?? null);
-              (document.getElementById('delete_modal') as HTMLDialogElement)?.showModal();
+              (
+                document.getElementById("delete_modal") as HTMLDialogElement
+              )?.showModal();
             }}
           />
         )}

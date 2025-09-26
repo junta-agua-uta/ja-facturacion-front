@@ -14,7 +14,6 @@ interface LiquidacionFormContentProps {
 
 export const LiquidacionFormContent: React.FC<LiquidacionFormContentProps> = ({
   formData,
-  total,
   onInputChange,
   onAddConcepto,
   onOpenCodigoModal,

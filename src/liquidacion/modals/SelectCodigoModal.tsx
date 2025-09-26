@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CODIGOS, MESES } from "../types/liquidacion";
+import { CODIGOS, MESES } from "../../facturacion/types/factura";
 
 interface SelectCodigoModalProps {
   id: string;
@@ -32,7 +32,7 @@ export const SelectCodigoModal: React.FC<SelectCodigoModalProps> = ({ id, onSele
       <div className="modal-box">
         <h3 className="font-bold text-lg mb-4">Seleccionar Código</h3>
         <div className="flex flex-col gap-3">
-          {CODIGOS.map((codigo) => (
+          {CODIGOS.map((codigo: string) => (
             <div key={codigo}>
               <button
                 className={`btn w-full ${codigoSeleccionado === codigo ? "btn-primary" : "btn-outline"}`}
@@ -49,7 +49,7 @@ export const SelectCodigoModal: React.FC<SelectCodigoModalProps> = ({ id, onSele
                     value={mesSeleccionado}
                     onChange={e => setMesSeleccionado(e.target.value)}
                   >
-                    {MESES.map(mes => (
+                    {MESES.map((mes: string) => (
                       <option key={mes} value={mes}>{mes}</option>
                     ))}
                   </select>

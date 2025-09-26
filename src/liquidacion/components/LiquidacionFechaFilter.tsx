@@ -1,8 +1,8 @@
-import { LiquidacionFechaEmisionFilter } from "../types/liquidacion";
+import { FacturacionFechaEmisionFilter } from "../../facturacion/types/factura";
 
 type Props = Readonly<{
-    filters: LiquidacionFechaEmisionFilter;
-    onChange: (filters: LiquidacionFechaEmisionFilter) => void;
+    filters: FacturacionFechaEmisionFilter;
+    onChange: (filters: FacturacionFechaEmisionFilter) => void;
 }>;
 
 export default function LiquidacionFechaFilter({ filters, onChange }: Props) {
