@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { AuthResponse, AuthError, Credentials, User } from '../Interfaces/Types';
 
-const API_URL = import.meta.env.VITE_API_URL as string;
+const API_URL = import.meta.env.API_URL as string;
 
 export const authService = {
   login: async (credentials: Credentials): Promise<AuthResponse> => {
