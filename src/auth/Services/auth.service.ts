@@ -5,7 +5,6 @@ const VITE_API_URL = import.meta.env.VITE_API_URL as string;
 
 export const authService = {
   login: async (credentials: Credentials): Promise<AuthResponse> => {
-    console.log(VITE_API_URL);
     try {
       const response = await axios.post<AuthResponse>(
         `${VITE_API_URL}/auth/login`,

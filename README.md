@@ -25,7 +25,7 @@ npm i
    Es importante definir la URL del backend para la integración:
 
 env
-VITE_API_URL=http://localhost:4000/api
+VITE_API_URL=http://localhost:4000/apiV2
 
 
 > Ajusta la URL según la ubicación del backend.
