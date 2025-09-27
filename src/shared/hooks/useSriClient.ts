@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 // Definir la variable de entorno para TypeScript
 declare global {
   interface ImportMetaEnv {
-    API_TO_GET_INFORMATION?: string;
+    VITE_API_TO_GET_INFORMATION?: string;
   }
 }
 
@@ -47,7 +47,7 @@ export function useSriClient() {
     setError(null);
 
     try {
-      const apiUrl = import.meta.env.API_TO_GET_INFORMATION || 'https://srienlinea.sri.gob.ec/movil-servicios/api/v1.0/deudas/porIdentificacion/';
+      const apiUrl = import.meta.env.VITE_API_TO_GET_INFORMATION || 'https://srienlinea.sri.gob.ec/movil-servicios/api/v1.0/deudas/porIdentificacion/';
       const response = await fetch(`${apiUrl}${identificacion}`);
       
       if (!response.ok) {

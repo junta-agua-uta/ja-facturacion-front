@@ -1,14 +1,14 @@
 import axios, { AxiosError } from 'axios';
 import { AuthResponse, AuthError, Credentials, User } from '../Interfaces/Types';
 
-const API_URL = import.meta.env.API_URL as string;
+const VITE_API_URL = import.meta.env.VITE_API_URL as string;
 
 export const authService = {
   login: async (credentials: Credentials): Promise<AuthResponse> => {
-    console.log(API_URL);
+    console.log(VITE_API_URL);
     try {
       const response = await axios.post<AuthResponse>(
-        `${API_URL}/auth/login`,
+        `${VITE_API_URL}/auth/login`,
         {
           cedula: credentials.cedula,
           password: credentials.password
