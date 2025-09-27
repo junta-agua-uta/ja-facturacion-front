@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { FacturasIcon, /*AutorizacionesIcon,*/ UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon } from './utils/icons';
+import { FacturasIcon, TransaccionesIcon, UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon } from './utils/icons';
 import NavItem from './components/NavItem';
 import { authService } from '../auth/Services/auth.service';
 import { useEffect, useState } from 'react';
@@ -55,36 +55,39 @@ const Layout = () => {
         </div>
 
         <nav className="flex-1">
-
           <NavItem
-            to="/junta/facturas"
-            isActive={isActive('facturas')}
-            icon={<FacturasIcon isActive={isActive('facturas')} />}
-            label="Facturas"
+            to="/junta/transacciones"
+            isActive={isActive('facturas') || isActive('liquidacion')}
+            icon={<TransaccionesIcon isActive={false} />}
+            label="Transacciones"
             children={[
               {
-                label: "Ver todas las facturas",
-                to: "/junta/facturas"
+                label: "Facturas",
+                to: "/junta/facturas",
+                children: [
+                  {
+                    label: "Ver todas las facturas",
+                    to: "/junta/facturas"
+                  },
+                  {
+                    label: "Crear factura",
+                    to: "/junta/facturas/crear"
+                  }
+                ]
               },
               {
-                label: "Crear factura",
-                to: "/junta/facturas/crear"
-              }
-            ]}
-          />
-           <NavItem
-            to="/junta/liquidacion"
-            isActive={isActive('liquidacion')}
-            icon={<FacturasIcon isActive={isActive('liquidacion')} />}
-            label="Liquidación de compras"
-            children={[
-              {
-                label: "Ver todas las liquidaciones de compras",
-                to: "/junta/liquidacion"
-              },
-              {
-                label: "Crear liquidación de compra",
-                to: "/junta/liquidacion/crear"
+                label: "Liquidación de compras",
+                to: "/junta/liquidacion",
+                children: [
+                  {
+                    label: "Ver todas las liquidaciones de compras",
+                    to: "/junta/liquidacion"
+                  },
+                  {
+                    label: "Crear liquidación de compra",
+                    to: "/junta/liquidacion/crear"
+                  }
+                ]
               }
             ]}
           />

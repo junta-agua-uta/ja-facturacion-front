@@ -193,11 +193,11 @@ export default function AgregarLiquidacion() {
 
       <dialog id="select_codigo_modal" className="modal">
         <div className="modal-box">
-          <h3 className="font-bold text-lg">Agregar Concepto</h3>
-          <p className="py-4">Haz clic en "Agregar Concepto" para añadir un nuevo concepto manualmente.</p>
+          <h3 className="font-bold text-lg">Agregar Producto</h3>
+          <p className="py-4">Haz clic en "Agregar Producto" para añadir un nuevo producto manualmente.</p>
           <div className="modal-action">
             <button onClick={handleAddConcepto} className="btn btn-primary">
-              Agregar Concepto
+              Agregar Producto
             </button>
             <button
               onClick={() => {

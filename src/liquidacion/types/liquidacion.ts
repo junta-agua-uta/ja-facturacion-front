@@ -5,7 +5,6 @@ export interface LiquidacionForm {
   tipoIdentificacionProveedor?: string;
   razonSocialProveedor?: string;
   identificacionProveedor?: string;
-  moneda?: string;
   direccionProveedor?: string;
   importeTotal?: number;
   estadoSri?: string;
@@ -28,7 +27,6 @@ export interface ConceptoCobro {
 }
 
 export const crearConcepto = (
-  codigoPrincipal: string,
   descripcion: string,
   precioUnitario: number = 0,
   cantidad: number = 1,
@@ -36,11 +34,11 @@ export const crearConcepto = (
 ): ConceptoCobro => {
   const precioTotalSinImpuesto = (precioUnitario - descuento) * cantidad;
   const baseImponible = precioTotalSinImpuesto;
-  const tarifaImpuesto = 12; // Ejemplo: 12% IVA como en la petición
+  const tarifaImpuesto = 12;
   const valorImpuesto = baseImponible * (tarifaImpuesto / 100);
 
   return {
-    codigoPrincipal,
+    codigoPrincipal: `PROD${String(Date.now()).slice(-6)}`,
     codigoAuxiliar: undefined,
     descripcion,
     unidadMedida: "UN",
