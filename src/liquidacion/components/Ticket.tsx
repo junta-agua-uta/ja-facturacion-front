@@ -1,5 +1,5 @@
 import React from 'react';
-import { LiquidacionForm as LiquidacionFormType, LiquidacionItem } from '../../shared/components/interfaces/liquidacion.interface';
+import { LiquidacionForm as LiquidacionFormType } from '../../shared/components/interfaces/liquidacion.interface';
 
 interface PrintPreviewModalProps {
   isOpen: boolean;
@@ -176,7 +176,7 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
   };
 
   const displayTotal = total || formData.total || 0;
-  const items: LiquidacionItem[] = formData.items || [];
+  
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
