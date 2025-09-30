@@ -11,17 +11,21 @@ export const TablaConceptos: React.FC<TablaConceptosProps> = ({
   onChange,
   onDelete,
 }) => {
-  const handleInputChange = (
-    idx: number,
-    field: keyof ConceptoCobro,
-    value: any
-  ) => {
+  const handleInputChange = (idx: number, field: keyof ConceptoCobro, value: any) => {
     const updated = { ...conceptos[idx], [field]: value };
-    updated.precioTotalSinImpuesto = (updated.precioUnitario - updated.descuento) * updated.cantidad;
+
+    const precioUnitario = Number(updated.precioUnitario) || 0;
+    const cantidad = Number(updated.cantidad) || 0;
+    const descuento = Number(updated.descuento) || 0;
+    const tarifaImpuesto = Number(updated.tarifaImpuesto) || 0;
+
+    updated.precioTotalSinImpuesto = (precioUnitario - descuento) * cantidad;
     updated.baseImponible = updated.precioTotalSinImpuesto;
-    updated.valorImpuesto = updated.baseImponible * (updated.tarifaImpuesto / 100);
+    updated.valorImpuesto = updated.baseImponible * (tarifaImpuesto / 100);
+
     onChange(idx, updated);
   };
+
 
   return (
     <div className="overflow-x-auto bg-white shadow-md rounded-lg">
@@ -62,18 +66,31 @@ export const TablaConceptos: React.FC<TablaConceptosProps> = ({
               <td className="px-6 py-4 whitespace-nowrap">
                 <input
                   type="number"
-                  value={concepto.precioUnitario}
-                  onChange={(e) => handleInputChange(idx, "precioUnitario", +e.target.value)}
+                  value={concepto.precioUnitario !== undefined ? concepto.precioUnitario : ''}
+                  onChange={(e) =>
+                    handleInputChange(
+                      idx,
+                      "precioUnitario",
+                      e.target.value === '' ? undefined : parseFloat(e.target.value)
+                    )
+                  }
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                   min="0"
                   step="0.01"
                 />
               </td>
+
               <td className="px-6 py-4 whitespace-nowrap">
                 <input
                   type="number"
-                  value={concepto.descuento}
-                  onChange={(e) => handleInputChange(idx, "descuento", +e.target.value)}
+                  value={concepto.descuento !== undefined ? concepto.descuento : ''}
+                  onChange={(e) =>
+                    handleInputChange(
+                      idx,
+                      "descuento",
+                      e.target.value === '' ? undefined : parseFloat(e.target.value)
+                    )
+                  }
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                   min="0"
                   step="0.01"

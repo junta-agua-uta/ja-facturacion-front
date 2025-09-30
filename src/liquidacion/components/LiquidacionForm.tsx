@@ -16,7 +16,6 @@ export const LiquidacionFormContent: React.FC<LiquidacionFormContentProps> = ({
   formData,
   onInputChange,
   onAddConcepto,
-  onOpenCodigoModal,
   onSave,
   onCancel,
   saving,
@@ -91,23 +90,7 @@ export const LiquidacionFormContent: React.FC<LiquidacionFormContentProps> = ({
             placeholder="DD/MM/YYYY"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium">Producto</label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value="Selecciona un producto"
-              disabled
-              className="mt-1 block w-full border rounded-md p-2 bg-gray-100"
-            />
-            <button
-              onClick={onOpenCodigoModal}
-              className="mt-1 btn btn-primary"
-            >
-              Seleccionar
-            </button>
-          </div>
-        </div>
+        
       </div>
       <div className="flex justify-between">
         <button onClick={onAddConcepto} className="btn btn-primary">
