@@ -79,6 +79,43 @@ export default function LiquidacionPage() {
     setCurrentPage(1);
   };
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  const formatDateForAPI = (date: Date) => {
+    return date.toISOString().split('T')[0];
+  };
+
+  const handleExportToExcel = async () => {
+    setIsExporting(true);
+    try {
+      const response = await api.get(
+        '/liquidacion-compra/descargar-excel',
+        {
+          params: {
+            fechaInicio: formatDateForAPI(dateFilters.FechaEmisionDesde),
+            fechaFin: formatDateForAPI(dateFilters.FechaEmisionHasta),
+            page: currentPage,
+            limit: PAGE_SIZE
+          },
+          responseType: 'blob' // Para manejar la respuesta como un archivo
+        }
+      );
+
+      // Crear un enlace para descargar el archivo
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'liquidacion_compras.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error al exportar a Excel:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <>
       <Title title="Liquidaciones de Compras" />
@@ -105,6 +142,21 @@ export default function LiquidacionPage() {
               Añadir liquidación
             </button>
           </Link>
+
+          <button
+            className="btn btn-accent ml-2 hover:bg-green-500 hover:border-green-500"
+            onClick={handleExportToExcel}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <>
+                <span className="loader mr-2" style={{border: '2px solid #fff', borderRadius: '50%', width: '1em', height: '1em', display: 'inline-block', borderTop: '2px solid transparent', animation: 'spin 1s linear infinite'}}></span>
+                Exportando...
+              </>
+            ) : (
+              'Exportar a Excel'
+            )}
+          </button>
         </EndSlot>
 
         <LiquidacionTable
