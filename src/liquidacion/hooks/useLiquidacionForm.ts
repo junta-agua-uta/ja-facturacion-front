@@ -36,7 +36,6 @@ export const useLiquidacionForm = (): UseLiquidacionFormReturn => {
     tipoIdentificacionProveedor: "05",
     razonSocialProveedor: "",
     identificacionProveedor: "",
-    moneda: "DOLAR",
     direccionProveedor: "",
   };
 
@@ -65,12 +64,9 @@ export const useLiquidacionForm = (): UseLiquidacionFormReturn => {
   }, []);
 
   const handleAddConcepto = useCallback(() => {
-    const nuevoConcepto = crearConcepto(
-      `PROD${String(conceptos.length + 1).padStart(3, "0")}`,
-      "Producto de ejemplo"
-    );
+    const nuevoConcepto = crearConcepto("Nuevo producto");
     setConceptos((prev) => [...prev, nuevoConcepto]);
-  }, [conceptos]);
+  }, []);
 
   const handleOpenCodigoModal = useCallback(() => {
     const dialog = document.getElementById("select_codigo_modal") as HTMLDialogElement;
@@ -125,22 +121,14 @@ export const useLiquidacionForm = (): UseLiquidacionFormReturn => {
           totalSinImpuestos,
           totalDescuento,
           importeTotal,
-          moneda: formData.moneda,
+          moneda: "DOLAR",
           direccionProveedor: formData.direccionProveedor || undefined,
         },
         detalles: conceptos.map((c) => ({
-          codigoPrincipal: c.codigoPrincipal,
-          codigoAuxiliar: c.codigoAuxiliar || undefined,
           descripcion: c.descripcion,
-          unidadMedida: c.unidadMedida || undefined,
           cantidad: c.cantidad,
           precioUnitario: c.precioUnitario,
           descuento: c.descuento,
-          precioTotalSinImpuesto: c.precioTotalSinImpuesto,
-          codigoImpuesto: c.codigoImpuesto,
-          codigoPorcentajeImpuesto: c.codigoPorcentajeImpuesto,
-          tarifaImpuesto: c.tarifaImpuesto,
-          baseImponible: c.baseImponible,
           valorImpuesto: c.valorImpuesto,
         })),
       };

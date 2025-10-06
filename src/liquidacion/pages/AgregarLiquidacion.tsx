@@ -93,25 +93,33 @@ export default function AgregarLiquidacion() {
   };
 
   const { subtotal, descuentoTotal, total } = useMemo(() => {
-    const subtotalSinDescuento = conceptos.reduce(
-      (sum, concepto) => sum + concepto.precioUnitario * concepto.cantidad,
-      0
-    );
-    const descuento = conceptos.reduce(
-      (sum, concepto) => sum + concepto.descuento * concepto.cantidad,
-      0
-    );
-    const totalConImpuestos = conceptos.reduce(
-      (sum, concepto) => sum + concepto.precioTotalSinImpuesto + concepto.valorImpuesto,
-      0
-    );
+  const subtotalSinDescuento = conceptos.reduce(
+    (sum, concepto) =>
+      sum + (Number(concepto.precioUnitario) || 0) * (Number(concepto.cantidad) || 0),
+    0
+  );
 
-    return {
-      subtotal: subtotalSinDescuento,
-      descuentoTotal: descuento,
-      total: totalConImpuestos,
-    };
-  }, [conceptos]);
+  const descuento = conceptos.reduce(
+    (sum, concepto) =>
+      sum + (Number(concepto.descuento) || 0) * (Number(concepto.cantidad) || 0),
+    0
+  );
+
+  const totalConImpuestos = conceptos.reduce(
+    (sum, concepto) =>
+      sum +
+      (Number(concepto.precioTotalSinImpuesto) || 0) +
+      (Number(concepto.valorImpuesto) || 0),
+    0
+  );
+
+  return {
+    subtotal: subtotalSinDescuento,
+    descuentoTotal: descuento,
+    total: totalConImpuestos,
+  };
+}, [conceptos]);
+
 
   return (
     <>
@@ -191,26 +199,7 @@ export default function AgregarLiquidacion() {
         </div>
       </div>
 
-      <dialog id="select_codigo_modal" className="modal">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">Agregar Concepto</h3>
-          <p className="py-4">Haz clic en "Agregar Concepto" para añadir un nuevo concepto manualmente.</p>
-          <div className="modal-action">
-            <button onClick={handleAddConcepto} className="btn btn-primary">
-              Agregar Concepto
-            </button>
-            <button
-              onClick={() => {
-                const dialog = document.getElementById("select_codigo_modal") as HTMLDialogElement;
-                dialog?.close();
-              }}
-              className="btn btn-secondary"
-            >
-              Cerrar
-            </button>
-          </div>
-        </div>
-      </dialog>
+      
     </>
   );
 };

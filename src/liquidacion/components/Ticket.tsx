@@ -10,8 +10,14 @@ interface PrintPreviewModalProps {
   showVencimiento?: boolean;
 }
 
-const formatCurrency = (n?: number) =>
-  typeof n === 'number' ? n.toFixed(2) : (n ? String(n) : '0.00');
+const formatCurrency = (n?: number | string) =>
+  typeof n === 'number' ? n.toFixed(2) : n ? Number(n).toFixed(2) : '0.00';
+
+const formatDate = (date?: string) => {
+  if (!date) return '-';
+  const d = new Date(date);
+  return isNaN(d.getTime()) ? date : d.toLocaleDateString('es-EC');
+};
 
 export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
   isOpen,
@@ -25,238 +31,272 @@ export const PrintPreviewModal: React.FC<PrintPreviewModalProps> = ({
 
   const handlePrint = () => {
     const printContent = document.getElementById('print-content');
-    if (!printContent) {
-      onPrint();
-      return;
-    }
+    if (!printContent) return onPrint();
 
-    const ticketNumber = formData.numero || formData.secuencia || `${Date.now()}`;
-    const printWindow = window.open('', '_blank', 'toolbar=0,location=0,menubar=0');
-    if (!printWindow) {
-      onPrint();
-      return;
-    }
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    if (!printWindow) return onPrint();
 
     printWindow.document.write(`
+      <!DOCTYPE html>
       <html>
         <head>
-          <meta charset="utf-8" />
-          <title>Liquidación-${ticketNumber}</title>
+          <title>Liquidación - ${formData.numero || formData.secuencia || '000'}</title>
+          <meta charset="UTF-8">
           <style>
-            * { box-sizing: border-box; -webkit-print-color-adjust: exact; }
-            body { font-family: Arial, Helvetica, sans-serif; color: #000; margin: 10px; }
-            .ticket { width: 820px; max-width: 100%; border: 1px solid #222; padding: 18px; }
-            .top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
-            .left-brand { width:56%; }
-            .logo { display:flex; align-items:center; gap:12px; }
-            .logo .brand-box { background:#f57c00; padding:6px 14px; color:#fff; font-weight:700; font-size:18px; border-radius:3px; }
-            .company-lines { font-size:12px; color:#333; margin-top:6px; }
-            .right-box { width:40%; border-left:3px solid #f2f2f2; padding-left:12px; text-align:right; }
-            .right-box .ruc { font-weight:700; font-size:16px; }
-            .right-box .doc-title { background:#e9f2ff; padding:6px 8px; margin-top:6px; display:inline-block; border-radius:4px; font-weight:700; font-size:13px; }
-            .meta { margin-top:10px; display:flex; gap:10px; font-size:12px; }
-            .meta > div { flex:1; }
-            .info { margin-top:14px; display:flex; gap:10px; font-size:13px; }
-            .info .col { flex:1; }
-            .info .label { font-weight:700; color:#333; margin-bottom:4px; display:block; font-size:12px; }
-            table.items { width:100%; border-collapse: collapse; margin-top:14px; font-size:12px; }
-            table.items th, table.items td { border:1px solid #aaa; padding:8px; text-align:left; vertical-align:middle; }
-            table.items th { background:#f7f7f7; text-align:center; font-weight:700; }
-            .totals { margin-top:12px; display:flex; justify-content:flex-end; font-size:13px; }
-            .totals .inner { width:320px; }
-            .totals-row { display:flex; justify-content:space-between; padding:6px 8px; border-bottom:1px dashed #ddd; }
-            .totals-row.last { font-weight:700; border-top:2px solid #333; border-bottom:none; padding-top:10px; }
-            .payment { margin-top:12px; font-size:12px; display:flex; gap:12px; }
-            .payment .left { flex:1; border:1px solid #dedede; padding:8px; border-radius:4px; background:#f9f9f9; }
-            .payment .right { width:260px; border:1px solid #dedede; padding:8px; border-radius:4px; background:#f9f9f9; font-size:11px; }
-            .footer { margin-top:14px; font-size:11px; text-align:center; color:#444; }
-            .note { margin-top:8px; font-size:10px; color:#8a8a8a; text-align:center; }
-            @media print { body { margin: 0; } .ticket { border: none; padding: 6mm; } .right-box { padding-left:6px; } }
+            * { 
+              margin: 0; 
+              padding: 0; 
+              box-sizing: border-box; 
+            }
+            body { 
+              font-family: 'Courier New', monospace; 
+              font-size: 12px; 
+              line-height: 1.2;
+              color: #000; 
+              background: white;
+              padding: 10px;
+            }
+            .ticket { 
+              max-width: 300px; 
+              margin: 0 auto;
+              border: 1px dashed #666;
+              padding: 15px;
+              position: relative;
+            }
+            .header { 
+              text-align: center; 
+              margin-bottom: 15px;
+              padding-bottom: 10px;
+              border-bottom: 1px dashed #333;
+            }
+            .organization {
+              font-weight: bold;
+              font-size: 14px;
+              margin-bottom: 5px;
+              text-transform: uppercase;
+            }
+            .document-type {
+              font-size: 11px;
+              color: #666;
+              margin-bottom: 8px;
+            }
+            .separator {
+              border-top: 1px dashed #333;
+              margin: 8px 0;
+            }
+            .double-separator {
+              border-top: 2px double #333;
+              margin: 10px 0;
+            }
+            .info-section {
+              margin-bottom: 12px;
+            }
+            .info-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 4px;
+            }
+            .info-label {
+              font-weight: bold;
+              min-width: 80px;
+            }
+            .info-value {
+              text-align: right;
+              flex: 1;
+            }
+            .items-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 10px 0;
+              font-size: 10px;
+            }
+            .items-table th {
+              border-bottom: 1px solid #333;
+              padding: 4px 2px;
+              text-align: left;
+              font-weight: bold;
+            }
+            .items-table td {
+              padding: 3px 2px;
+              border-bottom: 1px dotted #ccc;
+            }
+            .total-section {
+              text-align: center;
+              margin: 15px 0;
+              padding: 8px;
+              border: 1px solid #000;
+              background: #f0f0f0;
+            }
+            .total-amount {
+              font-size: 16px;
+              font-weight: bold;
+              margin-top: 5px;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 15px;
+              padding-top: 10px;
+              border-top: 1px dashed #333;
+              font-size: 10px;
+              color: #666;
+            }
+            .watermark {
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%) rotate(-45deg);
+              font-size: 40px;
+              color: rgba(0,0,0,0.1);
+              pointer-events: none;
+              z-index: -1;
+              white-space: nowrap;
+            }
+            @media print {
+              body { margin: 0; padding: 0; }
+              .ticket { border: none; padding: 10px; }
+            }
           </style>
         </head>
         <body>
-          ${printContent.innerHTML}
+          <div class="ticket">
+            <div class="watermark">LIQUIDACIÓN</div>
+            ${printContent.innerHTML}
+          </div>
         </body>
       </html>
     `);
 
     printWindow.document.close();
-    setTimeout(() => {
-      printWindow!.focus();
-      printWindow!.print();
-      printWindow!.close();
+    
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.close();
       onPrint();
-    }, 500);
+    };
   };
 
-  const computedSubtotal =
-    formData.items?.reduce((sum, it) => sum + (Number(it.subtotal ?? (Number(it.cantidad ?? 0) * Number(it.precioUnitario ?? 0))) || 0), 0) ?? 0;
-  const computedIva = formData.iva ?? formData.items?.reduce((sum, it) => sum + (Number(it.iva ?? 0) || 0), 0) ?? 0;
-  const computedTotal = total || formData.total || computedSubtotal + Number(computedIva || 0);
+  const displayTotal = total || formData.total || 0;
+  
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-[900px] max-w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-lg font-bold text-gray-800">Vista Previa - Liquidación de Compras</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl font-bold">×</button>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b bg-gradient-to-r from-blue-50 to-gray-50 rounded-t-xl">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">Vista Previa de Liquidación</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              {formData.numero || formData.secuencia ? `Documento: ${formData.numero || formData.secuencia}` : 'Nuevo documento'}
+            </p>
+          </div>
+          <button 
+            onClick={onClose} 
+            className="text-gray-500 hover:text-gray-700 text-3xl font-light bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-sm hover:shadow transition-all"
+          >
+            ×
+          </button>
         </div>
 
-        <div className="p-4">
-          <div id="print-content">
-            <div className="ticket" style={{ background: '#fff' }}>
-              {/* Top: Brand + Right document box */}
-              <div className="top">
-                <div className="left-brand">
-                  <div className="logo">
-                    <div className="brand-box">JUNTA ADMINISTRADORA DE AGUA POTABLE</div>
-                  </div>
-                  <div className="company-lines">
-                    <div>Dirección matriz: {formData.empresaDireccion || 'Av. Ejemplo N23-123 y Ejemplo'}</div>
-                    <div>Dirección sucursal: {formData.sucursalDireccion || 'García Moreno y Sucre'}</div>
-                  </div>
+        {/* Contenido */}
+        <div className="flex-1 overflow-y-auto p-8 bg-gray-50">
+          <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-8 max-w-md mx-auto">
+            <div id="print-content" className="text-center">
+              
+              {/* Encabezado Mejorado */}
+              <div className="header mb-6">
+                <div className="organization text-lg font-bold text-gray-900 leading-tight mb-2">
+                  JUNTA ADMINISTRADORA<br />
+                  DE AGUA POTABLE
                 </div>
-                <div className="right-box">
-                  <div className="ruc">R.U.C. {formData.rucEmisor || '1790182345001'}</div>
-                  <div className="doc-title">LIQUIDACIÓN DE COMPRAS DE BIENES Y PRESTACIÓN DE SERVICIOS</div>
-                  <div style={{ marginTop: 8, fontSize: 12 }}>
-                    <div>No. {formData.serie || '002'} - {formData.numero || '000-000123456789'}</div>
-                    <div>Aut. SRI: {formData.autorizacion || '1234567890'}</div>
-                    <div>Fecha de autorización: {formData.fechaAutorizacion || formData.emision || ''}</div>
+                <div className="document-type text-sm font-semibold text-blue-600 uppercase tracking-wide mb-3">
+                  COMPROBANTE DE LIQUIDACIÓN
+                </div>
+                <div className="separator"></div>
+              </div>
+
+              {/* Información Principal - Mejor Estructurada */}
+              <div className="info-section space-y-3 text-sm">
+                <div className="info-row">
+                  <span className="info-label text-gray-700">Serie/Número:</span>
+                  <span className="info-value text-gray-900 font-medium">
+                    {[formData.serie, formData.numero].filter(Boolean).join('-') || '-'}
+                  </span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label text-gray-700">Secuencia:</span>
+                  <span className="info-value text-gray-900 font-medium">{formData.secuencia || '-'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label text-gray-700">C.I./RUC:</span>
+                  <span className="info-value text-gray-900 font-medium">{formData.cedula || formData.rucComprador || '-'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label text-gray-700">Cliente:</span>
+                  <span className="info-value text-gray-900 font-medium">{formData.cliente || formData.nombre || '-'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label text-gray-700">Concepto:</span>
+                  <span className="info-value text-gray-900 font-medium">{formData.concepto || '-'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label text-gray-700">Emisión:</span>
+                  <span className="info-value text-gray-900 font-medium">{formatDate(formData.emision)}</span>
+                </div>
+                {showVencimiento && (
+                  <div className="info-row">
+                    <span className="info-label text-gray-700">Vencimiento:</span>
+                    <span className="info-value text-gray-900 font-medium">{formatDate(formData.vencimiento)}</span>
                   </div>
+                )}
+              </div>
+
+              <div className="double-separator my-6"></div>
+
+              {/* Total Destacado */}
+              <div className="total-section bg-gradient-to-r from-blue-50 to-gray-50 border-2 border-blue-200 rounded-lg py-4 px-6 mb-6">
+                <div className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  TOTAL A PAGAR
+                </div>
+                <div className="total-amount text-2xl font-bold text-blue-600 mt-2">
+                  $ {formatCurrency(displayTotal)}
                 </div>
               </div>
 
-              {/* Buyer / document meta */}
-              <div className="info">
-                <div className="col">
-                  <div className="label">Identificación adquirente</div>
-                  <div>{formData.cliente || formData.nombre || '-'}</div>
-                  <div style={{ marginTop: 6 }}><strong>C.I./RUC:</strong> {formData.cedula || formData.rucComprador || '-'}</div>
-                </div>
-                <div className="col">
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <div style={{ flex: 1 }}>
-                      <div className="label">Fecha de emisión</div>
-                      <div>{formData.emision || '-'}</div>
-                    </div>
-                    {showVencimiento && (
-                      <div style={{ flex: 1 }}>
-                        <div className="label">Fecha de vencimiento</div>
-                        <div>{formData.vencimiento || ''}</div>
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ marginTop: 10 }}>
-                    <div className="label">Dirección / Lugar operación</div>
-                    <div>{formData.direccion || formData.lugarOperacion || '-'}</div>
-                  </div>
-                </div>
+              {/* Pie de Página Mejorado */}
+              <div className="footer text-xs text-gray-500 space-y-1">
+                <div className="font-medium">¡Gracias por su preferencia!</div>
+                <div>Documento generado el {new Date().toLocaleDateString('es-EC')}</div>
               </div>
 
-              {/* Items Table */}
-              <table className="items" aria-label="Detalle de items">
-                <thead>
-                  <tr>
-                    <th style={{ width: 70, textAlign: 'center' }}>CANT.</th>
-                    <th style={{ textAlign: 'left' }}>DESCRIPCIÓN</th>
-                    <th style={{ width: 110, textAlign: 'center' }}>P. UNITARIO</th>
-                    <th style={{ width: 110, textAlign: 'center' }}>V. TOTAL</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formData.items && formData.items.length > 0 ? (
-                    formData.items.map((item, idx) => {
-                      const cantidad = Number(item.cantidad ?? 0);
-                      const precio = Number(item.precioUnitario ?? item.precio ?? 0);
-                      const subtotal = Number(item.subtotal ?? (cantidad * precio));
-                      return (
-                        <tr key={idx}>
-                          <td style={{ textAlign: 'center' }}>{cantidad}</td>
-                          <td>
-                            <div style={{ fontWeight: 600 }}>{item.descripcion || item.nombre || '-'}</div>
-                            {item.codigo && <div style={{ fontSize: 11, color: '#666' }}>Código: {item.codigo}</div>}
-                          </td>
-                          <td style={{ textAlign: 'center' }}>${formatCurrency(precio)}</td>
-                          <td style={{ textAlign: 'center' }}>${formatCurrency(subtotal)}</td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan={4} style={{ textAlign: 'center', padding: 20 }}>No hay detalles</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-
-              {/* Totals */}
-              <div className="totals" role="status" aria-live="polite">
-                <div className="inner">
-                  <div className="totals-row">
-                    <div>Subtotal</div>
-                    <div>${formatCurrency(formData.subtotal ?? computedSubtotal)}</div>
-                  </div>
-                  <div className="totals-row">
-                    <div>IVA {formData.ivaPorcentaje ?? '0'}%</div>
-                    <div>${formatCurrency(formData.iva ?? computedIva)}</div>
-                  </div>
-                  {formData.descuento ? (
-                    <div className="totals-row">
-                      <div>Descuento</div>
-                      <div>-${formatCurrency(formData.descuento)}</div>
-                    </div>
-                  ) : null}
-                  <div className="totals-row last">
-                    <div>Total</div>
-                    <div>${formatCurrency(computedTotal)}</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment */}
-              <div className="payment">
-                <div className="left">
-                  <div style={{ fontWeight: 700, marginBottom: 6 }}>FORMA DE PAGO</div>
-                  <div>{formData.formaPago || 'EFECTIVO / TARJETA / OTROS'}</div>
-                  {formData.valorPago !== undefined && (
-                    <div style={{ marginTop: 6 }}>Valor: ${formatCurrency(Number(formData.valorPago))}</div>
-                  )}
-                </div>
-                <div className="right">
-                  <div style={{ fontWeight: 700, marginBottom: 6 }}>Datos de la imprenta</div>
-                  <div>
-                    {formData.imprentaNombre || 'Nombre Imprenta / Taller'} <br />
-                    RUC: {formData.imprentaRuc || '1700xxxxxx'} <br />
-                    Aut.: {formData.imprentaAutorizacion || ''}
-                  </div>
-                </div>
-              </div>
-
-              <div className="footer">
-                <div>Documento emitido según normativa SRI.</div>
-              </div>
             </div>
           </div>
+
+          
         </div>
 
-        <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-100"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handlePrint}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Imprimir / Guardar
-          </button>
+        {/* Footer con acciones */}
+        <div className="flex justify-between items-center p-6 border-t bg-white rounded-b-xl">
+          <div className="text-sm text-gray-600">
+            Total: <span className="font-semibold text-green-600">$ {formatCurrency(displayTotal)}</span>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="px-6 py-3 text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors font-medium flex items-center gap-2"
+            >
+              <span>✕</span>
+              Cancelar
+            </button>
+            <button
+              onClick={handlePrint}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 shadow-sm"
+            >
+              
+              Imprimir
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
-
-export default PrintPreviewModal;
