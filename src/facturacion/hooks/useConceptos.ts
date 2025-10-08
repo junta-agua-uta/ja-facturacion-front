@@ -52,9 +52,6 @@ export function useConceptos() {
 
           return posA - posB;
         });
-        
-
-
         console.log("🗂️ Conceptos mapeados:", mapped);
         setConceptos(mappedOrdenado);
       } catch (err) {
