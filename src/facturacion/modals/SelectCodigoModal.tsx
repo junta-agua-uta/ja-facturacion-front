@@ -30,7 +30,10 @@ export const SelectCodigoModal: React.FC<SelectCodigoModalProps> = ({ id, onSele
     setMesSeleccionado("ninguno");
     if (!concepto.requiereMes) {
       console.log("✅ Concepto sin mes, seleccionando directamente:", concepto);
-      onSelect(concepto);
+      onSelect({
+        ...concepto,
+        codigo: concepto.codInterno,
+      });
       (document.getElementById(id) as HTMLDialogElement)?.close();
     } else {
       console.log("⏳ Concepto requiere mes, esperando selección de mes");
@@ -41,7 +44,10 @@ export const SelectCodigoModal: React.FC<SelectCodigoModalProps> = ({ id, onSele
   const handleMesSelect = () => {
     if (conceptoSeleccionado) {
       console.log("📅 Seleccionando concepto con mes:", { conceptoSeleccionado, mesSeleccionado });
-      onSelect(conceptoSeleccionado, mesSeleccionado);
+      onSelect({
+        ...conceptoSeleccionado,
+        codigo: conceptoSeleccionado.codInterno,
+      }, mesSeleccionado);
       (document.getElementById(id) as HTMLDialogElement)?.close();
     }
   };
@@ -63,7 +69,7 @@ export const SelectCodigoModal: React.FC<SelectCodigoModalProps> = ({ id, onSele
                   onClick={() => handleCodigoClick(c)}
                   type="button"
                 >
-                  {c.desc} {c.requiereMes ? "(Requiere mes)" : ""} {c.precioBase ? `- $${c.precioBase}` : ""}
+                  {c.desc}
                 </button>
                 {c.requiereMes && conceptoSeleccionado?.codigo === c.codigo && (
                   <div className="mt-2 flex gap-2 items-center">
