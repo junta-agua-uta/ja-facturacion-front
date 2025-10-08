@@ -69,7 +69,7 @@ export const SelectCodigoModal: React.FC<SelectCodigoModalProps> = ({ id, onSele
                   onClick={() => handleCodigoClick(c)}
                   type="button"
                 >
-                  {c.desc}
+                  {c.codigo}
                 </button>
                 {c.requiereMes && conceptoSeleccionado?.codigo === c.codigo && (
                   <div className="mt-2 flex gap-2 items-center">
