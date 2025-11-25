@@ -278,7 +278,7 @@ export default function ClientesPage() {
           params: { page: 1, limit: PAGE_SIZE }
         });
         const apiData = fetchResponse.data?.data ?? [];
-        const convertedClientes = Array.isArray(apiData) ? apiData.map(convertApiToCliente) : [];
+        const convertedClientes = apiData.map(convertApiToCliente);
         setClientes(convertedClientes);
         if (typeof fetchResponse.data?.totalItems === 'number') {
           setTotalItems(fetchResponse.data.totalItems);
