@@ -31,6 +31,7 @@ export const useLiquidacionForm = (): UseLiquidacionFormReturn => {
   };
 
   const initialFormState: LiquidacionForm = {
+    id: "0",
     fechaEmision: getCurrentDate(),
     dirEstablecimiento: "",
     tipoIdentificacionProveedor: "05",
