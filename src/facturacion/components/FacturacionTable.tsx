@@ -3,14 +3,21 @@ import { TableProps } from "../../shared/utils/types";
 import { Factura } from "../types/factura";
 import { PrintPreviewModal } from './Ticket';
 import { useTablePrint } from '../hooks/useTablePrint';
+import AnularFacturaModal from '../modals/AnularFacturaModal';
+import { useState } from 'react';
+import { showSuccess, showError, showWarning } from '../../shared/utils/notifications';
 
-type FacturacionTableProps = TableProps<Factura> & { loading?: boolean };
+type FacturacionTableProps = TableProps<Factura> & { 
+    loading?: boolean;
+    onFacturaAnulada?: () => void; // Callback cuando se anula una factura
+};
 
 export default function FacturacionTable({
     data,
     pagination,
     onPageChange,
-    loading = false
+    loading = false,
+    onFacturaAnulada
 }: FacturacionTableProps) {
 
     const {
@@ -21,6 +28,63 @@ export default function FacturacionTable({
         handleClosePrintPreview,
         handlePrint
     } = useTablePrint();
+
+    // Estados para el modal de anulación
+    const [isAnularModalOpen, setIsAnularModalOpen] = useState(false);
+    const [facturaSeleccionada, setFacturaSeleccionada] = useState<Factura | null>(null);
+    const [isAnulando, setIsAnulando] = useState(false);
+
+    // Función para abrir el modal de anulación
+    const handleOpenAnularModal = (factura: Factura) => {
+        if (factura.Estado !== 'AUTORIZADO') {
+            showWarning(`No se puede anular una factura con estado "${factura.Estado}". Solo se pueden anular facturas autorizadas.`);
+            return;
+        }
+        setFacturaSeleccionada(factura);
+        setIsAnularModalOpen(true);
+    };
+
+    // Función para cerrar el modal
+    const handleCloseAnularModal = () => {
+        if (!isAnulando) {
+            setIsAnularModalOpen(false);
+            setFacturaSeleccionada(null);
+        }
+    };
+
+    // Función para confirmar la anulación
+    const handleConfirmarAnulacion = async () => {
+        if (!facturaSeleccionada) return;
+
+        setIsAnulando(true);
+
+        try {
+            // Importar dinámicamente el servicio
+            const { anularFactura } = await import('../services/factura.service');
+            const response = await anularFactura(facturaSeleccionada.id);
+
+            if (response.success) {
+                setIsAnularModalOpen(false);
+                setFacturaSeleccionada(null);
+                
+                // Mostrar notificación de éxito
+                showSuccess(response.message || 'Factura anulada exitosamente');
+                
+                if (onFacturaAnulada) {
+                    onFacturaAnulada();
+                }
+            } else {
+                throw new Error(response.message || 'Error al anular la factura');
+            }
+        } catch (err: any) {
+            const errorMessage = err.message || 'Error desconocido al anular la factura';
+            
+            // Mostrar notificación de error
+            showError(errorMessage);
+        } finally {
+            setIsAnulando(false);
+        }
+    };
 
     const formatDate = (date: Date) => {
         const year = date.getUTCFullYear();
@@ -80,8 +144,10 @@ export default function FacturacionTable({
                 pagination={pagination}
                 onPageChange={onPageChange}
                 onPrint={handleOpenPrintPreview}
+                onAnular={handleOpenAnularModal}
                 showActions={true}
                 showPrint={true}
+                showAnular={true}
             />
 
             <PrintPreviewModal
@@ -101,6 +167,15 @@ export default function FacturacionTable({
                 onClose={handleClosePrintPreview}
                 onPrint={handlePrint}
                 showVencimiento={false}
+            />
+
+            <AnularFacturaModal
+                id="anular_factura_modal"
+                isOpen={isAnularModalOpen}
+                onClose={handleCloseAnularModal}
+                onConfirm={handleConfirmarAnulacion}
+                factura={facturaSeleccionada}
+                isLoading={isAnulando}
             />
         </>
     );
