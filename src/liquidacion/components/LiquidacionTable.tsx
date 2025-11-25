@@ -1,16 +1,24 @@
+import { useState } from 'react';
 import Table from "../../shared/components/Table";
 import { TableProps } from "../../shared/utils/types";
 import { LiquidacionForm } from "../types/liquidacion";
 import { PrintPreviewModal } from './Ticket';
 import { useTablePrint } from '../hooks/useTablePrint';
+import AnularLiquidacionModal from '../modals/AnularLiquidacionModal';
+import { anularLiquidacion } from '../services/liquidacion.service';
+import { showSuccess, showError, showWarning } from '../../shared/utils/notifications';
 
-type LiquidacionTableProps = TableProps<LiquidacionForm> & { loading?: boolean };
+type LiquidacionTableProps = TableProps<LiquidacionForm> & { 
+  loading?: boolean;
+  onLiquidacionAnulada?: () => void;
+};
 
 export default function LiquidacionTable({
   data,
   pagination,
   onPageChange,
-  loading = false
+  loading = false,
+  onLiquidacionAnulada
 }: LiquidacionTableProps) {
 
   const {
@@ -21,6 +29,53 @@ export default function LiquidacionTable({
     handleClosePrintPreview,
     handlePrint
   } = useTablePrint();
+
+  // Estados para anulación
+  const [isAnularModalOpen, setIsAnularModalOpen] = useState(false);
+  const [liquidacionSeleccionada, setLiquidacionSeleccionada] = useState<LiquidacionForm | null>(null);
+  const [isAnulando, setIsAnulando] = useState(false);
+
+  const handleOpenAnularModal = (liquidacion: LiquidacionForm) => {
+    if (liquidacion.estadoSri !== 'AUTORIZADO') {
+      showWarning('Solo se pueden anular liquidaciones con estado AUTORIZADO');
+      return;
+    }
+    setLiquidacionSeleccionada(liquidacion);
+    setIsAnularModalOpen(true);
+  };
+
+  const handleCloseAnularModal = () => {
+    if (!isAnulando) {
+      setIsAnularModalOpen(false);
+      setLiquidacionSeleccionada(null);
+    }
+  };
+
+  const handleConfirmarAnulacion = async () => {
+    if (!liquidacionSeleccionada?.id) return;
+
+    setIsAnulando(true);
+    try {
+      const result = await anularLiquidacion(liquidacionSeleccionada.id);
+      
+      if (result.success) {
+        showSuccess('Liquidación anulada correctamente en el sistema');
+        setIsAnularModalOpen(false);
+        setLiquidacionSeleccionada(null);
+        
+        // Refrescar la lista
+        if (onLiquidacionAnulada) {
+          onLiquidacionAnulada();
+        }
+      } else {
+        showError(result.message || 'Error al anular la liquidación');
+      }
+    } catch (error: any) {
+      showError(error.message || 'Error al anular la liquidación');
+    } finally {
+      setIsAnulando(false);
+    }
+  };
 
   const formatDate = (dateStr: string) => {
     const [day, month, year] = dateStr.split('/').map(Number);
@@ -75,8 +130,19 @@ export default function LiquidacionTable({
         pagination={pagination}
         onPageChange={onPageChange}
         onPrint={handleOpenPrintPreview}
+        onAnular={handleOpenAnularModal}
         showActions={true}
         showPrint={true}
+        showAnular={true}
+      />
+
+      <AnularLiquidacionModal
+        id="anular-liquidacion-modal"
+        isOpen={isAnularModalOpen}
+        onClose={handleCloseAnularModal}
+        onConfirm={handleConfirmarAnulacion}
+        liquidacion={liquidacionSeleccionada}
+        isLoading={isAnulando}
       />
 
       <PrintPreviewModal

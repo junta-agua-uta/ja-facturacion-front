@@ -8,6 +8,7 @@ export interface LiquidacionForm {
   direccionProveedor?: string;
   importeTotal?: number;
   estadoSri?: string;
+  Estado?: string; // Estado de la liquidación (AUTORIZADO, ANULADO, etc.)
 }
 
 export interface ConceptoCobro {
