@@ -1,5 +1,5 @@
 export interface LiquidacionForm {
-  id?: number;
+  id: string;
   fechaEmision?: string;
   dirEstablecimiento?: string;
   tipoIdentificacionProveedor?: string;

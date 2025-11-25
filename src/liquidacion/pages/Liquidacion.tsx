@@ -37,7 +37,7 @@ export default function LiquidacionPage() {
   // Mapear respuesta de la API a LiquidacionForm
   const mapLiquidaciones = (apiData: any[]): LiquidacionForm[] => {
     return apiData.map((item: any) => ({
-      id: item.id,
+      id: item.id?.toString() || '0',
       razonSocialProveedor: item.razonSocialProveedor ?? 'Sin Nombre Comercial',
       identificacionProveedor: item.identificacionProveedor ?? '',
       fechaEmision: item.fechaEmision ?? '',

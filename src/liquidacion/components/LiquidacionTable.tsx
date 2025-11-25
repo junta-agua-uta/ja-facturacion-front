@@ -56,7 +56,7 @@ export default function LiquidacionTable({
 
     setIsAnulando(true);
     try {
-      const result = await anularLiquidacion(liquidacionSeleccionada.id);
+      const result = await anularLiquidacion(Number(liquidacionSeleccionada.id));
       
       if (result.success) {
         showSuccess('Liquidación anulada correctamente en el sistema');
