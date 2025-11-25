@@ -49,7 +49,7 @@ const Layout = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <aside className={`${menuOpen ? 'w-64' : 'w-0'} flex flex-col bg-gray-200 border-r border-gray-300 shadow-xl pb-5 transition-all duration-300 overflow-hidden`}>
+      <aside className={`${menuOpen ? 'w-64' : 'w-0'} flex flex-col bg-gray-200 border-r border-gray-300 shadow-xl pb-5 transition-all duration-300 overflow-auto max-h-screen`}>
         <div className="p-4 flex justify-center">
           <img src="/logo_agua.svg" alt="Logo Agua Pública" className="h-36" />
         </div>
