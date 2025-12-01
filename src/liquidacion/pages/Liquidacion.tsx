@@ -13,6 +13,7 @@ export default function LiquidacionPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [filters, setFilters] = useState<{ Cedula?: string }>({});
   const [dateFilters, setDateFilters] = useState<{ FechaEmisionDesde: Date; FechaEmisionHasta: Date }>({
@@ -21,6 +22,11 @@ export default function LiquidacionPage() {
   });
 
   const [debouncedCedula, setDebouncedCedula] = useState(filters.Cedula || "");
+
+  // Handler para refrescar después de anular
+  const handleLiquidacionAnulada = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   // Debounce para cédula
   useEffect(() => {
@@ -31,6 +37,7 @@ export default function LiquidacionPage() {
   // Mapear respuesta de la API a LiquidacionForm
   const mapLiquidaciones = (apiData: any[]): LiquidacionForm[] => {
     return apiData.map((item: any) => ({
+      id: item.id?.toString() || '0',
       razonSocialProveedor: item.razonSocialProveedor ?? 'Sin Nombre Comercial',
       identificacionProveedor: item.identificacionProveedor ?? '',
       fechaEmision: item.fechaEmision ?? '',
@@ -68,7 +75,7 @@ export default function LiquidacionPage() {
     };
 
     fetchLiquidaciones();
-  }, [currentPage, debouncedCedula, dateFilters.FechaEmisionDesde, dateFilters.FechaEmisionHasta]);
+  }, [currentPage, debouncedCedula, dateFilters.FechaEmisionDesde, dateFilters.FechaEmisionHasta, refreshKey]);
 
   useEffect(() => setCurrentPage(1), [debouncedCedula, dateFilters.FechaEmisionDesde, dateFilters.FechaEmisionHasta]);
 
@@ -164,6 +171,7 @@ export default function LiquidacionPage() {
           loading={loading}
           pagination={{ currentPage, totalPages, pageSize: PAGE_SIZE || 10, totalItems }}
           onPageChange={setCurrentPage}
+          onLiquidacionAnulada={handleLiquidacionAnulada}
         />
       </CardSlot>
     </>
