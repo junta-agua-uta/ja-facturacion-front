@@ -88,6 +88,10 @@ export const useLiquidacionForm = (): UseLiquidacionFormReturn => {
         setSaveError("Debe ingresar la dirección del establecimiento");
         return false;
       }
+      if (!formData.direccionProveedor) {
+        setSaveError("Debe ingresar la dirección del proveedor");
+        return false;
+      }
       if (conceptos.length === 0) {
         setSaveError("Debe agregar al menos un concepto a la liquidación");
         return false;
@@ -123,7 +127,7 @@ export const useLiquidacionForm = (): UseLiquidacionFormReturn => {
           totalDescuento,
           importeTotal,
           moneda: "DOLAR",
-          direccionProveedor: formData.direccionProveedor || undefined,
+          direccionProveedor: formData.direccionProveedor,
         },
         detalles: conceptos.map((c) => ({
           descripcion: c.descripcion,

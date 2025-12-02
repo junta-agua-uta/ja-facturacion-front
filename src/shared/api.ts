@@ -22,9 +22,19 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error('API Error:', error.response?.status, error.response?.data);
+    
     if (error.response?.status === 401) {
-      localStorage.removeItem('userToken');
-      window.location.href = '/login';
+      // Only logout if it's actually an authentication issue
+      const errorMessage = error.response?.data?.message || '';
+      if (errorMessage.includes('token') || errorMessage.includes('unauthorized') || errorMessage.includes('expired')) {
+        console.log('Authentication error detected, logging out user');
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('userData');
+        window.location.href = '/login';
+      } else {
+        console.log('401 error but not authentication related:', errorMessage);
+      }
     }
     return Promise.reject(error);
   }
