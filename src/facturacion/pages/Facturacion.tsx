@@ -17,6 +17,7 @@ export default function Facturacion() {
     FechaEmisionDesde: new Date('2025-01-01'),
     FechaEmisionHasta: new Date('2025-12-31')
   });
+  const [refreshKey, setRefreshKey] = useState(0); // Para forzar recarga
 
   // Estado para el debounce de la cédula
   const [debouncedCedula, setDebouncedCedula] = useState(filters.Cedula || "");
@@ -119,11 +120,16 @@ export default function Facturacion() {
     };
 
     fetchFacturas();
-  }, [currentPage, debouncedCedula, dateFilters.FechaEmisionDesde, dateFilters.FechaEmisionHasta]);
+  }, [currentPage, debouncedCedula, dateFilters.FechaEmisionDesde, dateFilters.FechaEmisionHasta, refreshKey]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedCedula, dateFilters.FechaEmisionDesde, dateFilters.FechaEmisionHasta]);
+
+  // Función para recargar facturas después de anular
+  const handleFacturaAnulada = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   const paginatedFacturas = debouncedCedula && debouncedCedula.trim()
     ? facturas.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
@@ -234,6 +240,7 @@ export default function Facturacion() {
             totalItems
           }}
           onPageChange={setCurrentPage}
+          onFacturaAnulada={handleFacturaAnulada}
         />
       </CardSlot>
     </>

@@ -52,6 +52,10 @@ const Login = () => {
                         src="/logo_agua.svg"
                         alt="Logo Agua Pública"
                         className="w-50 h-50"
+                        onError={(e) => {
+                          console.error('Error cargando logo en Login');
+                          e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50"%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%23333" font-size="10"%3ELogo%3C/text%3E%3C/svg%3E';
+                        }}
                     />
                 </div>
 

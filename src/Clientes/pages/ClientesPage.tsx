@@ -41,6 +41,7 @@ export default function ClientesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [serverPaginated, setServerPaginated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [, setClienteToEdit] = useState<Cliente | null>(null);
@@ -143,13 +144,20 @@ export default function ClientesPage() {
     };
   };
 
+  // Cuando cambian los filtros reiniciamos a la primera página
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
   useEffect(() => {
     const fetchClientes = async () => {
       setIsLoading(true);
       setError(null);
       try {
         let response;
-        let apiData;
+        let apiData: any = [];
+        let totalFromApi: number | undefined;
+        let totalPagesFromApi: number | undefined;
 
         // Si hay un filtro por identificación, usar el endpoint de búsqueda por cédula
         if (filters.identificacion && filters.identificacion.trim() !== "") {
@@ -157,6 +165,7 @@ export default function ClientesPage() {
             `/clientes/buscarCedula?cedula=${filters.identificacion.trim()}`
           );
           apiData = response.data; // Este endpoint devuelve un array directamente
+          setServerPaginated(false);
         }
         // Si hay un filtro por razón social, usar el endpoint de búsqueda por nombre
         else if (filters.razonSocial && filters.razonSocial.trim() !== "") {
@@ -164,11 +173,18 @@ export default function ClientesPage() {
             `/clientes/buscar?nombre=${filters.razonSocial.trim()}`
           );
           apiData = response.data; // Este endpoint devuelve un array directamente
+          setServerPaginated(false);
         }
-        // Si no hay filtros, obtener todos los clientes
+        // Si no hay filtros, solicitar la página al backend (si el backend soporta paginación)
         else {
-          response = await api.get<ApiResponse>("/clientes");
-          apiData = response.data.data; // Este endpoint devuelve {data: [...], totalItems, etc.}
+          response = await api.get<ApiResponse>("/clientes", {
+            params: { page: currentPage, limit: PAGE_SIZE }
+          });
+          // response.data puede tener { data: [...], totalItems, totalPages }
+          apiData = response.data?.data ?? [];
+          totalFromApi = response.data?.totalItems;
+          totalPagesFromApi = response.data?.totalPages;
+          setServerPaginated(Boolean(totalFromApi || totalPagesFromApi));
         }
 
         // Convertir los datos de la API al formato interno
@@ -178,13 +194,19 @@ export default function ClientesPage() {
 
         setClientes(convertedClientes);
 
-        // Calcular paginación localmente
-        const totalItems = convertedClientes.length;
-        const totalPages = Math.ceil(totalItems / PAGE_SIZE);
-
-        setTotalItems(totalItems);
-        setTotalPages(totalPages);
-        setCurrentPage(1); // Resetear a la primera página cuando cambien los filtros
+        // Si la API provee totalItems / totalPages, usarlos; si no, calcular localmente
+        if (typeof totalFromApi === 'number') {
+          setTotalItems(totalFromApi);
+          setTotalPages(Math.ceil(totalFromApi / PAGE_SIZE));
+        } else if (typeof totalPagesFromApi === 'number') {
+          setTotalPages(totalPagesFromApi);
+          setTotalItems(convertedClientes.length * totalPagesFromApi);
+        } else {
+          const totalItemsLocal = convertedClientes.length;
+          const totalPagesLocal = Math.ceil(totalItemsLocal / PAGE_SIZE);
+          setTotalItems(totalItemsLocal);
+          setTotalPages(totalPagesLocal);
+        }
       } catch (error) {
         console.error("Error fetching clientes:", error);
         setError("No se pudo cargar la lista de clientes");
@@ -194,10 +216,14 @@ export default function ClientesPage() {
     };
 
     fetchClientes();
-  }, [filters]);
+  }, [filters, currentPage]);
 
   // Obtener datos para la página actual
   const getCurrentPageData = () => {
+    // Si el backend ya devuelve páginas (serverPaginated), `clientes` contiene
+    // solo los items de la página actual y no necesitamos rebanarlos.
+    if (serverPaginated) return clientes;
+
     const startIndex = (currentPage - 1) * PAGE_SIZE;
     const endIndex = startIndex + PAGE_SIZE;
     return clientes.slice(startIndex, endIndex);
@@ -247,11 +273,19 @@ export default function ClientesPage() {
 
         await api.post("/clientes", formattedCliente);
 
-        // Refetch the data to get the updated list
-        const fetchResponse = await api.get<ApiResponse>("/clientes");
-        const convertedClientes =
-          fetchResponse.data.data.map(convertApiToCliente);
+        // Refetch la primera página para incluir el nuevo cliente (si el backend está paginado)
+        const fetchResponse = await api.get<ApiResponse>("/clientes", {
+          params: { page: 1, limit: PAGE_SIZE }
+        });
+        const apiData = fetchResponse.data?.data ?? [];
+        const convertedClientes = apiData.map(convertApiToCliente);
         setClientes(convertedClientes);
+        if (typeof fetchResponse.data?.totalItems === 'number') {
+          setTotalItems(fetchResponse.data.totalItems);
+          setTotalPages(Math.ceil(fetchResponse.data.totalItems / PAGE_SIZE));
+          setServerPaginated(true);
+        }
+        setCurrentPage(1);
 
         setNewCliente(defaultNewCliente);
         setIsAddModalOpen(false);
