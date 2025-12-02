@@ -69,7 +69,7 @@ export const LiquidacionFormContent: React.FC<LiquidacionFormContentProps> = ({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium">Dirección Proveedor (Opcional)</label>
+          <label className="block text-sm font-medium">Dirección Proveedor *</label>
           <input
             type="text"
             name="direccionProveedor"
@@ -77,6 +77,7 @@ export const LiquidacionFormContent: React.FC<LiquidacionFormContentProps> = ({
             onChange={onInputChange}
             className="mt-1 block w-full border rounded-md p-2"
             placeholder="Av. Proveedor 123"
+            required
           />
         </div>
         <div>
