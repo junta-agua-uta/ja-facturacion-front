@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { FacturasIcon, TransaccionesIcon, UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon } from './utils/icons';
+import { FacturasIcon, TransaccionesIcon, UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon, EmpresaIcon } from './utils/icons';
 import NavItem from './components/NavItem';
 import { authService } from '../auth/Services/auth.service';
 import { useEffect, useState } from 'react';
@@ -51,10 +51,10 @@ const Layout = () => {
     <div className="flex h-screen bg-gray-100">
       <aside className={`${menuOpen ? 'w-64' : 'w-0'} flex flex-col bg-gray-200 border-r border-gray-300 shadow-xl pb-5 transition-all duration-300 overflow-auto max-h-screen`}>
         <div className="p-4 flex justify-center">
-          <img 
-            src="/logo_agua.svg" 
-            alt="Logo Agua Pública" 
-            className="h-36" 
+          <img
+            src="/logo_agua.svg"
+            alt="Logo Agua Pública"
+            className="h-36"
             onError={(e) => {
               console.error('Error cargando logo');
               e.currentTarget.style.display = 'none';
@@ -104,7 +104,7 @@ const Layout = () => {
             to="/junta/usuarios"
             isActive={isActive('usuarios')}
             icon={<UsuariosIcon isActive={isActive('usuarios')} />}
-            label="Usuarios"
+            label="Clientes"
           />
 
           <NavItem
@@ -112,6 +112,13 @@ const Layout = () => {
             isActive={isActive('sucursales')}
             icon={<SucursalesIcon isActive={isActive('sucursales')} />}
             label="Sucursales"
+          />
+
+          <NavItem
+            to="/junta/empresa"
+            isActive={isActive('empresa')}
+            icon={<EmpresaIcon isActive={isActive('empresa')} />}
+            label="Empresa"
           />
 
           <NavItem
@@ -134,7 +141,7 @@ const Layout = () => {
             icon={<PerfilIcon isActive={isActive('perfil')} />}
             label="Perfil"
           />
-          
+
         </nav>
 
         <div className="p-4 flex flex-col items-center">

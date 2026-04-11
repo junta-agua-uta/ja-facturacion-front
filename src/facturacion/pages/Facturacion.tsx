@@ -6,6 +6,17 @@ import { PAGE_SIZE } from "../../shared/utils/constants";
 import api from '../../shared/api';
 import { Link } from "react-router-dom";
 
+const getDefaultDates = () => {
+  const hoy = new Date();
+  const hasta = new Date(hoy);
+  hasta.setDate(hasta.getDate() + 30);
+  return {
+    FechaEmisionDesde: hoy,
+    FechaEmisionHasta: hasta
+  };
+};
+
+
 export default function Facturacion() {
   const [facturas, setFacturas] = useState<Factura[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -13,10 +24,7 @@ export default function Facturacion() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [filters, setFilters] = useState<FacturacionCedula>({});
-  const [dateFilters, setDateFilters] = useState<FacturacionFechaEmisionFilter>({
-    FechaEmisionDesde: new Date('2025-01-01'),
-    FechaEmisionHasta: new Date('2025-12-31')
-  });
+  const [dateFilters, setDateFilters] = useState<FacturacionFechaEmisionFilter>(getDefaultDates());
   const [refreshKey, setRefreshKey] = useState(0); // Para forzar recarga
 
   // Estado para el debounce de la cédula
@@ -138,10 +146,7 @@ export default function Facturacion() {
   const handleClearFilters = () => {
     setFilters({});
     setDebouncedCedula('');
-    setDateFilters({
-      FechaEmisionDesde: new Date('2025-01-01'),
-      FechaEmisionHasta: new Date('2025-12-31')
-    });
+    setDateFilters(getDefaultDates());
     setCurrentPage(1);
   };
 
