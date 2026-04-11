@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 
 interface NavItemProps {
   to: string;
@@ -90,6 +90,10 @@ const SubMenuItem = ({ item, index }: { item: { label: string; to: string; child
 
 const NavItem = ({ to, isActive, icon, label, children }: NavItemProps) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (children && isActive) setIsOpen(true);
+  }, [children, isActive]);
 
   const isButtonActive = isActive || isOpen;
   
