@@ -15,6 +15,7 @@ import AgregarLiquidacion from './liquidacion/pages/AgregarLiquidacion.tsx'
 import Liquidacion from './liquidacion/pages/Liquidacion.tsx'
 import ConceptosPage from './conceptos/pages/ConceptosPage';
 import AsientosPage from './contabilidad/pages/AsientosPage';
+import AsientoFormPage from './contabilidad/pages/AsientoFormPage';
 import PeriodosPage from './contabilidad/pages/PeriodosPage';
 import PeriodoDetallePage from './contabilidad/pages/PeriodoDetallePage';
 import PlanCuentasPage from './contabilidad/pages/PlanCuentasPage';
@@ -95,6 +96,8 @@ const router = createBrowserRouter([
           {
             path: 'contabilidad',
             children: [
+              { path: 'asientos/nuevo', element: <AsientoFormPage /> },
+              { path: 'asientos/:asientoId/editar', element: <AsientoFormPage /> },
               { path: 'asientos', element: <AsientosPage /> },
               { path: 'periodos/:periodoId', element: <PeriodoDetallePage /> },
               { path: 'periodos', element: <PeriodosPage /> },
