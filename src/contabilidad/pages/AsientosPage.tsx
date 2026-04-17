@@ -261,8 +261,13 @@ export default function AsientosPage() {
           onEditar={openEdit}
           onEliminar={openDelete}
         />
-        {!loadingList && totalPages > 1 && (
-          <Pagination pagination={{ currentPage: page, totalPages }} onPageChange={setPage} />
+        {!loadingList && periodoId != null && total > 0 && (
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <Pagination pagination={{ currentPage: page, totalPages }} onPageChange={setPage} />
+            <p className="text-xs text-base-content/60">
+              Página {page} de {totalPages} · {total} asiento{total !== 1 ? 's' : ''}
+            </p>
+          </div>
         )}
         {filters.buscar.trim() && (
           <p className="text-xs text-base-content/50 mt-2">
