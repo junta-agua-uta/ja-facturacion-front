@@ -4,9 +4,16 @@ import { Factura, FacturacionCedula, FacturacionFechaEmisionFilter } from "../ty
 import { FacturacionCedulaFilter, FacturacionFechaFilter, FacturacionTable } from "../components";
 import { PAGE_SIZE } from "../../shared/utils/constants";
 import api from '../../shared/api';
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+
+type FacturasLocationPrefill = {
+  FechaEmisionDesde?: string;
+  FechaEmisionHasta?: string;
+};
 
 export default function Facturacion() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [facturas, setFacturas] = useState<Factura[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -67,6 +74,17 @@ export default function Facturacion() {
   const formatDateForAPI = (date: Date) => {
     return date.toISOString().split('T')[0];
   };
+
+  useEffect(() => {
+    const s = location.state as FacturasLocationPrefill | null;
+    if (!s?.FechaEmisionDesde || !s?.FechaEmisionHasta) return;
+    setDateFilters({
+      FechaEmisionDesde: new Date(`${s.FechaEmisionDesde}T12:00:00`),
+      FechaEmisionHasta: new Date(`${s.FechaEmisionHasta}T12:00:00`),
+    });
+    setRefreshKey((k) => k + 1);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
     const fetchFacturas = async () => {
