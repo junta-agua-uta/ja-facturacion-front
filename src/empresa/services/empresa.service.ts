@@ -35,4 +35,9 @@ export const empresaService = {
     const response = await api.put(`/empresa/${id}`, payload);
     return response.data as EmpresaApiResponse;
   },
+
+  async obtenerUsuariosEmpresa(empresaId: number) {
+    const response = await api.get(`/users/empresa/${empresaId}`);
+    return response.data;
+  }
 };

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Title, CardSlot, EndSlot } from '../../shared/components';
+import { Title, CardSlot, EndSlot, Table } from '../../shared/components';
 import { empresaService, EmpresaApiResponse } from '../services/empresa.service';
 import EditEmpresaModal from '../modals/EditEmpresaModal';
 
@@ -62,6 +62,8 @@ const EmpresaPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EmpresaViewModel | null>(null);
   const [logoError, setLogoError] = useState(false);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [usuariosLoading, setUsuariosLoading] = useState(false);
 
   useEffect(() => {
     const fetchEmpresa = async () => {
@@ -71,6 +73,9 @@ const EmpresaPage = () => {
       try {
         const data: EmpresaApiResponse = await empresaService.obtenerEmpresa();
         setEmpresa(data);
+        if (data.id) {
+          fetchUsuarios(data.id);
+        }
       } catch (err) {
         console.error('Error al cargar empresa:', err);
         setError('No se pudo cargar la información de la empresa.');
@@ -81,6 +86,19 @@ const EmpresaPage = () => {
 
     fetchEmpresa();
   }, []);
+
+  const fetchUsuarios = async (empresaId: number) => {
+    setUsuariosLoading(true);
+    try {
+      const usersData = await empresaService.obtenerUsuariosEmpresa(empresaId);
+      // El backend devuelve un objeto paginado: { total, data: [...] }
+      setUsuarios(usersData.data || []);
+    } catch (err) {
+      console.error('Error al cargar usuarios:', err);
+    } finally {
+      setUsuariosLoading(false);
+    }
+  };
 
   const handleEditClick = () => {
     if (empresa) {
@@ -239,6 +257,41 @@ const EmpresaPage = () => {
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-900">Actualizado</p>
             <p className="mt-2 text-base text-slate-700">{formatDate(empresa.updatedAt)}</p>
+          </div>
+        </div>
+      </CardSlot>
+
+      <CardSlot>
+        <div className="collapse collapse-arrow border border-gray-200 bg-white shadow-sm rounded-2xl">
+          <input type="checkbox" name="my-accordion-2" />
+          <div className="collapse-title text-xl font-semibold text-slate-900">
+            Usuarios de la Empresa
+          </div>
+          <div className="collapse-content overflow-x-auto">
+            {usuariosLoading ? (
+              <div className="flex justify-center p-4">
+                <span className="loading loading-spinner text-blue-900"></span>
+              </div>
+            ) : usuarios && usuarios.length > 0 ? (
+              <div className="mt-4">
+                <Table
+                  data={usuarios.map(u => ({
+                    id: String(u.ID || Math.random()),
+                    nombreCompleto: `${u.NOMBRE || ''} ${u.APELLIDO || ''}`.trim() || 'N/A',
+                    correo: u.CORREO,
+                    rol: u.ROL || 'N/A'
+                  }))}
+                  columns={[
+                    { header: 'Nombre', accessor: 'nombreCompleto' },
+                    { header: 'Email', accessor: 'correo' },
+                    { header: 'Rol', accessor: 'rol' }
+                  ]}
+                  showActions={false}
+                />
+              </div>
+            ) : (
+              <p className="text-slate-500 text-center py-4">No se encontraron usuarios vinculados a esta empresa.</p>
+            )}
           </div>
         </div>
       </CardSlot>
