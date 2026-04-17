@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Title from '../../shared/components/Title';
 import api from '../../shared/api';
 import {
@@ -8,6 +8,7 @@ import {
   FiChevronRight,
   FiFilter,
   FiSearch,
+  FiX,
 } from 'react-icons/fi';
 
 type PlanCuentaApiItem = {
@@ -52,43 +53,56 @@ export default function PlanCuentasPage() {
   const [selectedDetalle, setSelectedDetalle] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createSuccess, setCreateSuccess] = useState<string | null>(null);
+  const [createForm, setCreateForm] = useState({
+    empresaId: '1',
+    padreId: '',
+    codigo: '',
+    nombre: '',
+    tipo: 'ACTIVO',
+    naturaleza: 'DEUDORA',
+    casillero: '',
+  });
+
+  const loadPlanCuentas = useCallback(async (): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await api.get<PlanCuentaApiResponse>('/plan-cuentas', {
+        params: {
+          formato: 'plano',
+          page: 1,
+          limit: 1000,
+        },
+      });
+
+      const items = Array.isArray(response.data?.data)
+        ? response.data.data
+        : [];
+
+      setRows(items);
+
+      const parentIds = new Set(
+        items
+          .map((item) => item.padreId)
+          .filter((id): id is number => id !== null),
+      );
+
+      setExpandedIds(parentIds);
+    } catch {
+      setError('No se pudo cargar el plan de cuentas.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchPlanCuentas = async (): Promise<void> => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const response = await api.get<PlanCuentaApiResponse>('/plan-cuentas', {
-          params: {
-            formato: 'plano',
-            page: 1,
-            limit: 1000,
-          },
-        });
-
-        const items = Array.isArray(response.data?.data)
-          ? response.data.data
-          : [];
-
-        setRows(items);
-
-        const parentIds = new Set(
-          items
-            .map((item) => item.padreId)
-            .filter((id): id is number => id !== null),
-        );
-
-        setExpandedIds(parentIds);
-      } catch {
-        setError('No se pudo cargar el plan de cuentas.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchPlanCuentas();
-  }, []);
+    void loadPlanCuentas();
+  }, [loadPlanCuentas]);
 
   const options = useMemo(() => {
     const tipos = Array.from(new Set(rows.map((account) => account.tipo)));
@@ -250,6 +264,97 @@ export default function PlanCuentasPage() {
 
       return next;
     });
+  };
+
+  const setFormField = (field: keyof typeof createForm, value: string): void => {
+    setCreateForm((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
+  };
+
+  const closeCreateModal = (): void => {
+    setIsCreateModalOpen(false);
+    setCreateError(null);
+    setCreateSuccess(null);
+  };
+
+  const handleCreateCuenta = async (): Promise<void> => {
+    const empresaId = Number(createForm.empresaId);
+    const padreId = createForm.padreId.trim()
+      ? Number(createForm.padreId)
+      : undefined;
+
+    if (!Number.isInteger(empresaId) || empresaId <= 0) {
+      setCreateError('Empresa ID debe ser un numero entero valido.');
+      return;
+    }
+
+    if (createForm.padreId.trim() && (!Number.isInteger(padreId) || (padreId ?? 0) <= 0)) {
+      setCreateError('Padre ID debe ser un numero entero valido.');
+      return;
+    }
+
+    if (!createForm.codigo.trim() || !createForm.nombre.trim()) {
+      setCreateError('Codigo y nombre son obligatorios.');
+      return;
+    }
+
+    setIsSaving(true);
+    setCreateError(null);
+    setCreateSuccess(null);
+
+    try {
+      await api.post(
+        '/plan-cuentas',
+        {
+          codigo: createForm.codigo.trim(),
+          nombre: createForm.nombre.trim(),
+          tipo: createForm.tipo,
+          naturaleza: createForm.naturaleza,
+          casillero: createForm.casillero.trim() || undefined,
+          padreId,
+        },
+        {
+          params: {
+            empresaId,
+          },
+        },
+      );
+
+      setCreateSuccess('Cuenta creada correctamente.');
+      setCreateForm({
+        empresaId: String(empresaId),
+        padreId: '',
+        codigo: '',
+        nombre: '',
+        tipo: 'ACTIVO',
+        naturaleza: 'DEUDORA',
+        casillero: '',
+      });
+
+      await loadPlanCuentas();
+
+      setTimeout(() => {
+        setIsCreateModalOpen(false);
+        setCreateSuccess(null);
+      }, 600);
+    } catch (requestError: unknown) {
+      const maybeError = requestError as {
+        response?: { data?: { message?: string | string[] } };
+      };
+
+      const message = maybeError?.response?.data?.message;
+      if (Array.isArray(message)) {
+        setCreateError(message.join(' | '));
+      } else if (typeof message === 'string') {
+        setCreateError(message);
+      } else {
+        setCreateError('No se pudo guardar la cuenta.');
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -496,12 +601,168 @@ export default function PlanCuentasPage() {
         <div className="mt-4 flex justify-end">
           <button
             type="button"
+            onClick={() => setIsCreateModalOpen(true)}
             className="inline-flex h-10 items-center justify-center rounded-xl bg-emerald-600 px-6 text-sm font-semibold text-white transition hover:bg-emerald-700"
           >
             Agregar
           </button>
         </div>
       </div>
+
+      {isCreateModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-emerald-900/30 px-4 py-8 backdrop-blur-[1px]">
+          <div className="w-full max-w-[672px] overflow-hidden rounded-lg border border-slate-200/20 bg-white shadow-[0px_12px_32px_rgba(0,41,68,0.08)]">
+            <header className="flex items-start justify-between bg-gradient-to-r from-[#004065] to-[#26638A] px-8 py-7">
+              <div>
+                <h3 className="text-[36px] font-extrabold leading-none tracking-[-0.6px] text-white">
+                  Nueva Cuenta
+                </h3>
+                <p className="mt-2 text-xs uppercase tracking-[1.2px] text-blue-200">
+                  Definicion de cuenta contable
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeCreateModal}
+                className="mt-1 text-white/70 transition hover:text-white"
+                aria-label="Cerrar modal"
+              >
+                <FiX className="h-7 w-7" />
+              </button>
+            </header>
+
+            <div className="px-8 pb-12 pt-8">
+              <form className="space-y-8">
+                {createError ? (
+                  <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {createError}
+                  </div>
+                ) : null}
+
+                {createSuccess ? (
+                  <div className="rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                    {createSuccess}
+                  </div>
+                ) : null}
+
+                <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+                  <label className="space-y-2">
+                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
+                      Empresa ID
+                    </span>
+                    <input
+                      value={createForm.empresaId}
+                      onChange={(event) => setFormField('empresaId', event.target.value)}
+                      className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base font-semibold text-[#002944] outline-none"
+                    />
+                  </label>
+
+                  <label className="space-y-2">
+                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
+                      Padre ID
+                    </span>
+                    <input
+                      value={createForm.padreId}
+                      onChange={(event) => setFormField('padreId', event.target.value)}
+                      className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base font-semibold text-[#002944] outline-none"
+                    />
+                  </label>
+
+                  <label className="space-y-2">
+                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
+                      Codigo
+                    </span>
+                    <input
+                      value={createForm.codigo}
+                      onChange={(event) => setFormField('codigo', event.target.value)}
+                      placeholder="1.1.1"
+                      className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-slate-500 outline-none placeholder:text-slate-500"
+                    />
+                  </label>
+
+                  <label className="space-y-2">
+                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
+                      Nombre
+                    </span>
+                    <input
+                      value={createForm.nombre}
+                      onChange={(event) => setFormField('nombre', event.target.value)}
+                      placeholder="Caja"
+                      className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-slate-700 outline-none placeholder:text-slate-500"
+                    />
+                  </label>
+
+                  <label className="space-y-2">
+                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
+                      Tipo
+                    </span>
+                    <select
+                      value={createForm.tipo}
+                      onChange={(event) => setFormField('tipo', event.target.value)}
+                      className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-[#191C1D] outline-none"
+                    >
+                      <option value="ACTIVO">ACTIVO</option>
+                      <option value="PASIVO">PASIVO</option>
+                      <option value="PATRIMONIO">PATRIMONIO</option>
+                      <option value="INGRESOS">INGRESOS</option>
+                      <option value="GASTOS">GASTOS</option>
+                      <option value="COSTOS">COSTOS</option>
+                    </select>
+                  </label>
+
+                  <label className="space-y-2">
+                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
+                      Naturaleza
+                    </span>
+                    <select
+                      value={createForm.naturaleza}
+                      onChange={(event) => setFormField('naturaleza', event.target.value)}
+                      className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-[#191C1D] outline-none"
+                    >
+                      <option value="DEUDORA">DEUDORA</option>
+                      <option value="ACREEDORA">ACREEDORA</option>
+                    </select>
+                  </label>
+
+                  <label className="space-y-2 sm:col-span-2">
+                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
+                      Casillero
+                    </span>
+                    <input
+                      value={createForm.casillero}
+                      onChange={(event) => setFormField('casillero', event.target.value)}
+                      placeholder="101"
+                      className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-slate-700 outline-none placeholder:text-slate-500"
+                    />
+                  </label>
+                </div>
+
+                <footer className="flex justify-end gap-4 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeCreateModal}
+                    className="inline-flex h-10 items-center px-6 text-xs font-bold uppercase tracking-[1.2px] text-slate-500"
+                    disabled={isSaving}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleCreateCuenta();
+                    }}
+                    disabled={isSaving}
+                    className="inline-flex h-10 items-center rounded bg-gradient-to-r from-[#002944] to-[#26638A] px-10 text-xs font-bold uppercase tracking-[1.2px] text-white shadow-[0_10px_15px_-3px_rgba(0,0,0,0.10),0_4px_6px_-4px_rgba(0,0,0,0.10)]"
+                  >
+                    {isSaving ? 'Guardando...' : 'Guardar Cuenta'}
+                  </button>
+                </footer>
+              </form>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
