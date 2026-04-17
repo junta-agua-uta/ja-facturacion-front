@@ -12,14 +12,9 @@ export function useConceptos() {
       setLoading(true);
       setError(null);
       try {
-        console.log("🔄 Cargando conceptos desde API...");
         const response = await api.get('/conceptos');
-        console.log("📥 Respuesta de conceptos:", response.data);
-        
-        // Comprobar que response.data.data es un array
         const data = Array.isArray(response.data.data) ? response.data.data : [];
-        console.log("📊 Datos procesados:", data);
-        
+
         const mapped: Concepto[] = data.map((c: any) => ({
           id: c.id || c.ID?.toString() || '',
           codigo: c.codigo || c.CODIGO,
@@ -29,10 +24,31 @@ export function useConceptos() {
           requiereMes: c.requiereMes ?? c.REQUIERE_MES ?? false,
         }));
 
-        console.log("🗂️ Conceptos mapeados:", mapped);
-        setConceptos(mapped);
+        const ordenConceptos = [
+          "EXCEDENTE",
+          "TARIFA BASICA",
+          "MORA",
+          "MULTA",
+          "REBAJA",
+          "ABONO",
+          "CUOTA PROYECTOS",
+          "VERTIENTE",
+          "OTROS"
+        ];
+        const quitarAcentos = (str: string) =>
+          str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        const mappedOrdenado = mapped.sort((a, b) => {
+          const indexA = ordenConceptos.indexOf(quitarAcentos(a.desc.toUpperCase()));
+          const indexB = ordenConceptos.indexOf(quitarAcentos(b.desc.toUpperCase()));
+
+          const posA = indexA === -1 ? ordenConceptos.length : indexA;
+          const posB = indexB === -1 ? ordenConceptos.length : indexB;
+
+          return posA - posB;
+        });
+        setConceptos(mappedOrdenado);
       } catch (err) {
-        console.error("❌ Error cargando conceptos:", err);
         setError('No se pudo cargar la lista de conceptos');
       } finally {
         setLoading(false);

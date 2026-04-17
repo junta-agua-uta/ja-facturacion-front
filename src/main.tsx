@@ -14,6 +14,7 @@ import Profile from './profile/Profile.tsx'
 import AgregarLiquidacion from './liquidacion/pages/AgregarLiquidacion.tsx'
 import Liquidacion from './liquidacion/pages/Liquidacion.tsx'
 import ConceptosPage from './conceptos/pages/ConceptosPage';
+import EmpresaPage from './empresa/pages/EmpresaPage';
 
 const router = createBrowserRouter([
   {
@@ -74,6 +75,10 @@ const router = createBrowserRouter([
           {
             path: 'sucursales',
             element: <BranchesPage />
+          },
+          {
+            path: 'empresa',
+            element: <EmpresaPage />
           },
           {
             path: 'mediciones',

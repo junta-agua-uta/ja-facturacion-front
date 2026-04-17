@@ -46,3 +46,12 @@
       <path d="M20 17.5C20 19.985 20 22 12 22C4 22 4 19.985 4 17.5C4 15.015 7.582 13 12 13C16.418 13 20 15.015 20 17.5Z" fill={isActive ? "#FFFFFF" : "#104D73"} />
     </svg>
   );
+
+  export const EmpresaIcon = ({ isActive }: { isActive: boolean }) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 20V7.5C4 6.67157 4.67157 6 5.5 6H11.5C12.3284 6 13 6.67157 13 7.5V20H4Z" fill={isActive ? "#FFFFFF" : "#104D73"} opacity="0.92" />
+      <path d="M14.5 20V10.5C14.5 9.67157 15.1716 9 16 9H18.5C19.3284 9 20 9.67157 20 10.5V20H14.5Z" fill={isActive ? "#FFFFFF" : "#104D73"} opacity="0.78" />
+      <path d="M2.75 20C2.75 19.5858 3.08579 19.25 3.5 19.25H20.5C20.9142 19.25 21.25 19.5858 21.25 20C21.25 20.4142 20.9142 20.75 20.5 20.75H3.5C3.08579 20.75 2.75 20.4142 2.75 20Z" fill={isActive ? "#FFFFFF" : "#104D73"} />
+      <path d="M6.25 8.25H8.25V10.25H6.25V8.25ZM9.75 8.25H11.75V10.25H9.75V8.25ZM6.25 11.75H8.25V13.75H6.25V11.75ZM9.75 11.75H11.75V13.75H9.75V11.75Z" fill={isActive ? "#104D73" : "#FFFFFF"} opacity="0.4" />
+    </svg>
+  );
