@@ -23,11 +23,45 @@ const formatDate = (value: string) =>
     timeStyle: 'short',
   }).format(new Date(value));
 
+const resolveLogoSrc = (logo: string | null) => {
+  if (!logo) {
+    return null;
+  }
+
+  const normalized = logo.trim();
+
+  // En algunos entornos se guarda literalmente "logo", lo tratamos como logo por defecto.
+  if (!normalized || normalized.toLowerCase() === 'logo') {
+    return '/logo_agua.svg';
+  }
+
+  if (
+    normalized.startsWith('http://') ||
+    normalized.startsWith('https://') ||
+    normalized.startsWith('data:image/')
+  ) {
+    return normalized;
+  }
+
+  const apiBase = import.meta.env.VITE_API_URL as string | undefined;
+
+  if (!apiBase) {
+    return normalized;
+  }
+
+  try {
+    return new URL(normalized, apiBase).toString();
+  } catch {
+    return normalized;
+  }
+};
+
 const EmpresaPage = () => {
   const [empresa, setEmpresa] = useState<EmpresaViewModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EmpresaViewModel | null>(null);
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     const fetchEmpresa = async () => {
@@ -103,6 +137,12 @@ const EmpresaPage = () => {
       .toUpperCase();
   }, [empresa]);
 
+  const logoSrc = useMemo(() => resolveLogoSrc(empresa?.logo ?? null), [empresa?.logo]);
+
+  useEffect(() => {
+    setLogoError(false);
+  }, [logoSrc]);
+
   if (loading) {
     return (
       <>
@@ -154,20 +194,21 @@ const EmpresaPage = () => {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex items-center gap-4">
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-900 text-2xl font-bold text-white shadow-lg">
-              {empresa.logo ? (
+              {logoSrc && !logoError ? (
                 <img
-                  src={empresa.logo}
+                  src={logoSrc}
                   alt={empresa.nombre}
-                  className="h-full w-full rounded-2xl object-cover"
+                  className="h-full w-full rounded-2xl bg-white p-2 object-contain"
+                  onError={() => setLogoError(true)}
                 />
               ) : (
                 initials
               )}
             </div>
 
-            <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-gray-500">Registro principal</p>
-              <h2 className="mt-1 text-2xl font-bold text-slate-900">{empresa.nombre}</h2>
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-[0.12em] text-gray-500 sm:text-sm sm:tracking-[0.3em]">Registro principal</p>
+              <h2 className="mt-1 break-words text-2xl font-bold text-slate-900">{empresa.nombre}</h2>
               <p className="mt-1 text-sm text-gray-500">Información institucional de la empresa conectada al sistema.</p>
             </div>
           </div>
