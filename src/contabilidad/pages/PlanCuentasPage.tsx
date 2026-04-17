@@ -58,14 +58,42 @@ export default function PlanCuentasPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
   const [createForm, setCreateForm] = useState({
-    empresaId: '1',
-    padreId: '',
     codigo: '',
     nombre: '',
     tipo: 'ACTIVO',
     naturaleza: 'DEUDORA',
     casillero: '',
   });
+
+  const detectedParent = useMemo(() => {
+    const codigo = createForm.codigo.trim();
+    const lastDotIndex = codigo.lastIndexOf('.');
+
+    if (lastDotIndex <= 0) {
+      return null;
+    }
+
+    const parentCode = codigo.slice(0, lastDotIndex);
+    return rows.find((account) => account.codigo === parentCode) ?? null;
+  }, [createForm.codigo, rows]);
+
+  const parentDisplayText = useMemo(() => {
+    const codigo = createForm.codigo.trim();
+    if (!codigo) {
+      return 'Escribe un codigo para detectar la cuenta padre automaticamente.';
+    }
+
+    const lastDotIndex = codigo.lastIndexOf('.');
+    if (lastDotIndex <= 0) {
+      return 'Cuenta principal (sin padre).';
+    }
+
+    if (detectedParent) {
+      return `Has elegido el nombre de la cuenta "${detectedParent.nombre}" como padre.`;
+    }
+
+    return 'No se encontro una cuenta padre valida con ese prefijo de codigo.';
+  }, [createForm.codigo, detectedParent]);
 
   const loadPlanCuentas = useCallback(async (): Promise<void> => {
     try {
@@ -280,22 +308,28 @@ export default function PlanCuentasPage() {
   };
 
   const handleCreateCuenta = async (): Promise<void> => {
-    const empresaId = Number(createForm.empresaId);
-    const padreId = createForm.padreId.trim()
-      ? Number(createForm.padreId)
-      : undefined;
+    const empresaId = 1;
+    const codigo = createForm.codigo.trim();
+    const nombre = createForm.nombre.trim();
 
-    if (!Number.isInteger(empresaId) || empresaId <= 0) {
-      setCreateError('Empresa ID debe ser un numero entero valido.');
-      return;
+    let padreId: number | undefined;
+    const lastDotIndex = codigo.lastIndexOf('.');
+
+    if (lastDotIndex > 0) {
+      const parentCode = codigo.slice(0, lastDotIndex);
+      const parent = rows.find((account) => account.codigo === parentCode);
+
+      if (!parent) {
+        setCreateError(
+          `No existe la cuenta padre con codigo ${parentCode}. Ejemplo correcto: padre 100, hijo 100.1, nieto 100.1.1`,
+        );
+        return;
+      }
+
+      padreId = parent.id;
     }
 
-    if (createForm.padreId.trim() && (!Number.isInteger(padreId) || (padreId ?? 0) <= 0)) {
-      setCreateError('Padre ID debe ser un numero entero valido.');
-      return;
-    }
-
-    if (!createForm.codigo.trim() || !createForm.nombre.trim()) {
+    if (!codigo || !nombre) {
       setCreateError('Codigo y nombre son obligatorios.');
       return;
     }
@@ -308,8 +342,8 @@ export default function PlanCuentasPage() {
       await api.post(
         '/plan-cuentas',
         {
-          codigo: createForm.codigo.trim(),
-          nombre: createForm.nombre.trim(),
+          codigo,
+          nombre,
           tipo: createForm.tipo,
           naturaleza: createForm.naturaleza,
           casillero: createForm.casillero.trim() || undefined,
@@ -324,8 +358,6 @@ export default function PlanCuentasPage() {
 
       setCreateSuccess('Cuenta creada correctamente.');
       setCreateForm({
-        empresaId: String(empresaId),
-        padreId: '',
         codigo: '',
         nombre: '',
         tipo: 'ACTIVO',
@@ -649,28 +681,6 @@ export default function PlanCuentasPage() {
                 <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
                   <label className="space-y-2">
                     <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
-                      Empresa ID
-                    </span>
-                    <input
-                      value={createForm.empresaId}
-                      onChange={(event) => setFormField('empresaId', event.target.value)}
-                      className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base font-semibold text-[#002944] outline-none"
-                    />
-                  </label>
-
-                  <label className="space-y-2">
-                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
-                      Padre ID
-                    </span>
-                    <input
-                      value={createForm.padreId}
-                      onChange={(event) => setFormField('padreId', event.target.value)}
-                      className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base font-semibold text-[#002944] outline-none"
-                    />
-                  </label>
-
-                  <label className="space-y-2">
-                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
                       Codigo
                     </span>
                     <input
@@ -679,6 +689,18 @@ export default function PlanCuentasPage() {
                       placeholder="1.1.1"
                       className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-slate-500 outline-none placeholder:text-slate-500"
                     />
+                    <span className="block text-xs text-slate-500">
+                      Ejemplo jerarquia: padre 100, hijo 100.1, nieto 100.1.1
+                    </span>
+                  </label>
+
+                  <label className="space-y-2">
+                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
+                      Cuenta padre detectada
+                    </span>
+                    <div className="min-h-12 w-full rounded bg-slate-100 px-4 py-3 text-sm leading-5 text-slate-600 break-words whitespace-normal">
+                      {parentDisplayText}
+                    </div>
                   </label>
 
                   <label className="space-y-2">
