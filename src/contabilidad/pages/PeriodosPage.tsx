@@ -22,9 +22,16 @@ const MESES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
 
+/** Año/mes de calendario según el prefijo YYYY-MM (sin zona horaria; igual que la tabla). */
 function fechaToAnioMes(iso: string): { anio: number; mes: string } {
   const [anio, mes] = iso.slice(0, 7).split('-').map(Number);
   return { anio, mes: MESES[mes - 1] };
+}
+
+function anioCalendarioDesdeIso(iso: string): number | null {
+  const y = Number(iso.slice(0, 4));
+  if (!Number.isFinite(y) || y <= 0) return null;
+  return y;
 }
 
 function formatFecha(iso: string): string {
@@ -70,6 +77,7 @@ type Confirm = {
 export default function PeriodosPage() {
   const navigate = useNavigate();
   const [periodos, setPeriodos] = useState<PeriodoContableDto[]>([]);
+  const [periodosParaFiltro, setPeriodosParaFiltro] = useState<PeriodoContableDto[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -80,6 +88,8 @@ export default function PeriodosPage() {
   const [confirm, setConfirm] = useState<Confirm | null>(null);
   const [rol, setRol] = useState<string | null>(null);
   const [filtroEstado, setFiltroEstado] = useState<'' | EstadoPeriodoFiltro>('');
+  const [filtroAnio, setFiltroAnio] = useState<string>('');
+  const [filtroMes, setFiltroMes] = useState<string>('');
   const [usuarioActual, setUsuarioActual] = useState<{ cedula: string; rol: string } | null>(null);
   const [anioModalKey, setAnioModalKey] = useState(0);
 
@@ -96,39 +106,62 @@ export default function PeriodosPage() {
     (document.getElementById(MODAL_ANIO_ID) as HTMLDialogElement)?.close();
 
   const cargar = useCallback(async () => {
+    const hasLocalFilter = !!filtroAnio || !!filtroMes;
     setLoading(true);
     setError(null);
     try {
-      const res = await periodosContablesService.listar(page, PAGE_SIZE, 1, filtroEstado || undefined);
-      setPeriodos(res.data);
-      setTotalPages(Math.max(1, res.totalPages));
-      setTotal(res.total);
+      const estado = filtroEstado || undefined;
+      const resFiltrosMeta = await periodosContablesService.listar(1, 1, 1, estado);
+      const totalFiltros = resFiltrosMeta.total;
+      if (totalFiltros > 0) {
+        const resFiltros = await periodosContablesService.listar(1, totalFiltros, 1, estado);
+        setPeriodosParaFiltro(resFiltros.data);
+      } else {
+        setPeriodosParaFiltro([]);
+      }
+
+      if (hasLocalFilter) {
+        const total = totalFiltros;
+        if (total > 0) {
+          const resTodos = await periodosContablesService.listar(1, total, 1, estado);
+          setPeriodos(resTodos.data);
+          setTotal(total);
+        } else {
+          setPeriodos([]);
+          setTotal(0);
+        }
+        setTotalPages(1);
+      } else {
+        const res = await periodosContablesService.listar(page, PAGE_SIZE, 1, estado);
+        setPeriodos(res.data);
+        setTotalPages(Math.max(1, res.totalPages));
+        setTotal(res.total);
+      }
     } catch (e) {
       setError(parseError(e, 'No se pudo cargar la lista de periodos.'));
       setPeriodos([]);
+      setPeriodosParaFiltro([]);
     } finally {
       setLoading(false);
     }
-  }, [page, filtroEstado]);
+  }, [page, filtroEstado, filtroAnio, filtroMes]);
 
   useEffect(() => {
     setRol(getRolFromToken());
     setUsuarioActual(getUserInfoFromToken());
   }, []);
   useEffect(() => { cargar(); }, [cargar]);
-  useEffect(() => { setPage(1); }, [filtroEstado]);
+  useEffect(() => { setPage(1); }, [filtroEstado, filtroAnio, filtroMes]);
 
   const irADetalle = (p: PeriodoContableDto) =>
     navigate(`/junta/contabilidad/periodos/${p.id}`, { state: { periodo: p } });
 
-  // Abre el modal con los datos del periodo y la acción
   const pedirConfirmacion = (periodo: PeriodoContableDto, variante: 'cerrar' | 'abrir') => {
     setConfirm({ periodo, variante });
     setActionError(null);
     openModal();
   };
 
-  // Ejecuta la acción real tras confirmación en el modal
   const handleConfirm = async () => {
     if (!confirm) return;
     setActionLoading(true);
@@ -161,6 +194,36 @@ export default function PeriodosPage() {
       ? `¿Estás seguro de que deseas cerrar el periodo "${confirm.periodo.nombre}"? Esta acción bloqueará modificaciones.`
       : `¿Estás seguro de que deseas reabrir el periodo "${confirm?.periodo.nombre}"?`;
 
+  const aniosOpciones = Array.from(
+    new Set(
+      periodosParaFiltro
+        .map((p) => anioCalendarioDesdeIso(p.fechaInicio))
+        .filter((y): y is number => y !== null),
+    ),
+  ).sort((a, b) => b - a);
+  const MESES_TABLA = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  ];
+  const periodosFiltrados = periodos.filter((p) => {
+    const [y, m] = p.fechaInicio.slice(0, 7).split('-').map(Number);
+    if (filtroAnio && y !== Number(filtroAnio)) return false;
+    if (filtroMes && m !== Number(filtroMes)) return false;
+    return true;
+  });
+  const mesesOpciones = Array.from(
+    new Set(
+      periodosParaFiltro
+        .filter((p) => {
+          if (!filtroAnio) return true;
+          const [anio] = p.fechaInicio.slice(0, 7).split('-').map(Number);
+          return anio === Number(filtroAnio);
+        })
+        .map((p) => Number(p.fechaInicio.slice(5, 7)))
+    )
+  ).sort((a, b) => a - b);
+  const hasLocalFilter = !!filtroAnio || !!filtroMes;
+
   return (
     <>
       <Title title="Cierre Contable" />
@@ -181,18 +244,50 @@ export default function PeriodosPage() {
         )}
 
         <div className="flex flex-wrap items-end justify-between gap-3 mt-4 mb-2">
-          <label className="form-control w-full max-w-xs">
-            <span className="label-text text-sm font-medium">Filtrar por estado</span>
-            <select
-              className="select select-bordered select-sm"
-              value={filtroEstado}
-              onChange={(e) => setFiltroEstado((e.target.value as '' | EstadoPeriodoFiltro) || '')}
-            >
-              <option value="">Todos</option>
-              <option value="ABIERTO">Abierto</option>
-              <option value="CERRADO">Cerrado</option>
-            </select>
-          </label>
+          <div className="flex flex-wrap gap-3">
+            <label className="form-control">
+              <span className="label-text text-sm font-medium">Estado</span>
+              <select
+                className="select select-bordered select-sm"
+                value={filtroEstado}
+                onChange={(e) => setFiltroEstado((e.target.value as '' | EstadoPeriodoFiltro) || '')}
+              >
+                <option value="">Todos</option>
+                <option value="ABIERTO">Abierto</option>
+                <option value="CERRADO">Cerrado</option>
+              </select>
+            </label>
+
+            <label className="form-control">
+              <span className="label-text text-sm font-medium">Año</span>
+              <select
+                className="select select-bordered select-sm"
+                value={filtroAnio}
+                onChange={(e) => setFiltroAnio(e.target.value)}
+              >
+                <option value="">Año (Todos)</option>
+                {aniosOpciones.map(anio => (
+                  <option key={anio} value={String(anio)}>{anio}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="form-control">
+              <span className="label-text text-sm font-medium">Mes</span>
+              <select
+                className="select select-bordered select-sm"
+                value={filtroMes}
+                onChange={(e) => setFiltroMes(e.target.value)}
+              >
+                <option value="">Todos</option>
+                {mesesOpciones.map((mesNumero) => (
+                  <option key={mesNumero} value={String(mesNumero)}>
+                    {MESES_TABLA[mesNumero - 1]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
 
           {esContador && (
             <button
@@ -201,13 +296,15 @@ export default function PeriodosPage() {
               onClick={openAnioModal}
             >
               <span className="text-base leading-none">+</span>
-              Crear Año Fiscal
+              Crear Periodos
             </button>
           )}
         </div>
 
         <p className="text-sm text-gray-500 mb-4">
-          Total: {total} periodo{total !== 1 ? 's' : ''}
+          {hasLocalFilter
+            ? `Mostrando ${periodosFiltrados.length} de ${total} periodo${total !== 1 ? 's' : ''}`
+            : `Total: ${total} periodo${total !== 1 ? 's' : ''}`}
         </p>
 
         {loading ? (
@@ -229,14 +326,14 @@ export default function PeriodosPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {periodos.length === 0 ? (
+                  {periodosFiltrados.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="text-center py-10 text-gray-500">
                         No hay periodos contables para este filtro.
                       </td>
                     </tr>
                   ) : (
-                    periodos.map((p) => {
+                    periodosFiltrados.map((p) => {
                       const { anio, mes } = fechaToAnioMes(p.fechaInicio);
                       const cerrado = p.estado === 'CERRADO';
                       return (
@@ -334,7 +431,7 @@ export default function PeriodosPage() {
               </table>
             </div>
 
-            {totalPages > 1 && (
+            {!hasLocalFilter && totalPages > 1 && (
               <Pagination
                 pagination={{ currentPage: page, totalPages }}
                 onPageChange={setPage}
