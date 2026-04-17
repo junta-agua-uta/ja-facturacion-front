@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import { FaEye, FaLock, FaBan, FaSpinner } from 'react-icons/fa';
@@ -21,13 +21,15 @@ const MESES = [
 ];
 
 function fechaToAnioMes(iso: string): { anio: number; mes: string } {
-  const d = new Date(iso);
-  return { anio: d.getFullYear(), mes: MESES[d.getMonth()] };
+  const [anio, mes] = iso.slice(0, 7).split('-').map(Number);
+  return { anio, mes: MESES[mes - 1] };
 }
 
 function formatFecha(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-EC', { day: '2-digit', month: 'numeric', year: 'numeric' });
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('es-EC', {
+    day: '2-digit', month: 'numeric', year: 'numeric',
+  });
 }
 
 function estadoLabel(estado: string): string {

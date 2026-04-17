@@ -38,12 +38,13 @@ const MESES = [
 ];
 
 function tituloMesAnio(iso: string): string {
-  const d = new Date(iso);
-  return `${MESES[d.getMonth()]} ${d.getFullYear()}`;
+  const [y, m] = iso.slice(0, 7).split('-').map(Number);
+  return `${MESES[m - 1]} ${y}`;
 }
 
 function formatFechaCorta(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-EC', {
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('es-EC', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
