@@ -109,6 +109,16 @@ const Layout = () => {
               {
                 label: 'Asientos',
                 to: '/junta/contabilidad/asientos',
+                children: [
+                  {
+                    label: 'Ver todos los asientos',
+                    to: '/junta/contabilidad/asientos',
+                  },
+                  {
+                    label: 'Nuevo asiento manual',
+                    to: '/junta/contabilidad/asientos/nuevo',
+                  },
+                ],
               },
               {
                 label: 'Periodos',
