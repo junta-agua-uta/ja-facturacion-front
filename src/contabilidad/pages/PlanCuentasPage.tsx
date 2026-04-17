@@ -44,6 +44,12 @@ export default function PlanCuentasPage() {
   const [rows, setRows] = useState<PlanCuentaApiItem[]>([]);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTipo, setSelectedTipo] = useState('');
+  const [selectedNaturaleza, setSelectedNaturaleza] = useState('');
+  const [selectedCasillero, setSelectedCasillero] = useState('');
+  const [selectedNivel, setSelectedNivel] = useState('');
+  const [selectedActivo, setSelectedActivo] = useState('');
+  const [selectedDetalle, setSelectedDetalle] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,18 +90,88 @@ export default function PlanCuentasPage() {
     void fetchPlanCuentas();
   }, []);
 
+  const options = useMemo(() => {
+    const tipos = Array.from(new Set(rows.map((account) => account.tipo)));
+    const naturalezas = Array.from(
+      new Set(rows.map((account) => account.naturaleza)),
+    );
+    const casilleros = Array.from(
+      new Set(
+        rows
+          .map((account) => account.casillero)
+          .filter((casillero): casillero is string => !!casillero),
+      ),
+    );
+    const niveles = Array.from(new Set(rows.map((account) => account.nivel))).sort(
+      (a, b) => a - b,
+    );
+
+    return {
+      tipos,
+      naturalezas,
+      casilleros,
+      niveles,
+    };
+  }, [rows]);
+
   const filteredRows = useMemo(() => {
     const text = searchTerm.trim().toLowerCase();
-    if (!text) {
-      return rows;
-    }
-
-    return rows.filter(
-      (account) =>
+    const byDirectFilters = rows.filter((account) => {
+      const matchesText =
+        !text ||
         account.nombre.toLowerCase().includes(text) ||
-        account.codigo.toLowerCase().includes(text),
-    );
-  }, [rows, searchTerm]);
+        account.codigo.toLowerCase().includes(text);
+
+      const matchesTipo = !selectedTipo || account.tipo === selectedTipo;
+      const matchesNaturaleza =
+        !selectedNaturaleza ||
+        account.naturaleza === selectedNaturaleza;
+      const matchesCasillero =
+        !selectedCasillero || account.casillero === selectedCasillero;
+      const matchesNivel =
+        !selectedNivel || account.nivel === Number(selectedNivel);
+      const matchesActivo =
+        !selectedActivo ||
+        (selectedActivo === 'ACTIVO' ? account.activo : !account.activo);
+      const matchesDetalle =
+        !selectedDetalle ||
+        (selectedDetalle === 'DETALLE' ? account.esDetalle : !account.esDetalle);
+
+      return (
+        matchesText &&
+        matchesTipo &&
+        matchesNaturaleza &&
+        matchesCasillero &&
+        matchesNivel &&
+        matchesActivo &&
+        matchesDetalle
+      );
+    });
+
+    const byId = new Map(rows.map((item) => [item.id, item]));
+    const includedIds = new Set<number>();
+
+    byDirectFilters.forEach((item) => {
+      includedIds.add(item.id);
+
+      let parentId = item.padreId;
+      while (parentId !== null) {
+        includedIds.add(parentId);
+        parentId = byId.get(parentId)?.padreId ?? null;
+      }
+    });
+
+    return rows.filter((item) => includedIds.has(item.id));
+  }, [
+    rows,
+    searchTerm,
+    selectedTipo,
+    selectedNaturaleza,
+    selectedCasillero,
+    selectedNivel,
+    selectedActivo,
+    selectedDetalle,
+  ]);
 
   const childrenMap = useMemo(() => {
     const map = new Map<number | null, PlanCuentaApiItem[]>();
@@ -202,7 +278,7 @@ export default function PlanCuentasPage() {
           })}
         </div>
 
-        <section className="mt-8 grid gap-4 xl:grid-cols-[1.5fr_1fr] xl:items-end">
+        <section className="mt-8 space-y-4">
           <label className="flex h-11 items-center gap-3 rounded-xl border border-slate-300 bg-white px-4 text-slate-500 shadow-sm">
             <FiSearch className="h-5 w-5 shrink-0" />
             <input
@@ -213,11 +289,103 @@ export default function PlanCuentasPage() {
             />
           </label>
 
-          <div className="flex xl:justify-end">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="sr-only" htmlFor="estado-filter">Estado</label>
+            <select
+              id="estado-filter"
+              value={selectedActivo}
+              onChange={(event) => setSelectedActivo(event.target.value)}
+              className="h-11 min-w-[130px] rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-600 outline-none"
+            >
+              <option value="" disabled hidden>Estados</option>
+              <option value="ACTIVO">Activo</option>
+              <option value="INACTIVO">Inactivo</option>
+            </select>
+
+            <label className="sr-only" htmlFor="tipo-filter">Tipo</label>
+            <select
+              id="tipo-filter"
+              value={selectedTipo}
+              onChange={(event) => setSelectedTipo(event.target.value)}
+              className="h-11 min-w-[130px] rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-600 outline-none"
+            >
+              <option value="" disabled hidden>Tipo</option>
+              {options.tipos.map((tipo) => (
+                <option key={tipo} value={tipo}>
+                  {toLabel(tipo)}
+                </option>
+              ))}
+            </select>
+
+            <label className="sr-only" htmlFor="naturaleza-filter">Naturaleza</label>
+            <select
+              id="naturaleza-filter"
+              value={selectedNaturaleza}
+              onChange={(event) => setSelectedNaturaleza(event.target.value)}
+              className="h-11 min-w-[140px] rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-600 outline-none"
+            >
+              <option value="" disabled hidden>Naturaleza</option>
+              {options.naturalezas.map((naturaleza) => (
+                <option key={naturaleza} value={naturaleza}>
+                  {toLabel(naturaleza)}
+                </option>
+              ))}
+            </select>
+
+            <label className="sr-only" htmlFor="casillero-filter">Casillero</label>
+            <select
+              id="casillero-filter"
+              value={selectedCasillero}
+              onChange={(event) => setSelectedCasillero(event.target.value)}
+              className="h-11 min-w-[130px] rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-600 outline-none"
+            >
+              <option value="" disabled hidden>Casillero</option>
+              {options.casilleros.map((casillero) => (
+                <option key={casillero} value={casillero}>
+                  {casillero}
+                </option>
+              ))}
+            </select>
+
+            <label className="sr-only" htmlFor="nivel-filter">Nivel</label>
+            <select
+              id="nivel-filter"
+              value={selectedNivel}
+              onChange={(event) => setSelectedNivel(event.target.value)}
+              className="h-11 min-w-[110px] rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-600 outline-none"
+            >
+              <option value="" disabled hidden>Nivel</option>
+              {options.niveles.map((nivel) => (
+                <option key={nivel} value={String(nivel)}>
+                  {nivel}
+                </option>
+              ))}
+            </select>
+
+            <label className="sr-only" htmlFor="detalle-filter">Es detalle</label>
+            <select
+              id="detalle-filter"
+              value={selectedDetalle}
+              onChange={(event) => setSelectedDetalle(event.target.value)}
+              className="h-11 min-w-[130px] rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-600 outline-none"
+            >
+              <option value="" disabled hidden>Es detalle</option>
+              <option value="DETALLE">Si</option>
+              <option value="AGRUPADORA">No</option>
+            </select>
+
             <button
               type="button"
-              onClick={() => setSearchTerm('')}
-              className="inline-flex h-11 items-center justify-center rounded-xl bg-[color:var(--color-primary)] px-6 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedTipo('');
+                setSelectedNaturaleza('');
+                setSelectedCasillero('');
+                setSelectedNivel('');
+                setSelectedActivo('');
+                setSelectedDetalle('');
+              }}
+              className="inline-flex h-11 min-w-[150px] items-center justify-center rounded-xl bg-[color:var(--color-primary)] px-6 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 md:ml-auto"
             >
               Limpiar Filtros
             </button>
@@ -225,10 +393,10 @@ export default function PlanCuentasPage() {
         </section>
 
         <div className="mt-6 overflow-hidden rounded-xl border border-[color:var(--color-primary)]">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '470px' }}>
             <table className="min-w-full border-separate border-spacing-0">
               <thead>
-                <tr className="bg-[color:var(--color-primary)] text-left text-[12px] font-semibold text-white">
+                <tr className="sticky top-0 z-10 bg-[color:var(--color-primary)] text-left text-[12px] font-semibold text-white">
                   <th className="px-4 py-3">Nombre de la cuenta</th>
                   <th className="px-4 py-3">Código</th>
                   <th className="px-4 py-3">Tipo</th>
@@ -323,6 +491,15 @@ export default function PlanCuentasPage() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            className="inline-flex h-10 items-center justify-center rounded-xl bg-emerald-600 px-6 text-sm font-semibold text-white transition hover:bg-emerald-700"
+          >
+            Agregar
+          </button>
         </div>
       </div>
     </div>
