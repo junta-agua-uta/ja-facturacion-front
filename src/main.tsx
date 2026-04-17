@@ -18,6 +18,7 @@ import EmpresaPage from './empresa/pages/EmpresaPage';
 import AsientosPage from './contabilidad/pages/AsientosPage';
 import AsientoFormPage from './contabilidad/pages/AsientoFormPage';
 import PeriodosPage from './contabilidad/pages/PeriodosPage';
+import PeriodoDetallePage from './contabilidad/pages/PeriodoDetallePage';
 import PlanCuentasPage from './contabilidad/pages/PlanCuentasPage';
 
 const router = createBrowserRouter([
@@ -98,6 +99,7 @@ const router = createBrowserRouter([
               { path: 'asientos/nuevo', element: <AsientoFormPage /> },
               { path: 'asientos/:asientoId/editar', element: <AsientoFormPage /> },
               { path: 'asientos', element: <AsientosPage /> },
+              { path: 'periodos/:periodoId', element: <PeriodoDetallePage /> },
               { path: 'periodos', element: <PeriodosPage /> },
               { path: 'plan-de-cuentas', element: <PlanCuentasPage /> },
             ],
