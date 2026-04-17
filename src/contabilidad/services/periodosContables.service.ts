@@ -44,4 +44,16 @@ export const periodosContablesService = {
     );
     return data;
   },
+
+  crear: async (
+    empresaId = DEFAULT_EMPRESA_ID,
+    body: { nombre: string; fechaInicio: string; fechaFin: string },
+  ): Promise<PeriodoContableDto> => {
+    const { data } = await api.post<PeriodoContableDto>(
+      '/periodos-contables',
+      body,
+      { params: { empresaId } },
+    );
+    return data;
+  },
 };

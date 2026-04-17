@@ -12,8 +12,10 @@ import {
 } from '../services/periodosContables.service';
 import type { PeriodoContableDto } from '../types/periodoContable';
 import ConfirmPeriodoModal from '../modals/ConfirmPeriodoModal';
+import CrearAnioFiscalModal from '../modals/CrearAnioFiscalModal';
 
 const MODAL_ID = 'confirm_periodo_modal';
+const MODAL_ANIO_ID = 'crear_anio_fiscal_modal';
 
 const MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -79,6 +81,7 @@ export default function PeriodosPage() {
   const [rol, setRol] = useState<string | null>(null);
   const [filtroEstado, setFiltroEstado] = useState<'' | EstadoPeriodoFiltro>('');
   const [usuarioActual, setUsuarioActual] = useState<{ cedula: string; rol: string } | null>(null);
+  const [anioModalKey, setAnioModalKey] = useState(0);
 
   const esContador = rol === 'CONTADOR';
   const esAdmin = rol === 'ADMIN';
@@ -87,6 +90,10 @@ export default function PeriodosPage() {
     (document.getElementById(MODAL_ID) as HTMLDialogElement)?.showModal();
   const closeModal = () =>
     (document.getElementById(MODAL_ID) as HTMLDialogElement)?.close();
+
+  const openAnioModal = () => setAnioModalKey((k) => k + 1);
+  const closeAnioModal = () =>
+    (document.getElementById(MODAL_ANIO_ID) as HTMLDialogElement)?.close();
 
   const cargar = useCallback(async () => {
     setLoading(true);
@@ -173,7 +180,7 @@ export default function PeriodosPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-end gap-3 mt-4 mb-2">
+        <div className="flex flex-wrap items-end justify-between gap-3 mt-4 mb-2">
           <label className="form-control w-full max-w-xs">
             <span className="label-text text-sm font-medium">Filtrar por estado</span>
             <select
@@ -186,6 +193,17 @@ export default function PeriodosPage() {
               <option value="CERRADO">Cerrado</option>
             </select>
           </label>
+
+          {esContador && (
+            <button
+              type="button"
+              className="btn btn-sm btn-outline border-blue-900 text-blue-900 gap-2"
+              onClick={openAnioModal}
+            >
+              <span className="text-base leading-none">+</span>
+              Crear Año Fiscal
+            </button>
+          )}
         </div>
 
         <p className="text-sm text-gray-500 mb-4">
@@ -335,6 +353,15 @@ export default function PeriodosPage() {
         onConfirm={handleConfirm}
         onCancel={handleCancel}
       />
+
+      {anioModalKey > 0 && (
+        <CrearAnioFiscalModal
+          key={anioModalKey}
+          id={MODAL_ANIO_ID}
+          onCreados={cargar}
+          onCancel={closeAnioModal}
+        />
+      )}
     </>
   );
 }
