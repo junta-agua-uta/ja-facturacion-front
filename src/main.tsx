@@ -15,6 +15,9 @@ import AgregarLiquidacion from './liquidacion/pages/AgregarLiquidacion.tsx'
 import Liquidacion from './liquidacion/pages/Liquidacion.tsx'
 import ConceptosPage from './conceptos/pages/ConceptosPage';
 import EmpresaPage from './empresa/pages/EmpresaPage';
+import AsientosPage from './contabilidad/pages/AsientosPage';
+import PeriodosPage from './contabilidad/pages/PeriodosPage';
+import PlanCuentasPage from './contabilidad/pages/PlanCuentasPage';
 
 const router = createBrowserRouter([
   {
@@ -88,6 +91,14 @@ const router = createBrowserRouter([
               path: 'conceptos',
               element: <ConceptosPage />
             },
+          {
+            path: 'contabilidad',
+            children: [
+              { path: 'asientos', element: <AsientosPage /> },
+              { path: 'periodos', element: <PeriodosPage /> },
+              { path: 'plan-de-cuentas', element: <PlanCuentasPage /> },
+            ],
+          },
           {
             path: 'perfil',
             element:<Profile/>
