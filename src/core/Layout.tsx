@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { FacturasIcon, TransaccionesIcon, UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon, EmpresaIcon } from './utils/icons';
+import { FacturasIcon, TransaccionesIcon, ContabilidadIcon, UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon, EmpresaIcon } from './utils/icons';
 import NavItem from './components/NavItem';
 import { authService } from '../auth/Services/auth.service';
 import { useEffect, useState } from 'react';
@@ -97,6 +97,37 @@ const Layout = () => {
                   }
                 ]
               }
+            ]}
+          />
+
+          <NavItem
+            to="/junta/contabilidad/asientos"
+            isActive={isActive('contabilidad')}
+            icon={<ContabilidadIcon isActive={isActive('contabilidad')} />}
+            label="Contabilidad"
+            children={[
+              {
+                label: 'Asientos',
+                to: '/junta/contabilidad/asientos',
+                children: [
+                  {
+                    label: 'Ver todos los asientos',
+                    to: '/junta/contabilidad/asientos',
+                  },
+                  {
+                    label: 'Nuevo asiento manual',
+                    to: '/junta/contabilidad/asientos/nuevo',
+                  },
+                ],
+              },
+              {
+                label: 'Periodos',
+                to: '/junta/contabilidad/periodos',
+              },
+              {
+                label: 'Plan de cuentas',
+                to: '/junta/contabilidad/plan-de-cuentas',
+              },
             ]}
           />
 

@@ -40,6 +40,16 @@
     </svg>
   );
 
+  export const ContabilidadIcon = ({ isActive }: { isActive: boolean }) => {
+    const c = isActive ? '#FFFFFF' : '#104D73'
+    return (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <rect x="4" y="3" width="16" height="18" rx="2" stroke={c} strokeWidth="1.8" />
+        <path d="M8 7h2M8 11h2M8 15h2M14 7h2M14 11h2M14 15h2" stroke={c} strokeWidth="1.6" strokeLinecap="round" />
+      </svg>
+    );
+  };
+
   export const PerfilIcon = ({ isActive }: { isActive: boolean }) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 10C14.2091 10 16 8.20914 16 6C16 3.79086 14.2091 2 12 2C9.79086 2 8 3.79086 8 6C8 8.20914 9.79086 10 12 10Z" fill={isActive ? "#FFFFFF" : "#104D73"} />
