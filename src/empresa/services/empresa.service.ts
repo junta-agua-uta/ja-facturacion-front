@@ -10,6 +10,7 @@ export interface EmpresaApiResponse {
   moneda: string;
   representanteLegal: string;
   logo: string | null;
+  modoAsientos?: 'INDIVIDUAL' | 'DIARIO' | 'MENSUAL';
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +24,7 @@ export interface UpdateEmpresaPayload {
   moneda?: string;
   representanteLegal?: string;
   logo?: string | null;
+  modoAsientos?: 'INDIVIDUAL' | 'DIARIO' | 'MENSUAL';
 }
 
 export const empresaService = {

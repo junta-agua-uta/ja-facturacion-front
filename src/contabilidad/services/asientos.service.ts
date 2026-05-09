@@ -59,3 +59,65 @@ export async function eliminarAsiento(id: number): Promise<{ message: string }> 
   const { data } = await api.delete<{ message: string }>(`/asientos/${id}`)
   return data
 }
+
+// ---- Nuevos Endpoints: Aprobación de Asientos ----
+
+export async function aprobarAsiento(id: number): Promise<AsientoDetalle> {
+  const { data } = await api.patch<AsientoDetalle>(`/asientos/${id}/aprobar`)
+  return data
+}
+
+export async function aprobarAsientosLote(asientoIds: number[]): Promise<{ message: string; aprobados: number }> {
+  const { data } = await api.patch<{ message: string; aprobados: number }>('/asientos/aprobar-lote', { asientoIds })
+  return data
+}
+
+// ---- Nuevos Endpoints: Agrupación de Asientos ----
+
+export async function agruparPorDia(payload: { fecha: string; empresaId: number }): Promise<{ message: string; asiento: AsientoDetalle | null }> {
+  const { data } = await api.post<{ message: string; asiento: AsientoDetalle | null }>('/asientos/agrupar/dia', payload)
+  return data
+}
+
+export async function agruparPorCliente(payload: { clienteId: number; fechaInicio?: string; fechaFin?: string; empresaId: number }): Promise<{ message: string; asiento: AsientoDetalle | null }> {
+  const { data } = await api.post<{ message: string; asiento: AsientoDetalle | null }>('/asientos/agrupar/cliente', payload)
+  return data
+}
+
+export async function agruparPorPeriodo(payload: { periodoId: number; empresaId: number }): Promise<{ message: string; asiento: AsientoDetalle | null }> {
+  const { data } = await api.post<{ message: string; asiento: AsientoDetalle | null }>('/asientos/agrupar/periodo', payload)
+  return data
+}
+
+// ---- Nuevos Endpoints: Exportación ----
+
+export async function descargarAsientoPdf(id: number, empresaId: number): Promise<Blob> {
+  const { data } = await api.get(`/asientos/${id}/pdf`, {
+    params: { empresaId },
+    responseType: 'blob',
+  })
+  return data
+}
+
+// ---- Nuevo: Facturas vinculadas a un asiento ----
+
+export interface FacturaAsientoItem {
+  id: number
+  secuencia: number
+  fechaEmision: string
+  total: number
+  valorSinImpuesto: number
+  iva: number
+  estado: string
+  tipoRelacion: string
+  cliente: {
+    id: number
+    razonSocial: string
+    identificacion: string
+  } | null
+}
+
+export async function obtenerFacturasDeAsiento(asientoId: number): Promise<FacturaAsientoItem[]> {
+  const { data } = await api.get<FacturaAsientoItem[]>(`/asientos/${asientoId}/facturas`)
+  return data
+}

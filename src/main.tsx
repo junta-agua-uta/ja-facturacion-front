@@ -20,6 +20,7 @@ import PeriodosPage from './contabilidad/pages/PeriodosPage';
 import PeriodoDetallePage from './contabilidad/pages/PeriodoDetallePage';
 import PlanCuentasPage from './contabilidad/pages/PlanCuentasPage';
 import EmpresaPage from './empresa/pages/EmpresaPage';
+import CuentasPorCobrarPage from './contabilidad/pages/CuentasPorCobrarPage';
 
 const router = createBrowserRouter([
   {
@@ -102,6 +103,7 @@ const router = createBrowserRouter([
               { path: 'periodos/:periodoId', element: <PeriodoDetallePage /> },
               { path: 'periodos', element: <PeriodosPage /> },
               { path: 'plan-de-cuentas', element: <PlanCuentasPage /> },
+              { path: 'cuentas-cobrar', element: <CuentasPorCobrarPage /> },
             ],
           },
           {

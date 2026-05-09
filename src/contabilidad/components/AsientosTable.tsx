@@ -1,4 +1,4 @@
-import { FaEye, FaEdit, FaTrash } from 'react-icons/fa'
+import { FaEye, FaEdit, FaTrash, FaCheck, FaFilePdf } from 'react-icons/fa'
 import type { AsientoListItem } from '../types/asiento'
 import StatusBadge from './StatusBadge'
 import TipoMovimientoBadge from './TipoMovimientoBadge'
@@ -10,9 +10,14 @@ export type AsientoRowVm = AsientoListItem
 type Props = {
   rows: AsientoRowVm[]
   loading?: boolean
+  selectedIds: number[]
+  onSelect: (id: number, selected: boolean) => void
+  onSelectAll: (selected: boolean) => void
   onVer: (id: number) => void
   onEditar: (id: number) => void
   onEliminar: (id: number) => void
+  onAprobar: (id: number) => void
+  onDescargarPdf: (id: number) => void
 }
 
 function fechaCorta(iso: string): string {
@@ -27,7 +32,18 @@ function fechaCorta(iso: string): string {
   }
 }
 
-export default function AsientosTable({ rows, loading, onVer, onEditar, onEliminar }: Props) {
+export default function AsientosTable({
+  rows,
+  loading,
+  selectedIds,
+  onSelect,
+  onSelectAll,
+  onVer,
+  onEditar,
+  onEliminar,
+  onAprobar,
+  onDescargarPdf
+}: Props) {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
@@ -36,24 +52,36 @@ export default function AsientosTable({ rows, loading, onVer, onEditar, onElimin
     )
   }
 
+  const allSelected = rows.length > 0 && selectedIds.length === rows.length
+  const someSelected = selectedIds.length > 0 && selectedIds.length < rows.length
+
   return (
     <div className="overflow-x-auto border border-base-300 rounded-lg">
       <table className="table table-zebra w-full">
         <thead className="bg-primary text-primary-content">
           <tr>
+            <th className="w-10 text-center">
+              <input
+                type="checkbox"
+                className="checkbox checkbox-sm border-white checked:border-white"
+                checked={allSelected}
+                ref={(el) => { if (el) el.indeterminate = someSelected }}
+                onChange={(e) => onSelectAll(e.target.checked)}
+              />
+            </th>
             <th>ID</th>
             <th>Fecha</th>
             <th>Concepto</th>
             <th>Tipo</th>
             <th>Estado</th>
             <th className="text-right">Descuadre</th>
-            <th className="text-center w-40">Acciones</th>
+            <th className="text-center w-48">Acciones</th>
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={7} className="text-center py-10 text-base-content/60">
+              <td colSpan={8} className="text-center py-10 text-base-content/60">
                 No hay asientos que coincidan con los filtros.
               </td>
             </tr>
@@ -69,6 +97,14 @@ export default function AsientosTable({ rows, loading, onVer, onEditar, onElimin
                 )
               return (
                 <tr key={row.id}>
+                  <td className="text-center">
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-sm"
+                      checked={selectedIds.includes(row.id)}
+                      onChange={(e) => onSelect(row.id, e.target.checked)}
+                    />
+                  </td>
                   <td className="font-mono font-medium">{codigoAsientoVisual(row)}</td>
                   <td>{fechaCorta(row.fecha)}</td>
                   <td className="max-w-xs truncate" title={row.concepto}>
@@ -91,8 +127,24 @@ export default function AsientosTable({ rows, loading, onVer, onEditar, onElimin
                       >
                         <FaEye />
                       </button>
+                      <button
+                        type="button"
+                        className="btn btn-xs btn-circle btn-outline btn-info"
+                        title="Descargar PDF"
+                        onClick={() => onDescargarPdf(row.id)}
+                      >
+                        <FaFilePdf />
+                      </button>
                       {row.estado === 'PENDIENTE' && (
                         <>
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-circle btn-outline btn-success"
+                            title="Aprobar"
+                            onClick={() => onAprobar(row.id)}
+                          >
+                            <FaCheck />
+                          </button>
                           <button
                             type="button"
                             className="btn btn-xs btn-circle btn-outline border-primary text-primary"

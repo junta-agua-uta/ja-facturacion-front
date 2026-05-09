@@ -128,6 +128,10 @@ const Layout = () => {
                 label: 'Plan de cuentas',
                 to: '/junta/contabilidad/plan-de-cuentas',
               },
+              {
+                label: 'Cuentas x Cobrar',
+                to: '/junta/contabilidad/cuentas-cobrar',
+              },
             ]}
           />
 
@@ -145,12 +149,14 @@ const Layout = () => {
             label="Sucursales"
           />
 
-          <NavItem
-            to="/junta/empresa"
-            isActive={isActive('empresa')}
-            icon={<EmpresaIcon isActive={isActive('empresa')} />}
-            label="Empresa"
-          />
+          {userRole === 'ADMIN' && (
+            <NavItem
+              to="/junta/empresa"
+              isActive={isActive('empresa')}
+              icon={<EmpresaIcon isActive={isActive('empresa')} />}
+              label="Empresa"
+            />
+          )}
 
           <NavItem
             to="/junta/mediciones"

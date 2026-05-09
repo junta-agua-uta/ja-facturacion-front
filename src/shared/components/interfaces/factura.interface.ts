@@ -8,4 +8,5 @@ export interface FacturaForm {
   numero: string;
   secuencia: string;
   concepto: string;
+  tipoPago: string;
 }
