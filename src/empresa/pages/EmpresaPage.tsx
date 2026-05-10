@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Title, CardSlot, EndSlot, Table } from '../../shared/components';
-import { empresaService, EmpresaApiResponse } from '../services/empresa.service';
+import { empresaService, EmpresaApiResponse, type ModoAsientos } from '../services/empresa.service';
 import EditEmpresaModal from '../modals/EditEmpresaModal';
 
 type EmpresaViewModel = {
@@ -13,7 +13,7 @@ type EmpresaViewModel = {
   moneda: string;
   representanteLegal: string;
   logo: string | null;
-  modoAsientos: string;
+  modoAsientos: ModoAsientos;
   createdAt: string;
   updatedAt: string;
 };

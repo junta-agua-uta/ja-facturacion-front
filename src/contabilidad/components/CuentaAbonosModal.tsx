@@ -78,7 +78,7 @@ export default function CuentaAbonosModal({ cuenta, isOpen, onClose, onAbonoCrea
 
       const currentUser = authService.getCurrentUser();
       const empresaResponse = await empresaService.obtenerEmpresa();
-      const empresaId = empresaResponse.data?.[0]?.id || 1;
+      const empresaId = empresaResponse.id || 1;
 
       await abonosService.crearAbono({
         idCuenta: cuenta.ID,

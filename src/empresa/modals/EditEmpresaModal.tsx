@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ModoAsientos } from '../services/empresa.service';
 
 type EmpresaData = {
   id: number;
@@ -10,7 +11,7 @@ type EmpresaData = {
   moneda: string;
   representanteLegal: string;
   logo: string | null;
-  modoAsientos: string;
+  modoAsientos: ModoAsientos;
   createdAt: string;
   updatedAt: string;
 };
@@ -287,7 +288,7 @@ export default function EditEmpresaModal({
               <select
                 className="select select-bordered w-full"
                 value={empresa.modoAsientos || 'INDIVIDUAL'}
-                onChange={(e) => onChange({ ...empresa, modoAsientos: e.target.value })}
+                onChange={(e) => onChange({ ...empresa, modoAsientos: e.target.value as ModoAsientos })}
               >
                 <option value="INDIVIDUAL">Individual</option>
                 <option value="DIARIO">Diario</option>

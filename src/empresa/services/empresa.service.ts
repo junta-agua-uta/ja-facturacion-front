@@ -1,5 +1,7 @@
 import api from '../../shared/api';
 
+export type ModoAsientos = 'INDIVIDUAL' | 'DIARIO' | 'MENSUAL';
+
 export interface EmpresaApiResponse {
   id: number;
   nombre: string;
@@ -10,7 +12,7 @@ export interface EmpresaApiResponse {
   moneda: string;
   representanteLegal: string;
   logo: string | null;
-  modoAsientos?: 'INDIVIDUAL' | 'DIARIO' | 'MENSUAL';
+  modoAsientos: ModoAsientos;
   createdAt: string;
   updatedAt: string;
 }
@@ -24,18 +26,23 @@ export interface UpdateEmpresaPayload {
   moneda?: string;
   representanteLegal?: string;
   logo?: string | null;
-  modoAsientos?: 'INDIVIDUAL' | 'DIARIO' | 'MENSUAL';
+  modoAsientos?: ModoAsientos;
 }
+
+const normalizeEmpresa = (data: EmpresaApiResponse | Omit<EmpresaApiResponse, 'modoAsientos'> & { modoAsientos?: ModoAsientos }): EmpresaApiResponse => ({
+  ...data,
+  modoAsientos: data.modoAsientos || 'INDIVIDUAL',
+});
 
 export const empresaService = {
   async obtenerEmpresa() {
     const response = await api.get('/empresa');
-    return response.data as EmpresaApiResponse;
+    return normalizeEmpresa(response.data);
   },
 
   async actualizarEmpresa(id: number, payload: UpdateEmpresaPayload) {
     const response = await api.put(`/empresa/${id}`, payload);
-    return response.data as EmpresaApiResponse;
+    return normalizeEmpresa(response.data);
   },
 
   async obtenerUsuariosEmpresa(empresaId: number) {

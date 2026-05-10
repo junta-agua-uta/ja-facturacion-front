@@ -161,7 +161,8 @@ export default function FacturacionTable({
                     serie: '',
                     numero: '',
                     secuencia: '',
-                    concepto: ''
+                    concepto: '',
+                    tipoPago: ''
                 }}
                 total={totalToPrint}
                 onClose={handleClosePrintPreview}

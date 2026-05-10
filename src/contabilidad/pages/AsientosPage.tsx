@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Title, SubTitle, EndSlot, CardSlot } from '../../shared/components'
+import { Title, SubTitle, CardSlot } from '../../shared/components'
 import { FaCheck } from 'react-icons/fa'
 import { PAGE_SIZE } from '../../shared/utils/constants'
 import { useCurrentUser } from '../hooks/useCurrentUser'
-import { listarAsientos, obtenerAsiento, eliminarAsiento, aprobarAsiento, aprobarAsientosLote, descargarAsientoPdf, agruparPorDia, agruparPorPeriodo, agruparPorCliente } from '../services/asientos.service'
+import { listarAsientos, obtenerAsiento, eliminarAsiento, aprobarAsiento, aprobarAsientosLote, descargarAsientoPdf, agruparPorDia, agruparPorPeriodo } from '../services/asientos.service'
 import { listarPeriodos } from '../services/periodos.service'
 import { empresaService } from '../../empresa/services/empresa.service'
 import type { AsientoDetalle, AsientoListItem } from '../types/asiento'
@@ -16,20 +16,20 @@ import AsientosFilters from '../components/AsientosFilters'
 import type { AsientosFiltersState } from '../components/AsientosFilters'
 import AsientosTable from '../components/AsientosTable'
 import AsientoDetailModal from '../components/AsientoDetailModal'
+import AsientoAgrupacionModal, { type ModoAsientos } from '../components/AsientoAgrupacionModal'
 import ConfirmModal from '../../sucursales/modals/ConfirmModal'
 import { showError, showSuccess } from '../../shared/utils/notifications'
 import Pagination from '../../shared/components/Pagination'
 
 const MODAL_DETAIL = 'modal_asiento_detalle'
 const MODAL_DELETE = 'modal_asiento_delete'
+const MODAL_AGRUPACION = 'modal_asiento_agrupacion'
 
 const defaultFilters: AsientosFiltersState = {
   buscar: '',
   estado: '',
   tipo: '',
 }
-
-type ModoAsientos = 'INDIVIDUAL' | 'DIARIO' | 'MENSUAL'
 
 export default function AsientosPage() {
   const navigate = useNavigate()
@@ -55,6 +55,7 @@ export default function AsientosPage() {
 
   // ---- Modo de asientos de la empresa ----
   const [modoAsientos, setModoAsientos] = useState<ModoAsientos>('INDIVIDUAL')
+  const [agrupando, setAgrupando] = useState(false)
 
   useEffect(() => {
     (async () => {
@@ -250,104 +251,101 @@ export default function AsientosPage() {
     }
   }
 
-  const handleAgruparPorDia = async () => {
-    if (!empresaId) return;
-    const fechaHtml = prompt('Ingrese la fecha (YYYY-MM-DD) para agrupar las facturas:')
-    if (!fechaHtml) return;
+  const getErrorMessage = (e: unknown, fallback: string) => {
+    const ax = e as { response?: { data?: { message?: string | string[] } } }
+    const message = ax.response?.data?.message
+    if (Array.isArray(message)) return message.join(', ')
+    return message || fallback
+  }
+
+  const openAgrupacion = () => {
+    ; (document.getElementById(MODAL_AGRUPACION) as HTMLDialogElement)?.showModal()
+  }
+
+  const closeAgrupacion = () => {
+    ; (document.getElementById(MODAL_AGRUPACION) as HTMLDialogElement)?.close()
+  }
+
+  const handleAgruparPorDia = async (fecha: string) => {
+    if (!empresaId) {
+      showError('No se pudo identificar la empresa actual.')
+      return
+    }
 
     try {
-      setLoadingList(true);
-      await agruparPorDia({ fecha: fechaHtml, empresaId });
-      showSuccess('Facturas agrupadas por día correctamente.');
-      void loadAsientos();
+      setAgrupando(true)
+      const res = await agruparPorDia({ fecha, empresaId })
+      showSuccess(res.message || 'Facturas agrupadas por dia correctamente.')
+      closeAgrupacion()
+      await loadAsientos()
     } catch (e: unknown) {
-      showError('No se pudieron agrupar las facturas.');
-      setLoadingList(false);
+      showError(getErrorMessage(e, 'No se pudieron agrupar las facturas.'))
+    } finally {
+      setAgrupando(false)
     }
   }
 
   const handleAgruparPorPeriodo = async () => {
     if (!empresaId || !periodoId) {
-      showError('Seleccione un periodo activo.');
-      return;
-    }
-    if (!window.confirm('¿Desea agrupar todas las facturas del periodo actualmente seleccionado?')) return;
-
-    try {
-      setLoadingList(true);
-      await agruparPorPeriodo({ periodoId, empresaId });
-      showSuccess('Facturas agrupadas por periodo correctamente.');
-      void loadAsientos();
-    } catch (e: unknown) {
-      showError('No se pudieron agrupar las facturas del periodo.');
-      setLoadingList(false);
-    }
-  }
-
-  const handleAgruparPorCliente = async () => {
-    if (!empresaId) return;
-    const clIdStr = prompt('Ingrese el ID del Cliente:');
-    if (!clIdStr) return;
-    const clienteId = parseInt(clIdStr, 10);
-    if (isNaN(clienteId)) {
-      showError('Debe ser un número válido.');
-      return;
+      showError('Seleccione un periodo activo.')
+      return
     }
 
     try {
-      setLoadingList(true);
-      await agruparPorCliente({ clienteId, empresaId });
-      showSuccess('Facturas del cliente agrupadas correctamente.');
-      void loadAsientos();
+      setAgrupando(true)
+      const res = await agruparPorPeriodo({ periodoId, empresaId })
+      showSuccess(res.message || 'Facturas agrupadas por periodo correctamente.')
+      closeAgrupacion()
+      await loadAsientos()
     } catch (e: unknown) {
-      showError('No se pudieron agrupar las facturas del cliente.');
-      setLoadingList(false);
+      showError(getErrorMessage(e, 'No se pudieron agrupar las facturas del periodo.'))
+    } finally {
+      setAgrupando(false)
     }
   }
 
-  // ---- Determinar qué opciones de agrupación mostrar según modoAsientos ----
-  const renderAgrupacionDropdown = () => {
-    // En modo INDIVIDUAL, los asientos se crean 1 por factura automáticamente.
-    // No tiene sentido agrupar; no mostramos el botón.
-    if (modoAsientos === 'INDIVIDUAL') return null
+  const agrupacionLabel = useMemo(() => {
+    if (modoAsientos === 'DIARIO') return 'Agrupar por dia'
+    if (modoAsientos === 'MENSUAL') return 'Agrupar por periodo'
+    return 'Agrupacion automatica'
+  }, [modoAsientos])
 
-    // Construir las opciones disponibles según el modo
-    const opciones: { label: string; onClick: () => void }[] = []
-
+  const modoAsientosInfo = useMemo(() => {
     if (modoAsientos === 'DIARIO') {
-      opciones.push({ label: 'Agrupar por Día', onClick: handleAgruparPorDia })
+      return {
+        label: 'Diario',
+        description: 'Agrupa ventas autorizadas por fecha.',
+      }
     }
 
     if (modoAsientos === 'MENSUAL') {
-      opciones.push({ label: 'Agrupar por Periodo Activo', onClick: handleAgruparPorPeriodo })
+      return {
+        label: 'Mensual',
+        description: 'Agrupa ventas del periodo seleccionado.',
+      }
     }
 
-    if (opciones.length === 0) return null
+    return {
+      label: 'Individual',
+      description: 'Cada factura autorizada genera su asiento.',
+    }
+  }, [modoAsientos])
 
-    // Si solo hay una opción, mostrar un botón directo en vez del dropdown
-    if (opciones.length === 1) {
-      return (
-        <button
-          type="button"
-          className="btn btn-outline btn-info gap-2 mr-2"
-          onClick={opciones[0].onClick}
-        >
-          {opciones[0].label}
-        </button>
-      )
+  const renderAgrupacionAction = () => {
+    if (modoAsientos === 'INDIVIDUAL') {
+      return null
     }
 
     return (
-      <div className="dropdown dropdown-end mr-2">
-        <div tabIndex={0} role="button" className="btn btn-outline btn-info gap-2">
-          Agrupar Facturas
-        </div>
-        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-          {opciones.map((op) => (
-            <li key={op.label}><a onClick={op.onClick}>{op.label}</a></li>
-          ))}
-        </ul>
-      </div>
+      <button
+        type="button"
+        className="btn btn-outline btn-info gap-2"
+        onClick={openAgrupacion}
+        disabled={agrupando}
+      >
+        {agrupando && <span className="loading loading-spinner loading-sm" />}
+        {agrupacionLabel}
+      </button>
     )
   }
 
@@ -373,13 +371,13 @@ export default function AsientosPage() {
       <Title title="Asientos contables" />
 
       <CardSlot>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div>
+        <div className="grid gap-5 xl:grid-cols-[1fr_auto] xl:items-center">
+          <div className="grid gap-4 md:grid-cols-[minmax(13rem,21rem)_minmax(13rem,1fr)_auto] md:items-center">
+            <div className="min-w-0">
               <p className="text-xs uppercase tracking-wide text-base-content/60">Periodo activo</p>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 <select
-                  className="select select-bordered select-sm min-w-[12rem]"
+                  className="select select-bordered select-sm w-full"
                   value={periodoId ?? ''}
                   onChange={(e) => setPeriodoId(Number(e.target.value) || null)}
                 >
@@ -396,22 +394,35 @@ export default function AsientosPage() {
                 {periodoActual && <StatusBadge kind="periodo" value={periodoActual.estado} />}
               </div>
             </div>
-            <p className="text-sm text-base-content/60 self-end sm:self-center">
-              {total} asiento{total !== 1 ? 's' : ''} en este periodo (pág. {page}/{totalPages})
+            <div
+              className="min-w-0 rounded-md border border-blue-100 bg-blue-50/70 px-4 py-3 text-blue-950"
+              title="Modo de generación de asientos de la empresa"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-blue-800/80">
+                  Modo de asientos
+                </span>
+                <span className="rounded-full bg-blue-900 px-2.5 py-0.5 text-xs font-semibold text-white">
+                  {modoAsientosInfo.label}
+                </span>
+              </div>
+              <p className="mt-1 text-sm leading-snug text-slate-600">
+                {modoAsientosInfo.description}
+              </p>
+            </div>
+
+            <p className="text-sm leading-relaxed text-base-content/60 md:text-right">
+              {total} asiento{total !== 1 ? 's' : ''}<br className="hidden md:block" /> en este periodo
+              <span className="whitespace-nowrap"> (pág. {page}/{totalPages})</span>
             </p>
           </div>
-          <EndSlot>
-            {/* Modo de asientos badge */}
-            <span className="badge badge-outline badge-sm mr-2" title="Modo de generación de asientos de la empresa">
-              Modo: {modoAsientos}
-            </span>
-
-            {renderAgrupacionDropdown()}
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center xl:justify-end">
+            {renderAgrupacionAction()}
 
             {selectedIds.length > 0 && (
               <button
                 type="button"
-                className="btn btn-success gap-2 mr-2"
+                className="btn btn-success gap-2"
                 onClick={handleAprobarLote}
               >
                 <FaCheck /> Aprobar Lote ({selectedIds.length})
@@ -426,7 +437,7 @@ export default function AsientosPage() {
               <span className="text-lg leading-none">+</span>
               Nuevo asiento manual
             </button>
-          </EndSlot>
+          </div>
         </div>
       </CardSlot>
 
@@ -492,6 +503,16 @@ export default function AsientosPage() {
           setDeleteTargetId(null)
             ; (document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.close()
         }}
+      />
+
+      <AsientoAgrupacionModal
+        id={MODAL_AGRUPACION}
+        modoAsientos={modoAsientos}
+        periodoActual={periodoActual}
+        loading={agrupando}
+        onClose={closeAgrupacion}
+        onAgruparDia={handleAgruparPorDia}
+        onAgruparPeriodo={handleAgruparPorPeriodo}
       />
     </div>
   )
