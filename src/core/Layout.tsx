@@ -125,6 +125,10 @@ const Layout = () => {
                 to: '/junta/contabilidad/periodos',
               },
               {
+                label: 'Libro Diario',
+                to: '/junta/contabilidad/libro-diario',
+              },
+              {
                 label: 'Plan de cuentas',
                 to: '/junta/contabilidad/plan-de-cuentas',
               },

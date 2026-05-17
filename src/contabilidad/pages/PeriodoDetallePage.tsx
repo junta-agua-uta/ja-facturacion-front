@@ -353,9 +353,10 @@ export default function PeriodoDetallePage() {
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-600 opacity-60 cursor-not-allowed"
-            disabled
-            title="Disponible próximamente"
+            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 hover:bg-gray-50 hover:border-blue-300"
+            onClick={() =>
+              navigate(`/junta/contabilidad/libro-diario?periodoId=${periodo.id}`)
+            }
           >
             Libro Diario
           </button>
