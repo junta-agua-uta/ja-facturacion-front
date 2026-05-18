@@ -9,8 +9,9 @@ import { empresaService } from '../../empresa/services/empresa.service'
 import { useCurrentUser } from '../hooks/useCurrentUser'
 import {
   listarAsientos,
-  obtenerAsiento,
   eliminarAsiento,
+  exportarLibroDiarioPdf,
+  obtenerKpisLibroDiario,
 } from '../services/asientos.service'
 import { listarPeriodos } from '../services/periodos.service'
 import type { LibroDiarioRow } from '../types/libroDiario'
@@ -21,14 +22,11 @@ import ConfirmModal from '../../sucursales/modals/ConfirmModal'
 import {
   comprobanteLibroDiario,
   defaultRangoAnioActual,
-  esAsientoCuadrado,
   isoDateEnd,
   isoDateStart,
 } from '../utils/libroDiarioUi'
-import { sumDetalleDebeHaber } from '../utils/asientoUi'
 
 const MODAL_DELETE = 'modal_libro_diario_delete'
-const STATS_SAMPLE_LIMIT = 300
 
 function buildDefaultFilters(periodo?: { fechaInicio: string; fechaFin: string } | null): LibroDiarioFiltersState {
   if (periodo) {
@@ -56,7 +54,6 @@ export default function LibroDiarioPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
   const [loadingList, setLoadingList] = useState(true)
-  const [enriching, setEnriching] = useState(false)
   const [loadingKpis, setLoadingKpis] = useState(true)
   const [kpis, setKpis] = useState<LibroDiarioKpis | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -64,7 +61,7 @@ export default function LibroDiarioPage() {
   const [initializedPeriodo, setInitializedPeriodo] = useState(false)
 
   useEffect(() => {
-    void empresaService.obtenerEmpresa().then((e) => setEmpresaRuc(e.ruc)).catch(() => {})
+    void empresaService.obtenerEmpresa().then((e) => setEmpresaRuc(e.ruc)).catch(() => { })
   }, [])
 
   useEffect(() => {
@@ -90,88 +87,54 @@ export default function LibroDiarioPage() {
     [filters.estado, filters.fechaDesde, filters.fechaHasta, periodoIdParam],
   )
 
-  const enrichRows = useCallback(async (items: LibroDiarioRow[]) => {
-    if (items.length === 0) return
-    setEnriching(true)
+  const handleExportPdf = async () => {
     try {
-      const enriched = await Promise.all(
-        items.map(async (row) => {
-          try {
-            const detalle = await obtenerAsiento(row.id)
-            const { totalDebe, totalHaber } = sumDetalleDebeHaber(detalle.detallesAsiento ?? [])
-            return { ...row, totalDebe, totalHaber }
-          } catch {
-            return row
-          }
-        }),
-      )
-      setRows(enriched)
-    } finally {
-      setEnriching(false)
+      const blob = await exportarLibroDiarioPdf({
+        empresaId,
+        estado: filters.estado || undefined,
+        fechaInicio: filters.fechaDesde || undefined,
+        fechaFin: filters.fechaHasta || undefined,
+        periodoId: periodoIdParam ? Number(periodoIdParam) : undefined,
+      })
+
+      const url = window.URL.createObjectURL(blob)
+
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'libro_diario.pdf'
+      a.click()
+
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.log(error)
+      showError('No se pudo exportar el PDF')
     }
-  }, [])
+  }
 
   const loadKpis = useCallback(async () => {
     setLoadingKpis(true)
     try {
-      const countRes = await listarAsientos({ page: 1, limit: 1, ...apiQueryBase })
-      const totalAsientos = countRes.total
-
-      const sampleLimit = Math.min(totalAsientos, STATS_SAMPLE_LIMIT)
-      let asientosCuadrados = 0
-      let asientosDescuadre = 0
-      let totalMovimientos: number | null = null
-      let statsAproximados = false
-
-      if (sampleLimit > 0) {
-        const sampleRes = await listarAsientos({
-          page: 1,
-          limit: sampleLimit,
-          ...apiQueryBase,
-        })
-        for (const a of sampleRes.data) {
-          if (esAsientoCuadrado(a.descuadre)) asientosCuadrados += 1
-          else asientosDescuadre += 1
-        }
-        if (totalAsientos > sampleLimit) {
-          const ratio = totalAsientos / sampleLimit
-          asientosCuadrados = Math.round(asientosCuadrados * ratio)
-          asientosDescuadre = Math.round(asientosDescuadre * ratio)
-          statsAproximados = true
-        }
-
-        const sampleForMov = sampleRes.data.slice(0, Math.min(40, sampleRes.data.length))
-        const detalles = await Promise.all(
-          sampleForMov.map(async (a) => {
-            try {
-              const d = await obtenerAsiento(a.id)
-              return (d.detallesAsiento ?? []).length
-            } catch {
-              return 0
-            }
-          }),
-        )
-        const movSample = detalles.reduce((s, n) => s + n, 0)
-        if (sampleForMov.length > 0) {
-          const avg = movSample / sampleForMov.length
-          totalMovimientos = Math.round(avg * totalAsientos)
-          if (totalAsientos > sampleForMov.length) statsAproximados = true
-        }
-      }
+      const data = await obtenerKpisLibroDiario({
+        empresaId,
+        estado: filters.estado || undefined,
+        fechaInicio: filters.fechaDesde || undefined,
+        fechaFin: filters.fechaHasta || undefined,
+        periodoId: periodoIdParam ? Number(periodoIdParam) : undefined,
+      })
 
       setKpis({
-        totalAsientos,
-        asientosCuadrados,
-        asientosDescuadre,
-        totalMovimientos,
-        statsAproximados,
+        totalAsientos: data.totalAsientos,
+        asientosCuadrados: data.asientosCuadrados,
+        asientosDescuadre: data.asientosDescuadrados,
+        totalMovimientos: data.totalMovimientos,
+        statsAproximados: false, // 🔥 ahora es real, no estimado
       })
     } catch {
       setKpis(null)
     } finally {
       setLoadingKpis(false)
     }
-  }, [apiQueryBase])
+  }, [empresaId, filters, periodoIdParam])
 
   const loadList = useCallback(async () => {
     setLoadingList(true)
@@ -189,7 +152,6 @@ export default function LibroDiarioPage() {
       setRows(baseRows)
       setTotalPages(Math.max(1, res.totalPages))
       setTotal(res.total)
-      void enrichRows(baseRows)
     } catch (e: unknown) {
       const ax = e as { response?: { data?: { message?: string } } }
       setError(ax.response?.data?.message || 'No se pudo cargar el libro diario.')
@@ -197,7 +159,7 @@ export default function LibroDiarioPage() {
     } finally {
       setLoadingList(false)
     }
-  }, [page, apiQueryBase, enrichRows])
+  }, [page, apiQueryBase])
 
   useEffect(() => {
     if (userLoading) return
@@ -234,7 +196,7 @@ export default function LibroDiarioPage() {
 
   const openDelete = (id: number) => {
     setDeleteTargetId(id)
-    ;(document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.showModal()
+      ; (document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.showModal()
   }
 
   const confirmDelete = async () => {
@@ -243,7 +205,7 @@ export default function LibroDiarioPage() {
       await eliminarAsiento(deleteTargetId)
       showSuccess('Asiento eliminado.')
       setDeleteTargetId(null)
-      ;(document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.close()
+        ; (document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.close()
       void loadList()
       void loadKpis()
     } catch (e: unknown) {
@@ -282,8 +244,8 @@ export default function LibroDiarioPage() {
           <button
             type="button"
             className="btn btn-outline border-primary text-primary hover:bg-primary/10 gap-2"
-            disabled
             title="Próximamente: requiere endpoint de exportación del libro completo"
+            onClick={handleExportPdf}
           >
             <FaFilePdf />
             Exportar PDF
@@ -314,7 +276,6 @@ export default function LibroDiarioPage() {
         <LibroDiarioTable
           rows={rowsFiltradas}
           loading={loadingList}
-          enriching={enriching}
           onEditar={openEdit}
           onEliminar={openDelete}
         />
@@ -336,7 +297,7 @@ export default function LibroDiarioPage() {
         onConfirm={confirmDelete}
         onCancel={() => {
           setDeleteTargetId(null)
-          ;(document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.close()
+            ; (document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.close()
         }}
       />
     </div>
