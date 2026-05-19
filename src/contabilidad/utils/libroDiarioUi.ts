@@ -1,4 +1,5 @@
 import type { AsientoListItem } from '../types/asiento'
+import type { LibroDiarioKpisUi, LibroDiarioResumenApi, LibroDiarioRow } from '../types/libroDiario'
 
 export function comprobanteLibroDiario(item: Pick<AsientoListItem, 'comprobante' | 'numero' | 'fecha'>): string {
   if (item.comprobante?.trim()) return item.comprobante.trim()
@@ -26,5 +27,35 @@ export function defaultRangoAnioActual(): { desde: string; hasta: string } {
   return {
     desde: `${year}-01-01`,
     hasta: `${year}-12-31`,
+  }
+}
+
+export function parseMontoApi(value: number | string | undefined | null): number | undefined {
+  if (value == null || value === '') return undefined
+  const n = Number(value)
+  return Number.isFinite(n) ? n : undefined
+}
+
+export function asientoListItemToLibroDiarioRow(item: AsientoListItem): LibroDiarioRow {
+  return {
+    ...item,
+    comprobanteLabel: comprobanteLibroDiario(item),
+    totalDebe: parseMontoApi(item.totalDebe),
+    totalHaber: parseMontoApi(item.totalHaber),
+  }
+}
+
+export function filaNecesitaTotales(row: LibroDiarioRow): boolean {
+  return row.totalDebe == null || row.totalHaber == null
+}
+
+export function mapResumenApiToKpis(res: LibroDiarioResumenApi): LibroDiarioKpisUi {
+  return {
+    totalAsientos: res.totalAsientos,
+    asientosCuadrados: res.asientosCuadrados,
+    asientosDescuadre: res.asientosDescuadrados,
+    totalMovimientos: res.totalMovimientos,
+    porcentajeCuadrados: res.porcentajeCuadrados,
+    statsAproximados: false,
   }
 }

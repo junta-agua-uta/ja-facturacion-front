@@ -6,13 +6,7 @@ import {
   FaExchangeAlt,
 } from 'react-icons/fa'
 
-export type LibroDiarioKpis = {
-  totalAsientos: number
-  asientosCuadrados: number
-  asientosDescuadre: number
-  totalMovimientos: number | null
-  statsAproximados?: boolean
-}
+import type { LibroDiarioKpisUi } from '../types/libroDiario'
 
 type KpiItem = {
   icon: ReactNode
@@ -39,7 +33,7 @@ function KpiCard({ icon, label, value, subtext, subtextClass }: KpiItem) {
   )
 }
 
-export default function LibroDiarioKpiCards({ kpis, loading }: { kpis: LibroDiarioKpis | null; loading?: boolean }) {
+export default function LibroDiarioKpiCards({ kpis, loading }: { kpis: LibroDiarioKpisUi | null; loading?: boolean }) {
   if (loading) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -53,9 +47,11 @@ export default function LibroDiarioKpiCards({ kpis, loading }: { kpis: LibroDiar
   if (!kpis) return null
 
   const pctCuadrado =
-    kpis.totalAsientos > 0
-      ? ((kpis.asientosCuadrados / kpis.totalAsientos) * 100).toFixed(1)
-      : '0'
+    kpis.porcentajeCuadrados != null
+      ? kpis.porcentajeCuadrados.toFixed(1)
+      : kpis.totalAsientos > 0
+        ? ((kpis.asientosCuadrados / kpis.totalAsientos) * 100).toFixed(1)
+        : '0'
 
   const items: KpiItem[] = [
     {

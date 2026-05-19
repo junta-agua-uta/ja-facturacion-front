@@ -7,6 +7,9 @@ export interface AsientoListItem {
   concepto: string
   estado: 'PENDIENTE' | 'APROBADO'
   descuadre: string | number
+  totalDebe?: number | string
+  totalHaber?: number | string
+  cantidadMovimientos?: number
   modelo?: string | null
   comprobante?: string | null
   periodoId: number

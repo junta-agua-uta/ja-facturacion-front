@@ -11,19 +11,24 @@ import {
   listarAsientos,
   obtenerAsiento,
   eliminarAsiento,
+  obtenerKpisLibroDiario,
+  descargarLibroDiarioPdf,
+  type LibroDiarioFiltrosParams,
 } from '../services/asientos.service'
 import { listarPeriodos } from '../services/periodos.service'
-import type { LibroDiarioRow } from '../types/libroDiario'
+import type { LibroDiarioKpisUi, LibroDiarioRow } from '../types/libroDiario'
 import LibroDiarioFilters, { type LibroDiarioFiltersState } from '../components/LibroDiarioFilters'
-import LibroDiarioKpiCards, { type LibroDiarioKpis } from '../components/LibroDiarioKpiCards'
+import LibroDiarioKpiCards from '../components/LibroDiarioKpiCards'
 import LibroDiarioTable from '../components/LibroDiarioTable'
 import ConfirmModal from '../../sucursales/modals/ConfirmModal'
 import {
-  comprobanteLibroDiario,
+  asientoListItemToLibroDiarioRow,
   defaultRangoAnioActual,
   esAsientoCuadrado,
+  filaNecesitaTotales,
   isoDateEnd,
   isoDateStart,
+  mapResumenApiToKpis,
 } from '../utils/libroDiarioUi'
 import { sumDetalleDebeHaber } from '../utils/asientoUi'
 
@@ -43,6 +48,17 @@ function buildDefaultFilters(periodo?: { fechaInicio: string; fechaFin: string }
   return { buscar: '', fechaDesde: desde, fechaHasta: hasta, estado: '' }
 }
 
+function downloadBlob(blob: Blob, filename: string) {
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  window.URL.revokeObjectURL(url)
+}
+
 export default function LibroDiarioPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -58,7 +74,8 @@ export default function LibroDiarioPage() {
   const [loadingList, setLoadingList] = useState(true)
   const [enriching, setEnriching] = useState(false)
   const [loadingKpis, setLoadingKpis] = useState(true)
-  const [kpis, setKpis] = useState<LibroDiarioKpis | null>(null)
+  const [exportingPdf, setExportingPdf] = useState(false)
+  const [kpis, setKpis] = useState<LibroDiarioKpisUi | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)
   const [initializedPeriodo, setInitializedPeriodo] = useState(false)
@@ -78,100 +95,91 @@ export default function LibroDiarioPage() {
     })
   }, [periodoIdParam, initializedPeriodo, empresaId])
 
-  const apiQueryBase = useMemo(
-    () => ({
-      ...(filters.estado ? { estado: filters.estado as 'PENDIENTE' | 'APROBADO' } : {}),
-      ...(filters.fechaDesde ? { fechaInicio: isoDateStart(filters.fechaDesde) } : {}),
-      ...(filters.fechaHasta ? { fechaFin: isoDateEnd(filters.fechaHasta) } : {}),
-      ...(periodoIdParam && !Number.isNaN(Number(periodoIdParam))
-        ? { periodoId: Number(periodoIdParam) }
-        : {}),
-    }),
-    [filters.estado, filters.fechaDesde, filters.fechaHasta, periodoIdParam],
-  )
+  const apiFiltros = useMemo((): LibroDiarioFiltrosParams => {
+    const f: LibroDiarioFiltrosParams = {}
+    if (filters.estado) f.estado = filters.estado
+    if (filters.fechaDesde) f.fechaInicio = isoDateStart(filters.fechaDesde)
+    if (filters.fechaHasta) f.fechaFin = isoDateEnd(filters.fechaHasta)
+    if (periodoIdParam && !Number.isNaN(Number(periodoIdParam))) {
+      f.periodoId = Number(periodoIdParam)
+    }
+    return f
+  }, [filters.estado, filters.fechaDesde, filters.fechaHasta, periodoIdParam])
 
-  const enrichRows = useCallback(async (items: LibroDiarioRow[]) => {
-    if (items.length === 0) return
+  const enrichRowsFallback = useCallback(async (items: LibroDiarioRow[]) => {
+    const pendientes = items.filter(filaNecesitaTotales)
+    if (pendientes.length === 0) return items
+
     setEnriching(true)
     try {
-      const enriched = await Promise.all(
-        items.map(async (row) => {
+      const enrichedMap = new Map<number, LibroDiarioRow>()
+      await Promise.all(
+        pendientes.map(async (row) => {
           try {
             const detalle = await obtenerAsiento(row.id)
             const { totalDebe, totalHaber } = sumDetalleDebeHaber(detalle.detallesAsiento ?? [])
-            return { ...row, totalDebe, totalHaber }
+            enrichedMap.set(row.id, { ...row, totalDebe, totalHaber })
           } catch {
-            return row
+            enrichedMap.set(row.id, row)
           }
         }),
       )
-      setRows(enriched)
+      return items.map((row) => enrichedMap.get(row.id) ?? row)
     } finally {
       setEnriching(false)
     }
   }, [])
 
+  const loadKpisFallback = useCallback(async (): Promise<LibroDiarioKpisUi> => {
+    const countRes = await listarAsientos({ page: 1, limit: 1, ...apiFiltros })
+    const totalAsientos = countRes.total
+    const sampleLimit = Math.min(totalAsientos, STATS_SAMPLE_LIMIT)
+    let asientosCuadrados = 0
+    let asientosDescuadre = 0
+    let statsAproximados = false
+
+    if (sampleLimit > 0) {
+      const sampleRes = await listarAsientos({
+        page: 1,
+        limit: sampleLimit,
+        ...apiFiltros,
+      })
+      for (const a of sampleRes.data) {
+        if (esAsientoCuadrado(a.descuadre)) asientosCuadrados += 1
+        else asientosDescuadre += 1
+      }
+      if (totalAsientos > sampleLimit) {
+        const ratio = totalAsientos / sampleLimit
+        asientosCuadrados = Math.round(asientosCuadrados * ratio)
+        asientosDescuadre = Math.round(asientosDescuadre * ratio)
+        statsAproximados = true
+      }
+    }
+
+    return {
+      totalAsientos,
+      asientosCuadrados,
+      asientosDescuadre,
+      totalMovimientos: null,
+      statsAproximados,
+    }
+  }, [apiFiltros])
+
   const loadKpis = useCallback(async () => {
     setLoadingKpis(true)
     try {
-      const countRes = await listarAsientos({ page: 1, limit: 1, ...apiQueryBase })
-      const totalAsientos = countRes.total
-
-      const sampleLimit = Math.min(totalAsientos, STATS_SAMPLE_LIMIT)
-      let asientosCuadrados = 0
-      let asientosDescuadre = 0
-      let totalMovimientos: number | null = null
-      let statsAproximados = false
-
-      if (sampleLimit > 0) {
-        const sampleRes = await listarAsientos({
-          page: 1,
-          limit: sampleLimit,
-          ...apiQueryBase,
-        })
-        for (const a of sampleRes.data) {
-          if (esAsientoCuadrado(a.descuadre)) asientosCuadrados += 1
-          else asientosDescuadre += 1
-        }
-        if (totalAsientos > sampleLimit) {
-          const ratio = totalAsientos / sampleLimit
-          asientosCuadrados = Math.round(asientosCuadrados * ratio)
-          asientosDescuadre = Math.round(asientosDescuadre * ratio)
-          statsAproximados = true
-        }
-
-        const sampleForMov = sampleRes.data.slice(0, Math.min(40, sampleRes.data.length))
-        const detalles = await Promise.all(
-          sampleForMov.map(async (a) => {
-            try {
-              const d = await obtenerAsiento(a.id)
-              return (d.detallesAsiento ?? []).length
-            } catch {
-              return 0
-            }
-          }),
-        )
-        const movSample = detalles.reduce((s, n) => s + n, 0)
-        if (sampleForMov.length > 0) {
-          const avg = movSample / sampleForMov.length
-          totalMovimientos = Math.round(avg * totalAsientos)
-          if (totalAsientos > sampleForMov.length) statsAproximados = true
-        }
-      }
-
-      setKpis({
-        totalAsientos,
-        asientosCuadrados,
-        asientosDescuadre,
-        totalMovimientos,
-        statsAproximados,
-      })
+      const res = await obtenerKpisLibroDiario(empresaId, apiFiltros)
+      setKpis(mapResumenApiToKpis(res))
     } catch {
-      setKpis(null)
+      try {
+        setKpis(await loadKpisFallback())
+      } catch {
+        setKpis(null)
+      }
     } finally {
       setLoadingKpis(false)
     }
-  }, [apiQueryBase])
+  }, [empresaId, apiFiltros, loadKpisFallback])
 
   const loadList = useCallback(async () => {
     setLoadingList(true)
@@ -180,16 +188,15 @@ export default function LibroDiarioPage() {
       const res = await listarAsientos({
         page,
         limit: PAGE_SIZE,
-        ...apiQueryBase,
+        ...apiFiltros,
       })
-      const baseRows: LibroDiarioRow[] = res.data.map((a) => ({
-        ...a,
-        comprobanteLabel: comprobanteLibroDiario(a),
-      }))
-      setRows(baseRows)
+      const baseRows = res.data.map(asientoListItemToLibroDiarioRow)
+      const finalRows = baseRows.some(filaNecesitaTotales)
+        ? await enrichRowsFallback(baseRows)
+        : baseRows
+      setRows(finalRows)
       setTotalPages(Math.max(1, res.totalPages))
       setTotal(res.total)
-      void enrichRows(baseRows)
     } catch (e: unknown) {
       const ax = e as { response?: { data?: { message?: string } } }
       setError(ax.response?.data?.message || 'No se pudo cargar el libro diario.')
@@ -197,7 +204,7 @@ export default function LibroDiarioPage() {
     } finally {
       setLoadingList(false)
     }
-  }, [page, apiQueryBase, enrichRows])
+  }, [page, apiFiltros, enrichRowsFallback])
 
   useEffect(() => {
     if (userLoading) return
@@ -221,6 +228,21 @@ export default function LibroDiarioPage() {
   const handleClearFilters = () => {
     setFilters(buildDefaultFilters())
     setPage(1)
+  }
+
+  const handleExportPdf = async () => {
+    setExportingPdf(true)
+    try {
+      const blob = await descargarLibroDiarioPdf(empresaId, apiFiltros)
+      const desde = filters.fechaDesde || 'inicio'
+      const hasta = filters.fechaHasta || 'fin'
+      downloadBlob(blob, `libro_diario_${desde}_${hasta}.pdf`)
+      showSuccess('Libro diario exportado correctamente.')
+    } catch {
+      showError('No se pudo exportar el libro diario. Verifique que el servicio esté disponible.')
+    } finally {
+      setExportingPdf(false)
+    }
   }
 
   const openCreate = () => {
@@ -282,10 +304,14 @@ export default function LibroDiarioPage() {
           <button
             type="button"
             className="btn btn-outline border-primary text-primary hover:bg-primary/10 gap-2"
-            disabled
-            title="Próximamente: requiere endpoint de exportación del libro completo"
+            disabled={exportingPdf}
+            onClick={() => void handleExportPdf()}
           >
-            <FaFilePdf />
+            {exportingPdf ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              <FaFilePdf />
+            )}
             Exportar PDF
           </button>
           <button
