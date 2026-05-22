@@ -6,7 +6,6 @@ import type { LibroDiarioRow } from '../types/libroDiario'
 type Props = {
   rows: LibroDiarioRow[]
   loading?: boolean
-  enriching?: boolean
   onEditar: (id: number) => void
   onEliminar: (id: number) => void
 }
@@ -26,7 +25,6 @@ function fechaLibro(iso: string): string {
 export default function LibroDiarioTable({
   rows,
   loading,
-  enriching,
   onEditar,
   onEliminar,
 }: Props) {
@@ -71,7 +69,7 @@ export default function LibroDiarioTable({
                     {row.concepto}
                   </td>
                   <td className="text-right tabular-nums">
-                    {enriching && row.totalDebe == null ? (
+                    {row.totalDebe == null ? (
                       <span className="loading loading-dots loading-xs" />
                     ) : row.totalDebe != null ? (
                       <span className={tieneDescuadre ? 'text-amber-700 font-medium' : ''}>
@@ -82,7 +80,7 @@ export default function LibroDiarioTable({
                     )}
                   </td>
                   <td className="text-right tabular-nums">
-                    {enriching && row.totalHaber == null ? (
+                    {row.totalHaber == null ? (
                       <span className="loading loading-dots loading-xs" />
                     ) : row.totalHaber != null ? (
                       <span className={tieneDescuadre ? 'text-amber-700 font-medium' : ''}>

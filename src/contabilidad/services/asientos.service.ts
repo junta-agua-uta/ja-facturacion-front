@@ -140,6 +140,28 @@ export async function descargarLibroDiarioPdf(
   return data
 }
 
+// ---- Nuevo: exportar asientos a PDF
+
+export type ExportarLibroDiarioParams = {
+  empresaId: number
+  estado?: 'PENDIENTE' | 'APROBADO'
+  periodoId?: number
+  fechaInicio?: string
+  fechaFin?: string
+}
+
+export async function exportarLibroDiarioPdf(
+  params: ExportarLibroDiarioParams,
+): Promise<Blob> {
+  const { data } = await api.get('/asientos/exportar/pdf', {
+    params,
+    responseType: 'blob', // 🔥 CLAVE
+  })
+
+  return data
+}
+// ---- Nuevo: KPIs ----
+
 // ---- Nuevo: Facturas vinculadas a un asiento ----
 
 export interface FacturaAsientoItem {

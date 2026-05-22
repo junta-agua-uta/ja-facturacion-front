@@ -9,8 +9,8 @@ import { empresaService } from '../../empresa/services/empresa.service'
 import { useCurrentUser } from '../hooks/useCurrentUser'
 import {
   listarAsientos,
-  obtenerAsiento,
   eliminarAsiento,
+  obtenerAsiento,
   obtenerKpisLibroDiario,
   descargarLibroDiarioPdf,
   type LibroDiarioFiltrosParams,
@@ -72,16 +72,16 @@ export default function LibroDiarioPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
   const [loadingList, setLoadingList] = useState(true)
-  const [enriching, setEnriching] = useState(false)
   const [loadingKpis, setLoadingKpis] = useState(true)
   const [exportingPdf, setExportingPdf] = useState(false)
+  const [enriching, setEnriching] = useState(false)
   const [kpis, setKpis] = useState<LibroDiarioKpisUi | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)
   const [initializedPeriodo, setInitializedPeriodo] = useState(false)
 
   useEffect(() => {
-    void empresaService.obtenerEmpresa().then((e) => setEmpresaRuc(e.ruc)).catch(() => {})
+    void empresaService.obtenerEmpresa().then((e) => setEmpresaRuc(e.ruc)).catch(() => { })
   }, [])
 
   useEffect(() => {
@@ -128,7 +128,7 @@ export default function LibroDiarioPage() {
     } finally {
       setEnriching(false)
     }
-  }, [])
+  },[])
 
   const loadKpisFallback = useCallback(async (): Promise<LibroDiarioKpisUi> => {
     const countRes = await listarAsientos({ page: 1, limit: 1, ...apiFiltros })
@@ -256,7 +256,7 @@ export default function LibroDiarioPage() {
 
   const openDelete = (id: number) => {
     setDeleteTargetId(id)
-    ;(document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.showModal()
+      ; (document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.showModal()
   }
 
   const confirmDelete = async () => {
@@ -265,7 +265,7 @@ export default function LibroDiarioPage() {
       await eliminarAsiento(deleteTargetId)
       showSuccess('Asiento eliminado.')
       setDeleteTargetId(null)
-      ;(document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.close()
+        ; (document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.close()
       void loadList()
       void loadKpis()
     } catch (e: unknown) {
@@ -340,7 +340,6 @@ export default function LibroDiarioPage() {
         <LibroDiarioTable
           rows={rowsFiltradas}
           loading={loadingList}
-          enriching={enriching}
           onEditar={openEdit}
           onEliminar={openDelete}
         />
@@ -362,7 +361,7 @@ export default function LibroDiarioPage() {
         onConfirm={confirmDelete}
         onCancel={() => {
           setDeleteTargetId(null)
-          ;(document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.close()
+            ; (document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.close()
         }}
       />
     </div>

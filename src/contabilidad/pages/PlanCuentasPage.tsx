@@ -10,6 +10,7 @@ import {
   FiSearch,
   FiX,
 } from 'react-icons/fi';
+import { FaEdit } from 'react-icons/fa';
 
 type PlanCuentaApiItem = {
   id: number;
@@ -64,6 +65,8 @@ export default function PlanCuentasPage() {
     naturaleza: 'DEUDORA',
     casillero: '',
   });
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<PlanCuentaApiItem | null>(null);
 
   const detectedParent = useMemo(() => {
     const codigo = createForm.codigo.trim();
@@ -303,31 +306,20 @@ export default function PlanCuentasPage() {
 
   const closeCreateModal = (): void => {
     setIsCreateModalOpen(false);
+    setIsEditModalOpen(false);
+    setEditingAccount(null);
     setCreateError(null);
     setCreateSuccess(null);
   };
+  const hasChildrenEditing = useMemo(() => {
+    if (!editingAccount) return false;
+    return rows.some(r => r.padreId === editingAccount.id);
+  }, [editingAccount, rows]);
 
-  const handleCreateCuenta = async (): Promise<void> => {
+  const handleSaveCuenta = async (): Promise<void> => {
     const empresaId = 1;
     const codigo = createForm.codigo.trim();
     const nombre = createForm.nombre.trim();
-
-    let padreId: number | undefined;
-    const lastDotIndex = codigo.lastIndexOf('.');
-
-    if (lastDotIndex > 0) {
-      const parentCode = codigo.slice(0, lastDotIndex);
-      const parent = rows.find((account) => account.codigo === parentCode);
-
-      if (!parent) {
-        setCreateError(
-          `No existe la cuenta padre con codigo ${parentCode}. Ejemplo correcto: padre 100, hijo 100.1, nieto 100.1.1`,
-        );
-        return;
-      }
-
-      padreId = parent.id;
-    }
 
     if (!codigo || !nombre) {
       setCreateError('Codigo y nombre son obligatorios.');
@@ -339,51 +331,45 @@ export default function PlanCuentasPage() {
     setCreateSuccess(null);
 
     try {
-      await api.post(
-        '/plan-cuentas',
-        {
+      if (editingAccount) {
+        // ✏️ EDITAR
+        await api.put(`/plan-cuentas/${editingAccount.id}`, {
           codigo,
           nombre,
           tipo: createForm.tipo,
           naturaleza: createForm.naturaleza,
           casillero: createForm.casillero.trim() || undefined,
-          padreId,
-        },
-        {
-          params: {
-            empresaId,
-          },
-        },
-      );
+        }, {
+          params: { empresaId }
+        });
 
-      setCreateSuccess('Cuenta creada correctamente.');
-      setCreateForm({
-        codigo: '',
-        nombre: '',
-        tipo: 'ACTIVO',
-        naturaleza: 'DEUDORA',
-        casillero: '',
-      });
+        setCreateSuccess('Cuenta actualizada correctamente.');
+      } else {
+        // ➕ CREAR (tu lógica actual)
+        await api.post('/plan-cuentas', {
+          codigo,
+          nombre,
+          tipo: createForm.tipo,
+          naturaleza: createForm.naturaleza,
+          casillero: createForm.casillero.trim() || undefined,
+        }, {
+          params: { empresaId }
+        });
+
+        setCreateSuccess('Cuenta creada correctamente.');
+      }
 
       await loadPlanCuentas();
 
       setTimeout(() => {
+        setIsEditModalOpen(false);
         setIsCreateModalOpen(false);
+        setEditingAccount(null);
         setCreateSuccess(null);
       }, 600);
-    } catch (requestError: unknown) {
-      const maybeError = requestError as {
-        response?: { data?: { message?: string | string[] } };
-      };
 
-      const message = maybeError?.response?.data?.message;
-      if (Array.isArray(message)) {
-        setCreateError(message.join(' | '));
-      } else if (typeof message === 'string') {
-        setCreateError(message);
-      } else {
-        setCreateError('No se pudo guardar la cuenta.');
-      }
+    } catch (error) {
+      setCreateError('Error al guardar la cuenta.');
     } finally {
       setIsSaving(false);
     }
@@ -542,6 +528,7 @@ export default function PlanCuentasPage() {
                   <th className="px-4 py-3">Nivel</th>
                   <th className="px-4 py-3">Es detalle</th>
                   <th className="px-4 py-3">Activo</th>
+                  <th className='px-4 py-3'>Acciones</th>
                 </tr>
               </thead>
 
@@ -572,58 +559,77 @@ export default function PlanCuentasPage() {
 
                 {!loading && !error
                   ? visibleRows.map(({ account, depth, hasChildren }, index) => (
-                      <tr
-                        key={account.id}
-                        className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'}
-                      >
-                        <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-800">
-                          <div
-                            className="flex items-center gap-2"
-                            style={{ paddingLeft: `${depth * 20}px` }}
-                          >
-                            {hasChildren ? (
-                              <button
-                                type="button"
-                                onClick={() => toggleNode(account.id)}
-                                className="rounded p-0.5 text-slate-900 transition hover:bg-slate-200"
-                              >
-                                {expandedIds.has(account.id) ? (
-                                  <FiChevronDown className="h-4 w-4" />
-                                ) : (
-                                  <FiChevronRight className="h-4 w-4" />
-                                )}
-                              </button>
-                            ) : (
-                              <span className="inline-block h-4 w-4" />
-                            )}
-                            <span className={depth === 0 ? 'font-semibold uppercase' : 'font-medium'}>
-                              {account.nombre}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
-                          {account.codigo}
-                        </td>
-                        <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
-                          {toLabel(account.tipo)}
-                        </td>
-                        <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
-                          {toLabel(account.naturaleza)}
-                        </td>
-                        <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
-                          {account.casillero ?? '-'}
-                        </td>
-                        <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
-                          {account.nivel}
-                        </td>
-                        <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
-                          {account.esDetalle ? 'Si' : 'No'}
-                        </td>
-                        <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
-                          {account.activo ? 'Si' : 'No'}
-                        </td>
-                      </tr>
-                    ))
+                    <tr
+                      key={account.id}
+                      className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'}
+                    >
+                      <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-800">
+                        <div
+                          className="flex items-center gap-2"
+                          style={{ paddingLeft: `${depth * 20}px` }}
+                        >
+                          {hasChildren ? (
+                            <button
+                              type="button"
+                              onClick={() => toggleNode(account.id)}
+                              className="rounded p-0.5 text-slate-900 transition hover:bg-slate-200"
+                            >
+                              {expandedIds.has(account.id) ? (
+                                <FiChevronDown className="h-4 w-4" />
+                              ) : (
+                                <FiChevronRight className="h-4 w-4" />
+                              )}
+                            </button>
+                          ) : (
+                            <span className="inline-block h-4 w-4" />
+                          )}
+                          <span className={depth === 0 ? 'font-semibold uppercase' : 'font-medium'}>
+                            {account.nombre}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
+                        {account.codigo}
+                      </td>
+                      <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
+                        {toLabel(account.tipo)}
+                      </td>
+                      <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
+                        {toLabel(account.naturaleza)}
+                      </td>
+                      <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
+                        {account.casillero ?? '-'}
+                      </td>
+                      <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
+                        {account.nivel}
+                      </td>
+                      <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
+                        {account.esDetalle ? 'Si' : 'No'}
+                      </td>
+                      <td className="border-t border-slate-200 px-4 py-3 text-sm text-slate-700">
+                        {account.activo ? 'Si' : 'No'}
+                      </td>
+                      <td className="border-t border-slate-200 px-4 py-3 text-sm">
+                        <button
+                          onClick={() => {
+                            setEditingAccount(account);
+                            setCreateForm({
+                              codigo: account.codigo,
+                              nombre: account.nombre,
+                              tipo: account.tipo,
+                              naturaleza: account.naturaleza,
+                              casillero: account.casillero ?? '',
+                            });
+                            setIsEditModalOpen(true);
+                          }}
+                          className="text-blue-600 hover:underline"
+                        >
+                          <FaEdit />
+
+                        </button>
+                      </td>
+                    </tr>
+                  ))
                   : null}
               </tbody>
             </table>
@@ -641,13 +647,13 @@ export default function PlanCuentasPage() {
         </div>
       </div>
 
-      {isCreateModalOpen ? (
+      {(isCreateModalOpen || isEditModalOpen) ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-emerald-900/30 px-4 py-8 backdrop-blur-[1px]">
           <div className="w-full max-w-[672px] overflow-hidden rounded-lg border border-slate-200/20 bg-white shadow-[0px_12px_32px_rgba(0,41,68,0.08)]">
             <header className="flex items-start justify-between bg-gradient-to-r from-[#004065] to-[#26638A] px-8 py-7">
               <div>
                 <h3 className="text-[36px] font-extrabold leading-none tracking-[-0.6px] text-white">
-                  Nueva Cuenta
+                  {editingAccount ? 'Editar Cuenta' : 'Nueva Cuenta'}
                 </h3>
                 <p className="mt-2 text-xs uppercase tracking-[1.2px] text-blue-200">
                   Definicion de cuenta contable
@@ -684,6 +690,7 @@ export default function PlanCuentasPage() {
                       Codigo
                     </span>
                     <input
+                      disabled={!!editingAccount && hasChildrenEditing}
                       value={createForm.codigo}
                       onChange={(event) => setFormField('codigo', event.target.value)}
                       placeholder="1.1.1"
@@ -708,6 +715,7 @@ export default function PlanCuentasPage() {
                       Nombre
                     </span>
                     <input
+                      disabled={!!editingAccount && hasChildrenEditing}
                       value={createForm.nombre}
                       onChange={(event) => setFormField('nombre', event.target.value)}
                       placeholder="Caja"
@@ -752,6 +760,7 @@ export default function PlanCuentasPage() {
                       Casillero
                     </span>
                     <input
+                      disabled={!!editingAccount && hasChildrenEditing}
                       value={createForm.casillero}
                       onChange={(event) => setFormField('casillero', event.target.value)}
                       placeholder="101"
@@ -772,7 +781,7 @@ export default function PlanCuentasPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      void handleCreateCuenta();
+                      void handleSaveCuenta();
                     }}
                     disabled={isSaving}
                     className="inline-flex h-10 items-center rounded bg-gradient-to-r from-[#002944] to-[#26638A] px-10 text-xs font-bold uppercase tracking-[1.2px] text-white shadow-[0_10px_15px_-3px_rgba(0,0,0,0.10),0_4px_6px_-4px_rgba(0,0,0,0.10)]"

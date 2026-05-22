@@ -26,7 +26,9 @@ export interface AsientoListItem {
     NOMBRE: string
     APELLIDO: string
     ROL: string
-  }
+  },
+  totalDebe: number,
+  totalHaber: number
 }
 
 export interface AsientosListResponse {
