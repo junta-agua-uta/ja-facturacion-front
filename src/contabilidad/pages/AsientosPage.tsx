@@ -23,6 +23,8 @@ import Pagination from '../../shared/components/Pagination'
 
 const MODAL_DETAIL = 'modal_asiento_detalle'
 const MODAL_DELETE = 'modal_asiento_delete'
+const MODAL_APPROVE = 'modal_asiento_approve'
+const MODAL_APPROVE_LOTE = 'modal_asiento_approve_lote'
 const MODAL_AGRUPACION = 'modal_asiento_agrupacion'
 
 const defaultFilters: AsientosFiltersState = {
@@ -51,6 +53,7 @@ export default function AsientosPage() {
   const [detailLoading, setDetailLoading] = useState(false)
 
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)
+  const [approveTargetId, setApproveTargetId] = useState<number | null>(null)
   const [selectedIds, setSelectedIds] = useState<number[]>([])
 
   // ---- Modo de asientos de la empresa ----
@@ -208,11 +211,22 @@ export default function AsientosPage() {
     }
   }
 
-  const handleAprobar = async (id: number) => {
+  const openAprobarModal = (id: number) => {
+    setApproveTargetId(id)
+    ;(document.getElementById(MODAL_APPROVE) as HTMLDialogElement)?.showModal()
+  }
+
+  const closeAprobarModal = () => {
+    setApproveTargetId(null)
+    ;(document.getElementById(MODAL_APPROVE) as HTMLDialogElement)?.close()
+  }
+
+  const confirmAprobar = async () => {
+    if (approveTargetId == null) return
     try {
-      if (!window.confirm('¿Desea aprobar este asiento contabilizando sus valores?')) return
-      await aprobarAsiento(id)
+      await aprobarAsiento(approveTargetId)
       showSuccess('Asiento aprobado con éxito.')
+      closeAprobarModal()
       void loadAsientos()
     } catch (e: unknown) {
       const ax = e as { response?: { data?: { message?: string } } }
@@ -220,13 +234,22 @@ export default function AsientosPage() {
     }
   }
 
-  const handleAprobarLote = async () => {
+  const openAprobarLoteModal = () => {
     if (selectedIds.length === 0) return
-    if (!window.confirm(`¿Desea aprobar ${selectedIds.length} asiento(s)?`)) return
+    ;(document.getElementById(MODAL_APPROVE_LOTE) as HTMLDialogElement)?.showModal()
+  }
+
+  const closeAprobarLoteModal = () => {
+    ;(document.getElementById(MODAL_APPROVE_LOTE) as HTMLDialogElement)?.close()
+  }
+
+  const confirmAprobarLote = async () => {
+    if (selectedIds.length === 0) return
     try {
       const res = await aprobarAsientosLote(selectedIds)
       showSuccess(res.message || 'Lote de asientos aprobado.')
       setSelectedIds([])
+      closeAprobarLoteModal()
       void loadAsientos()
     } catch (e: unknown) {
       const ax = e as { response?: { data?: { message?: string } } }
@@ -423,7 +446,7 @@ export default function AsientosPage() {
               <button
                 type="button"
                 className="btn btn-success gap-2"
-                onClick={handleAprobarLote}
+                onClick={openAprobarLoteModal}
               >
                 <FaCheck /> Aprobar Lote ({selectedIds.length})
               </button>
@@ -468,7 +491,7 @@ export default function AsientosPage() {
           onVer={openDetail}
           onEditar={openEdit}
           onEliminar={openDelete}
-          onAprobar={handleAprobar}
+          onAprobar={openAprobarModal}
           onDescargarPdf={handleDescargarPdf}
         />
         {!loadingList && periodoId != null && total > 0 && (
@@ -501,8 +524,28 @@ export default function AsientosPage() {
         onConfirm={confirmDelete}
         onCancel={() => {
           setDeleteTargetId(null)
-            ; (document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.close()
+          ;(document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.close()
         }}
+      />
+
+      <ConfirmModal
+        id={MODAL_APPROVE}
+        title="Aprobar asiento"
+        message="¿Desea aprobar este asiento contabilizando sus valores? Esta acción registra el comprobante como aprobado y habilita sus movimientos en los reportes contables."
+        confirmLabel="Aprobar"
+        confirmClassName="btn btn-primary"
+        onConfirm={() => void confirmAprobar()}
+        onCancel={closeAprobarModal}
+      />
+
+      <ConfirmModal
+        id={MODAL_APPROVE_LOTE}
+        title="Aprobar asientos en lote"
+        message={`¿Desea aprobar ${selectedIds.length} asiento(s) seleccionado(s)? Se contabilizarán todos los comprobantes pendientes del lote.`}
+        confirmLabel="Aprobar lote"
+        confirmClassName="btn btn-primary"
+        onConfirm={() => void confirmAprobarLote()}
+        onCancel={closeAprobarLoteModal}
       />
 
       <AsientoAgrupacionModal

@@ -125,8 +125,34 @@ const Layout = () => {
                 to: '/junta/contabilidad/periodos',
               },
               {
-                label: 'Libro Diario',
+                label: 'Reportes',
                 to: '/junta/contabilidad/libro-diario',
+                children: [
+                  {
+                    label: 'Libro Diario',
+                    to: '/junta/contabilidad/libro-diario',
+                  },
+                  {
+                    label: 'Libro Mayor',
+                    to: '/junta/contabilidad/reportes/libro-mayor',
+                  },
+                  {
+                    label: 'Balance de comprobación',
+                    to: '/junta/contabilidad/reportes/balance-comprobacion',
+                  },
+                  {
+                    label: 'Balance General',
+                    to: '/junta/contabilidad/reportes/balance-general',
+                  },
+                  {
+                    label: 'Estado de Resultados',
+                    to: '/junta/contabilidad/reportes/estado-resultados',
+                  },
+                  {
+                    label: 'Cartera de Clientes',
+                    to: '/junta/contabilidad/reportes/cartera-clientes',
+                  },
+                ],
               },
               {
                 label: 'Plan de cuentas',
