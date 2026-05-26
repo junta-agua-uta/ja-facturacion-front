@@ -10,7 +10,8 @@ import {
   FiSearch,
   FiX,
 } from 'react-icons/fi';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaTrash } from 'react-icons/fa';
+import { eliminarPlanCuenta } from '../services';
 
 type PlanCuentaApiItem = {
   id: number;
@@ -318,6 +319,8 @@ export default function PlanCuentasPage() {
 
   const handleSaveCuenta = async (): Promise<void> => {
     const empresaId = 1;
+    const detectedParentId = detectedParent?.id || null
+    console.log(detectedParentId)
     const codigo = createForm.codigo.trim();
     const nombre = createForm.nombre.trim();
 
@@ -339,6 +342,7 @@ export default function PlanCuentasPage() {
           tipo: createForm.tipo,
           naturaleza: createForm.naturaleza,
           casillero: createForm.casillero.trim() || undefined,
+          padreId: detectedParentId
         }, {
           params: { empresaId }
         });
@@ -352,6 +356,7 @@ export default function PlanCuentasPage() {
           tipo: createForm.tipo,
           naturaleza: createForm.naturaleza,
           casillero: createForm.casillero.trim() || undefined,
+          padreId: detectedParentId, 
         }, {
           params: { empresaId }
         });
@@ -372,6 +377,27 @@ export default function PlanCuentasPage() {
       setCreateError('Error al guardar la cuenta.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeleteCuenta = async (account: PlanCuentaApiItem): Promise<void> => {
+    if (!window.confirm(`¿Está seguro de que desea eliminar la cuenta "${account.nombre}" (${account.codigo})?`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const empresaId = 1;
+      const response = await eliminarPlanCuenta(account.id, empresaId);
+      alert(response.message || 'Cuenta eliminada/desactivada correctamente.');
+      await loadPlanCuentas();
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Error al eliminar la cuenta.';
+      setError(msg);
+      alert(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -610,23 +636,34 @@ export default function PlanCuentasPage() {
                         {account.activo ? 'Si' : 'No'}
                       </td>
                       <td className="border-t border-slate-200 px-4 py-3 text-sm">
-                        <button
-                          onClick={() => {
-                            setEditingAccount(account);
-                            setCreateForm({
-                              codigo: account.codigo,
-                              nombre: account.nombre,
-                              tipo: account.tipo,
-                              naturaleza: account.naturaleza,
-                              casillero: account.casillero ?? '',
-                            });
-                            setIsEditModalOpen(true);
-                          }}
-                          className="text-blue-600 hover:underline"
-                        >
-                          <FaEdit />
-
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => {
+                              setEditingAccount(account);
+                              setCreateForm({
+                                codigo: account.codigo,
+                                nombre: account.nombre,
+                                tipo: account.tipo,
+                                naturaleza: account.naturaleza,
+                                casillero: account.casillero ?? '',
+                              });
+                              setIsEditModalOpen(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 transition"
+                            title="Editar cuenta"
+                          >
+                            <FaEdit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              void handleDeleteCuenta(account);
+                            }}
+                            className="text-red-600 hover:text-red-800 transition"
+                            title="Eliminar cuenta"
+                          >
+                            <FaTrash className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

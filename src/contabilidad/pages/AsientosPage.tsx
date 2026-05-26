@@ -4,7 +4,7 @@ import { Title, SubTitle, CardSlot } from '../../shared/components'
 import { FaCheck } from 'react-icons/fa'
 import { PAGE_SIZE } from '../../shared/utils/constants'
 import { useCurrentUser } from '../hooks/useCurrentUser'
-import { listarAsientos, obtenerAsiento, eliminarAsiento, aprobarAsiento, aprobarAsientosLote, descargarAsientoPdf, agruparPorDia, agruparPorPeriodo } from '../services/asientos.service'
+import { listarAsientos, obtenerAsiento, eliminarAsiento, aprobarAsiento, desaprobarAsiento, aprobarAsientosLote, descargarAsientoPdf, agruparPorDia, agruparPorPeriodo } from '../services/asientos.service'
 import { listarPeriodos } from '../services/periodos.service'
 import { empresaService } from '../../empresa/services/empresa.service'
 import type { AsientoDetalle, AsientoListItem } from '../types/asiento'
@@ -274,6 +274,24 @@ export default function AsientosPage() {
     }
   }
 
+  const handleReabrir = async (id: number) => {
+    if (!window.confirm('¿Está seguro de que desea reabrir (desaprobar) este asiento? Volverá al estado PENDIENTE.')) {
+      return
+    }
+
+    try {
+      setLoadingList(true)
+      await desaprobarAsiento(id)
+      showSuccess('Asiento reabierto con éxito.')
+      await loadAsientos()
+    } catch (e: unknown) {
+      const ax = e as { response?: { data?: { message?: string } } }
+      showError(ax.response?.data?.message || 'Error al reabrir el asiento.')
+    } finally {
+      setLoadingList(false)
+    }
+  }
+
   const getErrorMessage = (e: unknown, fallback: string) => {
     const ax = e as { response?: { data?: { message?: string | string[] } } }
     const message = ax.response?.data?.message
@@ -493,6 +511,7 @@ export default function AsientosPage() {
           onEliminar={openDelete}
           onAprobar={openAprobarModal}
           onDescargarPdf={handleDescargarPdf}
+          onReabrir={handleReabrir}
         />
         {!loadingList && periodoId != null && total > 0 && (
           <div className="mt-4 flex flex-col items-center gap-2">

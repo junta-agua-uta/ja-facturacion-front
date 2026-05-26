@@ -85,6 +85,12 @@ export async function aprobarAsiento(id: number): Promise<AsientoDetalle> {
   return data
 }
 
+export async function desaprobarAsiento(id: number): Promise<AsientoDetalle> {
+  const { data } = await api.patch<AsientoDetalle>(`/asientos/${id}/desaprobar`)
+  return data
+}
+
+
 export async function aprobarAsientosLote(asientoIds: number[]): Promise<{ message: string; aprobados: number }> {
   const { data } = await api.patch<{ message: string; aprobados: number }>('/asientos/aprobar-lote', { asientoIds })
   return data

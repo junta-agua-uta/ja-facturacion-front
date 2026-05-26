@@ -1,4 +1,4 @@
-import { FaEye, FaEdit, FaTrash, FaCheck, FaFilePdf } from 'react-icons/fa'
+import { FaEye, FaEdit, FaTrash, FaCheck, FaFilePdf, FaDoorOpen } from 'react-icons/fa'
 import type { AsientoListItem } from '../types/asiento'
 import StatusBadge from './StatusBadge'
 import TipoMovimientoBadge from './TipoMovimientoBadge'
@@ -18,6 +18,7 @@ type Props = {
   onEliminar: (id: number) => void
   onAprobar: (id: number) => void
   onDescargarPdf: (id: number) => void
+  onReabrir: (id:number) => void
 }
 
 function fechaCorta(iso: string): string {
@@ -42,7 +43,8 @@ export default function AsientosTable({
   onEditar,
   onEliminar,
   onAprobar,
-  onDescargarPdf
+  onDescargarPdf,
+  onReabrir
 }: Props) {
   if (loading) {
     return (
@@ -135,6 +137,17 @@ export default function AsientosTable({
                       >
                         <FaFilePdf />
                       </button>
+                      {row.estado === 'APROBADO' && (
+                        <button
+                          type='button'
+                          className='btn btn-xs btn-circle btn-outline btn-info'
+                          title='Reabrir asiento'
+                          onClick={() => onReabrir(row.id)}
+                        >
+                          <FaDoorOpen />
+                        </button>
+                      )}
+
                       {row.estado === 'PENDIENTE' && (
                         <>
                           <button
