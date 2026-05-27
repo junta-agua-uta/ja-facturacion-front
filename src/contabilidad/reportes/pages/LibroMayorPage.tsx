@@ -46,23 +46,36 @@ export default function LibroMayorPage() {
   const [loadingDetalle, setLoadingDetalle] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const [cuentasFiltradas, setCuentasFiltradas] = useState<LibroMayorCuentaResumen[]>([])
   const loadCuentas = useCallback(async () => {
     setLoadingCuentas(true)
     setError(null)
     try {
       const res = await obtenerLibroMayorResumen(filtrosApi)
       setCuentas(res)
-      if (res.length === 0) {
+      const filtradas = res.filter(cuenta => {
+        // Si no tiene nivel, mostrarlo como advertencia
+        if (cuenta.nivel === undefined || cuenta.nivel === null) {
+          console.warn(`⚠️ Cuenta sin nivel: ${cuenta.codigo} - ${cuenta.nombre}`);
+          return false; // o true si quieres mostrarlas igual
+        }
+        return cuenta.nivel > 3;
+      });
+      setCuentasFiltradas(filtradas)
+
+      if (filtradas.length === 0) {
         setCuentaId(null)
         setMovimientos([])
         setCuentaLabel('')
-      } else if (cuentaId && !res.some((c) => c.cuentaId === cuentaId)) {
+      } else if (cuentaId && !filtradas.some((c) => c.cuentaId === cuentaId)) {
         setCuentaId(null)
         setMovimientos([])
       }
     } catch (e: unknown) {
       setError(parseApiError(e, 'No se pudo cargar las cuentas del libro mayor.'))
       setCuentas([])
+      setCuentasFiltradas([])
     } finally {
       setLoadingCuentas(false)
     }
@@ -190,19 +203,21 @@ export default function LibroMayorPage() {
           <select
             className="select select-bordered w-full"
             value={cuentaId ?? ''}
-            disabled={loadingCuentas || cuentas.length === 0}
+            disabled={loadingCuentas || cuentasFiltradas.length === 0}
             onChange={(e) => setCuentaId(Number(e.target.value) || null)}
           >
             <option value="">
               {loadingCuentas
                 ? 'Cargando cuentas…'
-                : cuentas.length === 0
+                : cuentasFiltradas.length === 0
                   ? 'Sin cuentas con movimientos'
                   : 'Seleccione una cuenta'}
             </option>
-            {cuentas.map((c) => (
+            {cuentasFiltradas.map((c) => (
               <option key={c.cuentaId} value={c.cuentaId}>
                 {c.codigo} - {c.nombre}
+                {/* Mostrar nivel para depuración */}
+                {c.nivel && ` (Nivel ${c.nivel})`}
               </option>
             ))}
           </select>

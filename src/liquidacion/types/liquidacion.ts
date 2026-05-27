@@ -22,9 +22,10 @@ export interface ConceptoCobro {
   precioTotalSinImpuesto: number;
   codigoImpuesto: string;
   codigoPorcentajeImpuesto: string;
-  tarifaImpuesto: number;
+  // tarifaImpuesto: number;
   baseImponible: number;
   valorImpuesto: number;
+  tarifaIVA: number; // 0, 12, 15
 }
 
 export const crearConcepto = (
@@ -35,9 +36,12 @@ export const crearConcepto = (
 ): ConceptoCobro => {
   const precioTotalSinImpuesto = (precioUnitario - descuento) * cantidad;
   const baseImponible = precioTotalSinImpuesto;
-  const tarifaImpuesto = 12;
-  const valorImpuesto = baseImponible * (tarifaImpuesto / 100);
-
+  const tarifaIVA = 0; // 👈 por defecto SIN IVA
+  const valorImpuesto = 0;
+  const codigoPorcentajeImpuesto =
+    tarifaIVA === 0 ? "0" :
+      tarifaIVA === 12 ? "2" :
+        tarifaIVA === 15 ? "4" : "2";
   return {
     codigoPrincipal: `PROD${String(Date.now()).slice(-6)}`,
     codigoAuxiliar: undefined,
@@ -48,8 +52,8 @@ export const crearConcepto = (
     descuento,
     precioTotalSinImpuesto,
     codigoImpuesto: "2",
-    codigoPorcentajeImpuesto: "2",
-    tarifaImpuesto,
+    codigoPorcentajeImpuesto,
+    tarifaIVA,
     baseImponible,
     valorImpuesto,
   };

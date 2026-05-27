@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     allowedHosts: [
       'localhost', 
-      // 'sauce-pricing-week-tale.trycloudflare.com', 
+      // 'christina-ppm-visitors-interstate.trycloudflare.com',
       // 'kindling-evasion-pouring.ngrok-free.dev'
     ]
   }

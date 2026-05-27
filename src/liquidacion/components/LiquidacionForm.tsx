@@ -102,7 +102,7 @@ export const LiquidacionFormContent: React.FC<LiquidacionFormContentProps> = ({
             Cancelar
           </button>
           <button onClick={onSave} className="btn btn-primary" disabled={saving}>
-            {saving ? "Guardando..." : "Guardar"}
+            {saving ? "Guardando..." : "Guardar papu"}
           </button>
         </div>
       </div>

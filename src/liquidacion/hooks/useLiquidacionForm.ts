@@ -55,7 +55,22 @@ export const useLiquidacionForm = (): UseLiquidacionFormReturn => {
 
   const handleConceptoChange = useCallback(
     (idx: number, updated: ConceptoCobro) => {
-      setConceptos((prev) => prev.map((c, i) => (i === idx ? updated : c)));
+      const base =
+        updated.cantidad * updated.precioUnitario - updated.descuento;
+
+      const valorImpuesto =
+        base * (updated.tarifaIVA / 100);
+
+      const actualizado = {
+        ...updated,
+        precioTotalSinImpuesto: base,
+        baseImponible: base,
+        valorImpuesto: Number(valorImpuesto.toFixed(2)),
+      };
+
+      setConceptos((prev) =>
+        prev.map((c, i) => (i === idx ? actualizado : c))
+      );
     },
     []
   );
@@ -65,7 +80,7 @@ export const useLiquidacionForm = (): UseLiquidacionFormReturn => {
   }, []);
 
   const handleAddConcepto = useCallback(() => {
-    const nuevoConcepto = crearConcepto("Nuevo producto");
+    const nuevoConcepto = crearConcepto("Nuevo producto"); // USO AQUI EL CREAR CONCEPTO
     setConceptos((prev) => [...prev, nuevoConcepto]);
   }, []);
 
@@ -141,8 +156,9 @@ export const useLiquidacionForm = (): UseLiquidacionFormReturn => {
       try {
         setSaving(true);
         setSaveError(null);
+        // console.log("Payload enviado:", JSON.stringify(liquidacionData))
         await api.post("/liquidacion-compra/crear", liquidacionData);
-        navigate("/junta/liquidaciones");
+        navigate("/junta/liquidacion");
         return true;
       } catch (error: unknown) {
         console.error("Error al guardar liquidación:", error);

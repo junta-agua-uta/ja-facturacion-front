@@ -24,6 +24,7 @@ export interface LibroMayorCuentaResumen {
   totalDebe: number
   totalHaber: number
   saldo: number
+  nivel: number
 }
 
 export interface LibroMayorMovimiento {
