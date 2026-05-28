@@ -59,6 +59,8 @@ export interface BalanceComprobacionResponse {
   totales: {
     totalDebe: number
     totalHaber: number
+    totalSaldoDeudor: number
+    totalSaldoAcreedor: number
   }
 }
 

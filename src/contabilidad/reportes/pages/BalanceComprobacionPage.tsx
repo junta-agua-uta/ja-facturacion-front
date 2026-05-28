@@ -201,7 +201,12 @@ export default function BalanceComprobacionPage() {
                   <td className="text-right text-red-600 tabular-nums">
                     {formatMoney(data.totales.totalHaber)}
                   </td>
-                  <td colSpan={2} />
+                  <td className="text-right tabular-nums">
+                    {formatMoney(data.totales.totalSaldoDeudor)}
+                  </td>
+                  <td className="text-right tabular-nums">
+                    {formatMoney(data.totales.totalSaldoAcreedor)}
+                  </td>
                 </tr>
               </tbody>
             </table>

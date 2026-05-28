@@ -24,6 +24,7 @@ import ReporteAvisoPendientes from '../components/ReporteAvisoPendientes'
 import ReporteTablaPaginacion from '../components/ReporteTablaPaginacion'
 import { useAsientosPendientesPeriodo } from '../hooks/useAsientosPendientesPeriodo'
 import { usePaginacionCliente } from '../hooks/usePaginacionCliente'
+import CuentaSelect from '../../components/CuentaSelect'
 import {
   calcularKpisLibroMayor,
   comprobanteDesdeNumero,
@@ -200,27 +201,19 @@ export default function LibroMayorPage() {
           <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Seleccionar cuenta contable
           </span>
-          <select
-            className="select select-bordered w-full"
-            value={cuentaId ?? ''}
+          <CuentaSelect
+            cuentas={cuentasFiltradas}
+            value={cuentaId}
+            onChange={(id) => setCuentaId(id)}
             disabled={loadingCuentas || cuentasFiltradas.length === 0}
-            onChange={(e) => setCuentaId(Number(e.target.value) || null)}
-          >
-            <option value="">
-              {loadingCuentas
+            placeholder={
+              loadingCuentas
                 ? 'Cargando cuentas…'
                 : cuentasFiltradas.length === 0
                   ? 'Sin cuentas con movimientos'
-                  : 'Seleccione una cuenta'}
-            </option>
-            {cuentasFiltradas.map((c) => (
-              <option key={c.cuentaId} value={c.cuentaId}>
-                {c.codigo} - {c.nombre}
-                {/* Mostrar nivel para depuración */}
-                {c.nivel && ` (Nivel ${c.nivel})`}
-              </option>
-            ))}
-          </select>
+                  : 'Seleccione o busque una cuenta...'
+            }
+          />
         </label>
       </div>
 
