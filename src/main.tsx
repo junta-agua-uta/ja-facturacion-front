@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import Layout from './core/Layout.tsx'
 import Login from './auth/Login.tsx'
-import { createBrowserRouter, RouterProvider, Navigate} from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import Facturacion from './facturacion/pages/Facturacion.tsx'
 import AgregarFacturas from './facturacion/pages/AgregarFacturas.tsx'
 import BranchesPage from './sucursales/pages/BranchesPage.tsx'
@@ -14,6 +14,19 @@ import Profile from './profile/Profile.tsx'
 import AgregarLiquidacion from './liquidacion/pages/AgregarLiquidacion.tsx'
 import Liquidacion from './liquidacion/pages/Liquidacion.tsx'
 import ConceptosPage from './conceptos/pages/ConceptosPage';
+import AsientosPage from './contabilidad/pages/AsientosPage';
+import AsientoFormPage from './contabilidad/pages/AsientoFormPage';
+import PeriodosPage from './contabilidad/pages/PeriodosPage';
+import PeriodoDetallePage from './contabilidad/pages/PeriodoDetallePage';
+import PlanCuentasPage from './contabilidad/pages/PlanCuentasPage';
+import EmpresaPage from './empresa/pages/EmpresaPage';
+import CuentasPorCobrarPage from './contabilidad/pages/CuentasPorCobrarPage';
+import LibroDiarioPage from './contabilidad/pages/LibroDiarioPage';
+import LibroMayorPage from './contabilidad/reportes/pages/LibroMayorPage';
+import BalanceComprobacionPage from './contabilidad/reportes/pages/BalanceComprobacionPage';
+import BalanceGeneralPage from './contabilidad/reportes/pages/BalanceGeneralPage';
+import EstadoResultadosPage from './contabilidad/reportes/pages/EstadoResultadosPage';
+import CarteraClientesPage from './contabilidad/reportes/pages/CarteraClientesPage';
 
 const router = createBrowserRouter([
   {
@@ -50,12 +63,12 @@ const router = createBrowserRouter([
               }
             ]
           },
-           {
+          {
             path: 'liquidacion',
             children: [
               {
                 path: '',
-                element: <Liquidacion/>
+                element: <Liquidacion />
               },
               {
                 path: 'crear',
@@ -69,23 +82,45 @@ const router = createBrowserRouter([
           },
           {
             path: 'usuarios',
-             element: <ClientesPage />
+            element: <ClientesPage />
           },
           {
             path: 'sucursales',
             element: <BranchesPage />
           },
           {
+            path: 'empresa',
+            element: <EmpresaPage />
+          },
+          {
             path: 'mediciones',
             element: <MedicionesPage />
           },
-            {
-              path: 'conceptos',
-              element: <ConceptosPage />
-            },
+          {
+            path: 'conceptos',
+            element: <ConceptosPage />
+          },
+          {
+            path: 'contabilidad',
+            children: [
+              { path: 'asientos/nuevo', element: <AsientoFormPage /> },
+              { path: 'asientos/:asientoId/editar', element: <AsientoFormPage /> },
+              { path: 'asientos', element: <AsientosPage /> },
+              { path: 'periodos/:periodoId', element: <PeriodoDetallePage /> },
+              { path: 'periodos', element: <PeriodosPage /> },
+              { path: 'libro-diario', element: <LibroDiarioPage /> },
+              { path: 'reportes/libro-mayor', element: <LibroMayorPage /> },
+              { path: 'reportes/balance-comprobacion', element: <BalanceComprobacionPage /> },
+              { path: 'reportes/balance-general', element: <BalanceGeneralPage /> },
+              { path: 'reportes/estado-resultados', element: <EstadoResultadosPage /> },
+              { path: 'reportes/cartera-clientes', element: <CarteraClientesPage /> },
+              { path: 'plan-de-cuentas', element: <PlanCuentasPage /> },
+              { path: 'cuentas-cobrar', element: <CuentasPorCobrarPage /> },
+            ],
+          },
           {
             path: 'perfil',
-            element:<Profile/>
+            element: <Profile />
           }
         ]
       }

@@ -4,10 +4,17 @@ import { LiquidacionCedulaFilter, LiquidacionFechaFilter } from "../components";
 import { LiquidacionForm } from "../types/liquidacion";
 import { PAGE_SIZE } from "../../shared/utils/constants";
 import api from '../../shared/api';
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import LiquidacionTable from "../components/LiquidacionTable";
 
+type LiquidacionLocationPrefill = {
+  FechaEmisionDesde?: string;
+  FechaEmisionHasta?: string;
+};
+
 export default function LiquidacionPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [liquidaciones, setLiquidaciones] = useState<LiquidacionForm[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,6 +40,17 @@ export default function LiquidacionPage() {
     const handler = setTimeout(() => setDebouncedCedula(filters.Cedula || ""), 1500);
     return () => clearTimeout(handler);
   }, [filters.Cedula]);
+
+  useEffect(() => {
+    const s = location.state as LiquidacionLocationPrefill | null;
+    if (!s?.FechaEmisionDesde || !s?.FechaEmisionHasta) return;
+    setDateFilters({
+      FechaEmisionDesde: new Date(`${s.FechaEmisionDesde}T12:00:00`),
+      FechaEmisionHasta: new Date(`${s.FechaEmisionHasta}T12:00:00`),
+    });
+    setRefreshKey((k) => k + 1);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.pathname, location.state, navigate]);
 
   // Mapear respuesta de la API a LiquidacionForm
   const mapLiquidaciones = (apiData: any[]): LiquidacionForm[] => {

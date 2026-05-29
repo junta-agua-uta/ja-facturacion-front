@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { FacturasIcon, TransaccionesIcon, UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon } from './utils/icons';
+import { FacturasIcon, TransaccionesIcon, ContabilidadIcon, UsuariosIcon, SucursalesIcon, MedicionesIcon, PerfilIcon, EmpresaIcon } from './utils/icons';
 import NavItem from './components/NavItem';
 import { authService } from '../auth/Services/auth.service';
 import { useEffect, useState } from 'react';
@@ -51,10 +51,10 @@ const Layout = () => {
     <div className="flex h-screen bg-gray-100">
       <aside className={`${menuOpen ? 'w-64' : 'w-0'} flex flex-col bg-gray-200 border-r border-gray-300 shadow-xl pb-5 transition-all duration-300 overflow-auto max-h-screen`}>
         <div className="p-4 flex justify-center">
-          <img 
-            src="/logo_agua.svg" 
-            alt="Logo Agua Pública" 
-            className="h-36" 
+          <img
+            src="/logo_agua.svg"
+            alt="Logo Agua Pública"
+            className="h-36"
             onError={(e) => {
               console.error('Error cargando logo');
               e.currentTarget.style.display = 'none';
@@ -101,10 +101,75 @@ const Layout = () => {
           />
 
           <NavItem
+            to="/junta/contabilidad/asientos"
+            isActive={isActive('contabilidad')}
+            icon={<ContabilidadIcon isActive={isActive('contabilidad')} />}
+            label="Contabilidad"
+            children={[
+              {
+                label: 'Asientos',
+                to: '/junta/contabilidad/asientos',
+                children: [
+                  {
+                    label: 'Ver todos los asientos',
+                    to: '/junta/contabilidad/asientos',
+                  },
+                  {
+                    label: 'Nuevo asiento manual',
+                    to: '/junta/contabilidad/asientos/nuevo',
+                  },
+                ],
+              },
+              {
+                label: 'Periodos',
+                to: '/junta/contabilidad/periodos',
+              },
+              {
+                label: 'Reportes',
+                to: '/junta/contabilidad/libro-diario',
+                children: [
+                  {
+                    label: 'Libro Diario',
+                    to: '/junta/contabilidad/libro-diario',
+                  },
+                  {
+                    label: 'Libro Mayor',
+                    to: '/junta/contabilidad/reportes/libro-mayor',
+                  },
+                  {
+                    label: 'Balance de comprobación',
+                    to: '/junta/contabilidad/reportes/balance-comprobacion',
+                  },
+                  {
+                    label: 'Balance General',
+                    to: '/junta/contabilidad/reportes/balance-general',
+                  },
+                  {
+                    label: 'Estado de Resultados',
+                    to: '/junta/contabilidad/reportes/estado-resultados',
+                  },
+                  {
+                    label: 'Cartera de Clientes',
+                    to: '/junta/contabilidad/reportes/cartera-clientes',
+                  },
+                ],
+              },
+              {
+                label: 'Plan de cuentas',
+                to: '/junta/contabilidad/plan-de-cuentas',
+              },
+              {
+                label: 'Cuentas x Cobrar',
+                to: '/junta/contabilidad/cuentas-cobrar',
+              },
+            ]}
+          />
+
+          <NavItem
             to="/junta/usuarios"
             isActive={isActive('usuarios')}
             icon={<UsuariosIcon isActive={isActive('usuarios')} />}
-            label="Usuarios"
+            label="Clientes"
           />
 
           <NavItem
@@ -113,6 +178,15 @@ const Layout = () => {
             icon={<SucursalesIcon isActive={isActive('sucursales')} />}
             label="Sucursales"
           />
+
+          {userRole === 'ADMIN' && (
+            <NavItem
+              to="/junta/empresa"
+              isActive={isActive('empresa')}
+              icon={<EmpresaIcon isActive={isActive('empresa')} />}
+              label="Empresa"
+            />
+          )}
 
           <NavItem
             to="/junta/mediciones"
@@ -134,7 +208,7 @@ const Layout = () => {
             icon={<PerfilIcon isActive={isActive('perfil')} />}
             label="Perfil"
           />
-          
+
         </nav>
 
         <div className="p-4 flex flex-col items-center">

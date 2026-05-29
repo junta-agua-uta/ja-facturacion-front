@@ -32,7 +32,8 @@ export const useTablePrint = () => {
       numero: factura.Numero || '',
       secuencia: factura.Secuencia || '',
       vencimiento: '', // No tenemos este dato en la lista
-      codigo: '' // No necesitamos este dato para la impresión
+      codigo: '', // No necesitamos este dato para la impresión
+      tipoPago: factura.TipoPago || '',
     };
 
     setPrintState({

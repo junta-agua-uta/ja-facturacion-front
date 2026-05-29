@@ -14,14 +14,14 @@ export const TablaConceptos: React.FC<TablaConceptosProps> = ({
   const handleInputChange = (idx: number, field: keyof ConceptoCobro, value: any) => {
     const updated = { ...conceptos[idx], [field]: value };
 
-    const precioUnitario = Number(updated.precioUnitario) || 0;
-    const cantidad = Number(updated.cantidad) || 0;
-    const descuento = Number(updated.descuento) || 0;
-    const tarifaImpuesto = Number(updated.tarifaImpuesto) || 0;
+    // const precioUnitario = Number(updated.precioUnitario) || 0;
+    // const cantidad = Number(updated.cantidad) || 0;
+    // const descuento = Number(updated.descuento) || 0;
+    // const tarifaImpuesto = Number(updated.tarifaImpuesto) || 0;
 
-    updated.precioTotalSinImpuesto = (precioUnitario - descuento) * cantidad;
-    updated.baseImponible = updated.precioTotalSinImpuesto;
-    updated.valorImpuesto = updated.baseImponible * (tarifaImpuesto / 100);
+    // updated.precioTotalSinImpuesto = (precioUnitario - descuento) * cantidad;
+    // updated.baseImponible = updated.precioTotalSinImpuesto;
+    // updated.valorImpuesto = updated.baseImponible * (tarifaImpuesto / 100);
 
     onChange(idx, updated);
   };
@@ -37,7 +37,8 @@ export const TablaConceptos: React.FC<TablaConceptosProps> = ({
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Unitario</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descuento</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IVA (12%)</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IVA </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IVA (valor)</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
           </tr>
@@ -98,6 +99,19 @@ export const TablaConceptos: React.FC<TablaConceptosProps> = ({
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-medium">
                 ${concepto.precioTotalSinImpuesto.toFixed(2)}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <select
+                  value={concepto.tarifaIVA}
+                  onChange={(e) =>
+                    handleInputChange(idx, "tarifaIVA", Number(e.target.value))
+                  }
+                  className="w-24 p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white cursor-pointer"
+                >
+                  <option value={0}>0%</option>
+                  <option value={12}>12%</option>
+                  <option value={15}>15%</option>
+                </select>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-medium">
                 ${concepto.valorImpuesto.toFixed(2)}
