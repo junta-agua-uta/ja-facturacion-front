@@ -74,7 +74,7 @@ export default function LibroDiarioPage() {
   const [loadingList, setLoadingList] = useState(true)
   const [loadingKpis, setLoadingKpis] = useState(true)
   const [exportingPdf, setExportingPdf] = useState(false)
-  const [enriching, setEnriching] = useState(false)
+  const [, setEnriching] = useState(false)
   const [kpis, setKpis] = useState<LibroDiarioKpisUi | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)

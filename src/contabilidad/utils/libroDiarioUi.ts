@@ -40,8 +40,8 @@ export function asientoListItemToLibroDiarioRow(item: AsientoListItem): LibroDia
   return {
     ...item,
     comprobanteLabel: comprobanteLibroDiario(item),
-    totalDebe: parseMontoApi(item.totalDebe),
-    totalHaber: parseMontoApi(item.totalHaber),
+    totalDebe: parseMontoApi(item.totalDebe) ?? 0,
+    totalHaber: parseMontoApi(item.totalHaber) ?? 0,
   }
 }
 
