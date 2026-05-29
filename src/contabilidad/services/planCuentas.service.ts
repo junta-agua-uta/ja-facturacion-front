@@ -10,3 +10,14 @@ export async function listarCuentasDetalle(
   })
   return data.data.filter((c) => c.esDetalle && c.activo)
 }
+
+export async function eliminarPlanCuenta(
+  id: number,
+  empresaId: number,
+): Promise<{ message: string }> {
+  const { data } = await api.delete<{ message: string }>(`/plan-cuentas/${id}`, {
+    params: { empresaId },
+  })
+  return data
+}
+

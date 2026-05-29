@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Title, CardSlot, EndSlot, Table } from '../../shared/components';
-import { empresaService, EmpresaApiResponse } from '../services/empresa.service';
+import { empresaService, EmpresaApiResponse, type ModoAsientos } from '../services/empresa.service';
 import EditEmpresaModal from '../modals/EditEmpresaModal';
 
 type EmpresaViewModel = {
@@ -13,6 +13,7 @@ type EmpresaViewModel = {
   moneda: string;
   representanteLegal: string;
   logo: string | null;
+  modoAsientos: ModoAsientos;
   createdAt: string;
   updatedAt: string;
 };
@@ -128,6 +129,7 @@ const EmpresaPage = () => {
         moneda: editForm.moneda,
         representanteLegal: editForm.representanteLegal,
         logo: editForm.logo,
+        modoAsientos: editForm.modoAsientos,
       });
 
       setEmpresa(updated);
@@ -192,6 +194,7 @@ const EmpresaPage = () => {
     { label: 'Correo', value: empresa.email },
     { label: 'Teléfono', value: empresa.telefono },
     { label: 'Moneda', value: empresa.moneda },
+    { label: 'Modo Asientos', value: empresa.modoAsientos || 'INDIVIDUAL' },
     { label: 'Representante legal', value: empresa.representanteLegal },
     { label: 'Dirección', value: empresa.direccion },
   ];

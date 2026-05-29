@@ -125,8 +125,42 @@ const Layout = () => {
                 to: '/junta/contabilidad/periodos',
               },
               {
+                label: 'Reportes',
+                to: '/junta/contabilidad/libro-diario',
+                children: [
+                  {
+                    label: 'Libro Diario',
+                    to: '/junta/contabilidad/libro-diario',
+                  },
+                  {
+                    label: 'Libro Mayor',
+                    to: '/junta/contabilidad/reportes/libro-mayor',
+                  },
+                  {
+                    label: 'Balance de comprobación',
+                    to: '/junta/contabilidad/reportes/balance-comprobacion',
+                  },
+                  {
+                    label: 'Balance General',
+                    to: '/junta/contabilidad/reportes/balance-general',
+                  },
+                  {
+                    label: 'Estado de Resultados',
+                    to: '/junta/contabilidad/reportes/estado-resultados',
+                  },
+                  {
+                    label: 'Cartera de Clientes',
+                    to: '/junta/contabilidad/reportes/cartera-clientes',
+                  },
+                ],
+              },
+              {
                 label: 'Plan de cuentas',
                 to: '/junta/contabilidad/plan-de-cuentas',
+              },
+              {
+                label: 'Cuentas x Cobrar',
+                to: '/junta/contabilidad/cuentas-cobrar',
               },
             ]}
           />
@@ -145,12 +179,14 @@ const Layout = () => {
             label="Sucursales"
           />
 
-          <NavItem
-            to="/junta/empresa"
-            isActive={isActive('empresa')}
-            icon={<EmpresaIcon isActive={isActive('empresa')} />}
-            label="Empresa"
-          />
+          {userRole === 'ADMIN' && (
+            <NavItem
+              to="/junta/empresa"
+              isActive={isActive('empresa')}
+              icon={<EmpresaIcon isActive={isActive('empresa')} />}
+              label="Empresa"
+            />
+          )}
 
           <NavItem
             to="/junta/mediciones"

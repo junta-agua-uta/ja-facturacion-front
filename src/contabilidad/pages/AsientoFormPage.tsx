@@ -31,6 +31,7 @@ export default function AsientoFormPage() {
   const [periodos, setPeriodos] = useState<PeriodoContable[]>([])
   const [periodoId, setPeriodoId] = useState<number | null>(null)
   const [cuentas, setCuentas] = useState<PlanCuentaRow[]>([])
+  const [cuentasFiltradas, setCuentasFiltradas] = useState<PlanCuentaRow[]>([])
   const [pageError, setPageError] = useState<string | null>(null)
 
   const periodoActual = useMemo(
@@ -45,8 +46,18 @@ export default function AsientoFormPage() {
         listarPeriodos({ empresaId, page: 1, limit: 50 }),
         listarCuentasDetalle(empresaId, 500),
       ])
+      const filtradas = ctaRows.filter(cuenta => {
+        // Verificar si la cuenta tiene nivel definido
+        if (cuenta.nivel === undefined || cuenta.nivel === null) {
+          console.warn(`⚠️ Cuenta sin nivel: ${cuenta.codigo} - ${cuenta.nombre}`);
+          return false; // Excluir cuentas sin nivel
+        }
+        return cuenta.nivel > 3; // Nivel 3 o superior
+      });
       setPeriodos(perRes.data)
       setCuentas(ctaRows)
+      setCuentasFiltradas(filtradas)
+      console.log(filtradas)
 
       const fromUrl = Number(searchParams.get('periodoId'))
       const abierto = perRes.data.find((p) => p.estado === 'ABIERTO')
@@ -191,7 +202,7 @@ export default function AsientoFormPage() {
               comprobante={form.comprobante}
               setComprobante={form.setComprobante}
               lineas={form.lineas}
-              cuentas={cuentas}
+              cuentas={cuentasFiltradas}
               addLinea={form.addLinea}
               removeLinea={form.removeLinea}
               updateLinea={form.updateLinea}

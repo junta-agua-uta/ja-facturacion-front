@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Title, SubTitle, EndSlot, CardSlot } from '../../shared/components'
+import { Title, SubTitle, CardSlot } from '../../shared/components'
+import { FaCheck } from 'react-icons/fa'
 import { PAGE_SIZE } from '../../shared/utils/constants'
 import { useCurrentUser } from '../hooks/useCurrentUser'
-import { listarAsientos, obtenerAsiento, eliminarAsiento } from '../services/asientos.service'
+import { listarAsientos, obtenerAsiento, eliminarAsiento, aprobarAsiento, desaprobarAsiento, aprobarAsientosLote, descargarAsientoPdf, agruparPorDia, agruparPorPeriodo } from '../services/asientos.service'
 import { listarPeriodos } from '../services/periodos.service'
+import { empresaService } from '../../empresa/services/empresa.service'
 import type { AsientoDetalle, AsientoListItem } from '../types/asiento'
 import type { PeriodoContable } from '../types/periodo'
 import { inferTipoMovimiento } from '../utils/asientoUi'
@@ -14,12 +16,16 @@ import AsientosFilters from '../components/AsientosFilters'
 import type { AsientosFiltersState } from '../components/AsientosFilters'
 import AsientosTable from '../components/AsientosTable'
 import AsientoDetailModal from '../components/AsientoDetailModal'
+import AsientoAgrupacionModal, { type ModoAsientos } from '../components/AsientoAgrupacionModal'
 import ConfirmModal from '../../sucursales/modals/ConfirmModal'
 import { showError, showSuccess } from '../../shared/utils/notifications'
 import Pagination from '../../shared/components/Pagination'
 
 const MODAL_DETAIL = 'modal_asiento_detalle'
 const MODAL_DELETE = 'modal_asiento_delete'
+const MODAL_APPROVE = 'modal_asiento_approve'
+const MODAL_APPROVE_LOTE = 'modal_asiento_approve_lote'
+const MODAL_AGRUPACION = 'modal_asiento_agrupacion'
 
 const defaultFilters: AsientosFiltersState = {
   buscar: '',
@@ -47,6 +53,23 @@ export default function AsientosPage() {
   const [detailLoading, setDetailLoading] = useState(false)
 
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)
+  const [approveTargetId, setApproveTargetId] = useState<number | null>(null)
+  const [selectedIds, setSelectedIds] = useState<number[]>([])
+
+  // ---- Modo de asientos de la empresa ----
+  const [modoAsientos, setModoAsientos] = useState<ModoAsientos>('INDIVIDUAL')
+  const [agrupando, setAgrupando] = useState(false)
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const emp = await empresaService.obtenerEmpresa()
+        setModoAsientos((emp.modoAsientos as ModoAsientos) || 'INDIVIDUAL')
+      } catch {
+        // fallback, se queda en INDIVIDUAL
+      }
+    })()
+  }, [])
 
   const periodoActual = useMemo(
     () => periodos.find((p) => p.id === periodoId) ?? null,
@@ -94,6 +117,7 @@ export default function AsientosPage() {
       setAsientos(res.data)
       setTotalPages(Math.max(1, res.totalPages))
       setTotal(res.total)
+      setSelectedIds([])
     } catch (e: unknown) {
       const ax = e as { response?: { data?: { message?: string } } }
       setError(ax.response?.data?.message || 'No se pudo cargar el listado de asientos.')
@@ -173,6 +197,199 @@ export default function AsientosPage() {
     }
   }
 
+  const handleSelect = (id: number, selected: boolean) => {
+    setSelectedIds((prev) =>
+      selected ? [...prev, id] : prev.filter((item) => item !== id)
+    )
+  }
+
+  const handleSelectAll = (selected: boolean) => {
+    if (selected) {
+      setSelectedIds(rowsFiltradas.map((r) => r.id))
+    } else {
+      setSelectedIds([])
+    }
+  }
+
+  const openAprobarModal = (id: number) => {
+    setApproveTargetId(id)
+    ;(document.getElementById(MODAL_APPROVE) as HTMLDialogElement)?.showModal()
+  }
+
+  const closeAprobarModal = () => {
+    setApproveTargetId(null)
+    ;(document.getElementById(MODAL_APPROVE) as HTMLDialogElement)?.close()
+  }
+
+  const confirmAprobar = async () => {
+    if (approveTargetId == null) return
+    try {
+      await aprobarAsiento(approveTargetId)
+      showSuccess('Asiento aprobado con éxito.')
+      closeAprobarModal()
+      void loadAsientos()
+    } catch (e: unknown) {
+      const ax = e as { response?: { data?: { message?: string } } }
+      showError(ax.response?.data?.message || 'Error al aprobar asiento.')
+    }
+  }
+
+  const openAprobarLoteModal = () => {
+    if (selectedIds.length === 0) return
+    ;(document.getElementById(MODAL_APPROVE_LOTE) as HTMLDialogElement)?.showModal()
+  }
+
+  const closeAprobarLoteModal = () => {
+    ;(document.getElementById(MODAL_APPROVE_LOTE) as HTMLDialogElement)?.close()
+  }
+
+  const confirmAprobarLote = async () => {
+    if (selectedIds.length === 0) return
+    try {
+      const res = await aprobarAsientosLote(selectedIds)
+      showSuccess(res.message || 'Lote de asientos aprobado.')
+      setSelectedIds([])
+      closeAprobarLoteModal()
+      void loadAsientos()
+    } catch (e: unknown) {
+      const ax = e as { response?: { data?: { message?: string } } }
+      showError(ax.response?.data?.message || 'Error al aprobar el lote.')
+    }
+  }
+
+  const handleDescargarPdf = async (id: number) => {
+    if (!empresaId) return;
+    try {
+      const blob = await descargarAsientoPdf(id, empresaId)
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `comprobante_diario_${id}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    } catch (e: unknown) {
+      showError('Error al descargar el PDF del asiento.')
+    }
+  }
+
+  const handleReabrir = async (id: number) => {
+    if (!window.confirm('¿Está seguro de que desea reabrir (desaprobar) este asiento? Volverá al estado PENDIENTE.')) {
+      return
+    }
+
+    try {
+      setLoadingList(true)
+      await desaprobarAsiento(id)
+      showSuccess('Asiento reabierto con éxito.')
+      await loadAsientos()
+    } catch (e: unknown) {
+      const ax = e as { response?: { data?: { message?: string } } }
+      showError(ax.response?.data?.message || 'Error al reabrir el asiento.')
+    } finally {
+      setLoadingList(false)
+    }
+  }
+
+  const getErrorMessage = (e: unknown, fallback: string) => {
+    const ax = e as { response?: { data?: { message?: string | string[] } } }
+    const message = ax.response?.data?.message
+    if (Array.isArray(message)) return message.join(', ')
+    return message || fallback
+  }
+
+  const openAgrupacion = () => {
+    ; (document.getElementById(MODAL_AGRUPACION) as HTMLDialogElement)?.showModal()
+  }
+
+  const closeAgrupacion = () => {
+    ; (document.getElementById(MODAL_AGRUPACION) as HTMLDialogElement)?.close()
+  }
+
+  const handleAgruparPorDia = async (fecha: string) => {
+    if (!empresaId) {
+      showError('No se pudo identificar la empresa actual.')
+      return
+    }
+
+    try {
+      setAgrupando(true)
+      const res = await agruparPorDia({ fecha, empresaId })
+      showSuccess(res.message || 'Facturas agrupadas por dia correctamente.')
+      closeAgrupacion()
+      await loadAsientos()
+    } catch (e: unknown) {
+      showError(getErrorMessage(e, 'No se pudieron agrupar las facturas.'))
+    } finally {
+      setAgrupando(false)
+    }
+  }
+
+  const handleAgruparPorPeriodo = async () => {
+    if (!empresaId || !periodoId) {
+      showError('Seleccione un periodo activo.')
+      return
+    }
+
+    try {
+      setAgrupando(true)
+      const res = await agruparPorPeriodo({ periodoId, empresaId })
+      showSuccess(res.message || 'Facturas agrupadas por periodo correctamente.')
+      closeAgrupacion()
+      await loadAsientos()
+    } catch (e: unknown) {
+      showError(getErrorMessage(e, 'No se pudieron agrupar las facturas del periodo.'))
+    } finally {
+      setAgrupando(false)
+    }
+  }
+
+  const agrupacionLabel = useMemo(() => {
+    if (modoAsientos === 'DIARIO') return 'Agrupar por dia'
+    if (modoAsientos === 'MENSUAL') return 'Agrupar por periodo'
+    return 'Agrupacion automatica'
+  }, [modoAsientos])
+
+  const modoAsientosInfo = useMemo(() => {
+    if (modoAsientos === 'DIARIO') {
+      return {
+        label: 'Diario',
+        description: 'Agrupa ventas autorizadas por fecha.',
+      }
+    }
+
+    if (modoAsientos === 'MENSUAL') {
+      return {
+        label: 'Mensual',
+        description: 'Agrupa ventas del periodo seleccionado.',
+      }
+    }
+
+    return {
+      label: 'Individual',
+      description: 'Cada factura autorizada genera su asiento.',
+    }
+  }, [modoAsientos])
+
+  const renderAgrupacionAction = () => {
+    if (modoAsientos === 'INDIVIDUAL') {
+      return null
+    }
+
+    return (
+      <button
+        type="button"
+        className="btn btn-outline btn-info gap-2"
+        onClick={openAgrupacion}
+        disabled={agrupando}
+      >
+        {agrupando && <span className="loading loading-spinner loading-sm" />}
+        {agrupacionLabel}
+      </button>
+    )
+  }
+
   if (userLoading) {
     return (
       <div className="flex justify-center py-24">
@@ -195,13 +412,13 @@ export default function AsientosPage() {
       <Title title="Asientos contables" />
 
       <CardSlot>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div>
+        <div className="grid gap-5 xl:grid-cols-[1fr_auto] xl:items-center">
+          <div className="grid gap-4 md:grid-cols-[minmax(13rem,21rem)_minmax(13rem,1fr)_auto] md:items-center">
+            <div className="min-w-0">
               <p className="text-xs uppercase tracking-wide text-base-content/60">Periodo activo</p>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 <select
-                  className="select select-bordered select-sm min-w-[12rem]"
+                  className="select select-bordered select-sm w-full"
                   value={periodoId ?? ''}
                   onChange={(e) => setPeriodoId(Number(e.target.value) || null)}
                 >
@@ -218,11 +435,40 @@ export default function AsientosPage() {
                 {periodoActual && <StatusBadge kind="periodo" value={periodoActual.estado} />}
               </div>
             </div>
-            <p className="text-sm text-base-content/60 self-end sm:self-center">
-              {total} asiento{total !== 1 ? 's' : ''} en este periodo (pág. {page}/{totalPages})
+            <div
+              className="min-w-0 rounded-md border border-blue-100 bg-blue-50/70 px-4 py-3 text-blue-950"
+              title="Modo de generación de asientos de la empresa"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-blue-800/80">
+                  Modo de asientos
+                </span>
+                <span className="rounded-full bg-blue-900 px-2.5 py-0.5 text-xs font-semibold text-white">
+                  {modoAsientosInfo.label}
+                </span>
+              </div>
+              <p className="mt-1 text-sm leading-snug text-slate-600">
+                {modoAsientosInfo.description}
+              </p>
+            </div>
+
+            <p className="text-sm leading-relaxed text-base-content/60 md:text-right">
+              {total} asiento{total !== 1 ? 's' : ''}<br className="hidden md:block" /> en este periodo
+              <span className="whitespace-nowrap"> (pág. {page}/{totalPages})</span>
             </p>
           </div>
-          <EndSlot>
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center xl:justify-end">
+            {renderAgrupacionAction()}
+
+            {selectedIds.length > 0 && (
+              <button
+                type="button"
+                className="btn btn-success gap-2"
+                onClick={openAprobarLoteModal}
+              >
+                <FaCheck /> Aprobar Lote ({selectedIds.length})
+              </button>
+            )}
             <button
               type="button"
               className="btn btn-primary gap-2"
@@ -232,7 +478,7 @@ export default function AsientosPage() {
               <span className="text-lg leading-none">+</span>
               Nuevo asiento manual
             </button>
-          </EndSlot>
+          </div>
         </div>
       </CardSlot>
 
@@ -257,9 +503,15 @@ export default function AsientosPage() {
         <AsientosTable
           rows={rowsFiltradas}
           loading={loadingList}
+          selectedIds={selectedIds}
+          onSelect={handleSelect}
+          onSelectAll={handleSelectAll}
           onVer={openDetail}
           onEditar={openEdit}
           onEliminar={openDelete}
+          onAprobar={openAprobarModal}
+          onDescargarPdf={handleDescargarPdf}
+          onReabrir={handleReabrir}
         />
         {!loadingList && periodoId != null && total > 0 && (
           <div className="mt-4 flex flex-col items-center gap-2">
@@ -291,8 +543,38 @@ export default function AsientosPage() {
         onConfirm={confirmDelete}
         onCancel={() => {
           setDeleteTargetId(null)
-            ; (document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.close()
+          ;(document.getElementById(MODAL_DELETE) as HTMLDialogElement)?.close()
         }}
+      />
+
+      <ConfirmModal
+        id={MODAL_APPROVE}
+        title="Aprobar asiento"
+        message="¿Desea aprobar este asiento contabilizando sus valores? Esta acción registra el comprobante como aprobado y habilita sus movimientos en los reportes contables."
+        confirmLabel="Aprobar"
+        confirmClassName="btn btn-primary"
+        onConfirm={() => void confirmAprobar()}
+        onCancel={closeAprobarModal}
+      />
+
+      <ConfirmModal
+        id={MODAL_APPROVE_LOTE}
+        title="Aprobar asientos en lote"
+        message={`¿Desea aprobar ${selectedIds.length} asiento(s) seleccionado(s)? Se contabilizarán todos los comprobantes pendientes del lote.`}
+        confirmLabel="Aprobar lote"
+        confirmClassName="btn btn-primary"
+        onConfirm={() => void confirmAprobarLote()}
+        onCancel={closeAprobarLoteModal}
+      />
+
+      <AsientoAgrupacionModal
+        id={MODAL_AGRUPACION}
+        modoAsientos={modoAsientos}
+        periodoActual={periodoActual}
+        loading={agrupando}
+        onClose={closeAgrupacion}
+        onAgruparDia={handleAgruparPorDia}
+        onAgruparPeriodo={handleAgruparPorPeriodo}
       />
     </div>
   )

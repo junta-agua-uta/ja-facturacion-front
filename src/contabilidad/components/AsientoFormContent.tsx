@@ -1,5 +1,6 @@
 import type { LineaAsientoForm } from '../hooks/useAsientoForm'
 import type { PlanCuentaRow } from '../types/planCuenta'
+import CuentaSelect from './CuentaSelect'
 
 type Props = {
   fetchingEdit: boolean
@@ -107,20 +108,11 @@ export default function AsientoFormContent({
           >
             <label className="form-control lg:col-span-5">
               <span className="label-text text-xs font-medium">Cuenta</span>
-              <select
-                className="select select-bordered w-full"
-                value={linea.cuentaId || ''}
-                onChange={(e) => updateLinea(idx, { cuentaId: Number(e.target.value) })}
-              >
-                <option value="" disabled>
-                  Seleccione cuenta…
-                </option>
-                {cuentas.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.codigo} — {c.nombre}
-                  </option>
-                ))}
-              </select>
+              <CuentaSelect
+                cuentas={cuentas}
+                value={linea.cuentaId}
+                onChange={(cuentaId) => updateLinea(idx, { cuentaId })}
+              />
             </label>
             <label className="form-control lg:col-span-2">
               <span className="label-text text-xs font-medium">Debe</span>

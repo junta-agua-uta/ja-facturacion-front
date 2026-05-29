@@ -9,7 +9,7 @@ interface FacturaFormProps {
   formData: FacturaFormType;
   clienteError: string | null;
   total?: number; // Agregamos el total como prop
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   onOpenCodigoModal: () => void;
   onConceptoSelect: (codigo: string, mes?: string) => void;
   onAddCliente?: () => void;
@@ -225,6 +225,21 @@ export const FacturaFormContent: React.FC<FacturaFormProps> = ({
 
         {/* Tercera columna */}
         <div className="space-y-4">
+          <InputSlot label="Método de Pago">
+            <select
+              name="tipoPago"
+              value={formData.tipoPago || 'EFECTIVO'}
+              onChange={onInputChange}
+              className="select select-bordered w-full"
+            >
+              <option value="EFECTIVO">EFECTIVO</option>
+              <option value="CREDITO">CREDITO</option>
+              <option value="DEPOSITO">DEPOSITO</option>
+              <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+              <option value="CHEQUE">CHEQUE</option>
+            </select>
+          </InputSlot>
+
           <InputSlot label="Vencimiento">
             <input
               type="date"

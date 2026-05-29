@@ -29,7 +29,8 @@ export const useFacturaForm = () => {
     serie: DEFAULTS.serie,
     numero: DEFAULTS.numero,
     secuencia: '', // Inicialmente vacío, se actualizará con la última secuencia
-    concepto: ''
+    concepto: '',
+    tipoPago: 'EFECTIVO'
   };
   
   // 2. Estados (useState hooks)
@@ -83,7 +84,7 @@ export const useFacturaForm = () => {
   }, []);
 
   // Manejador de cambios en el formulario
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -172,7 +173,7 @@ export const useFacturaForm = () => {
         idUsuario: parseInt(currentUser.id),
         idCliente: clienteId,
         idMedidor: 1, // Valor fijo como se solicitó
-        tipoPago: 'EFECTIVO', // Valor fijo como se solicitó
+        tipoPago: formData.tipoPago || 'EFECTIVO',
         valorSinImpuesto: subtotal,
         secuencia: parseInt(formData.secuencia),
         // iva: ,
@@ -188,8 +189,12 @@ export const useFacturaForm = () => {
         }))
       };
 
-      await api.post('/facturas/crear', facturaData);
+      const response = await api.post('/facturas/crear', facturaData);
       
+      if (response.data && response.data.mensaje && response.data.mensaje !== 'Factura procesada exitosamente y enviada al cliente.') {
+        alert(`Factura guardada localmente, pero hubo un problema con el SRI:\n\n${response.data.mensaje}\n\n(Revisa si la secuencia ya fue utilizada)`);
+      }
+
       // Redireccionar a la lista de facturas
       navigate('/junta/facturas');
       return true;

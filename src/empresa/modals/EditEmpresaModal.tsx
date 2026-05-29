@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ModoAsientos } from '../services/empresa.service';
 
 type EmpresaData = {
   id: number;
@@ -10,6 +11,7 @@ type EmpresaData = {
   moneda: string;
   representanteLegal: string;
   logo: string | null;
+  modoAsientos: ModoAsientos;
   createdAt: string;
   updatedAt: string;
 };
@@ -45,10 +47,51 @@ const validadores = {
     return soloDigitos.length === 10;
   },
   rucValidator: (ruc: string) => {
-    // Extraer solo dígitos para validar cantidad
-    const soloDigitos = ruc.replace(/[^0-9]/g, '');
-    // RUC en Ecuador tiene exactamente 13 dígitos
-    return soloDigitos.length === 13;
+    // Validar RUC Ecuatoriano (Natural, Pública, Privada)
+    const digits = ruc.replace(/[^0-9]/g, '');
+    if (digits.length !== 13) return false;
+
+    const prov = parseInt(digits.substring(0, 2), 10);
+    if (prov < 1 || (prov > 24 && prov !== 30)) return false;
+
+    const d3 = parseInt(digits[2], 10);
+
+    if (d3 < 6) {
+      if (digits.substring(10, 13) === '000') return false;
+      let sum = 0;
+      for (let i = 0; i < 9; i++) {
+        let val = parseInt(digits[i], 10);
+        if (i % 2 === 0) val *= 2;
+        if (val > 9) val -= 9;
+        sum += val;
+      }
+      const digitoVerificador = (Math.ceil(sum / 10) * 10) - sum;
+      return digitoVerificador === parseInt(digits[9], 10);
+    }
+    else if (d3 === 6) {
+      if (digits.substring(9, 13) === '0000') return false;
+      const coef = [3, 2, 7, 6, 5, 4, 3, 2];
+      let sum = 0;
+      for (let i = 0; i < 8; i++) {
+        sum += parseInt(digits[i], 10) * coef[i];
+      }
+      const residuo = sum % 11;
+      const digitoVerificador = residuo === 0 ? 0 : 11 - residuo;
+      return digitoVerificador === parseInt(digits[8], 10);
+    }
+    else if (d3 === 9) {
+      if (digits.substring(10, 13) === '000') return false;
+      const coef = [4, 3, 2, 7, 6, 5, 4, 3, 2];
+      let sum = 0;
+      for (let i = 0; i < 9; i++) {
+        sum += parseInt(digits[i], 10) * coef[i];
+      }
+      const residuo = sum % 11;
+      const digitoVerificador = residuo === 0 ? 0 : 11 - residuo;
+      return digitoVerificador === parseInt(digits[9], 10);
+    }
+
+    return false;
   },
 };
 
@@ -91,10 +134,10 @@ export default function EditEmpresaModal({
 
     if (!empresa.ruc || !empresa.ruc.trim()) {
       newErrors.ruc = 'El RUC es obligatorio.';
+    } else if (empresa.ruc.length !== 13 || !/^[0-9]+$/.test(empresa.ruc)) {
+      newErrors.ruc = 'El RUC debe contener exactamente 13 dígitos numéricos.';
     } else if (!validadores.rucValidator(empresa.ruc)) {
-      newErrors.ruc = 'El RUC debe contener exactamente 13 dígitos.';
-    } else if (empresa.ruc.length > 191) {
-      newErrors.ruc = 'El RUC no debe exceder 191 caracteres.';
+      newErrors.ruc = 'El RUC ingresado no es válido (Ecuador).';
     }
 
     if (!empresa.direccion || !empresa.direccion.trim()) {
@@ -236,6 +279,21 @@ export default function EditEmpresaModal({
               {errors.representanteLegal && (
                 <p className="text-red-500 text-sm mt-1">{errors.representanteLegal}</p>
               )}
+            </div>
+
+            <div>
+              <label className="label">
+                <span className="label-text font-semibold">Modo de Asientos</span>
+              </label>
+              <select
+                className="select select-bordered w-full"
+                value={empresa.modoAsientos || 'INDIVIDUAL'}
+                onChange={(e) => onChange({ ...empresa, modoAsientos: e.target.value as ModoAsientos })}
+              >
+                <option value="INDIVIDUAL">Individual</option>
+                <option value="DIARIO">Diario</option>
+                <option value="MENSUAL">Mensual</option>
+              </select>
             </div>
           </div>
 

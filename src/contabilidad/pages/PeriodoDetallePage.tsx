@@ -353,27 +353,65 @@ export default function PeriodoDetallePage() {
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-600 opacity-60 cursor-not-allowed"
-            disabled
-            title="Disponible próximamente"
+            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 hover:bg-gray-50 hover:border-blue-300"
+            onClick={() =>
+              navigate(`/junta/contabilidad/libro-diario?periodoId=${periodo.id}`)
+            }
           >
             Libro Diario
           </button>
           <button
             type="button"
-            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-600 opacity-60 cursor-not-allowed"
-            disabled
-            title="Disponible próximamente"
+            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 hover:bg-gray-50 hover:border-blue-300"
+            onClick={() =>
+              navigate(
+                `/junta/contabilidad/reportes/libro-mayor?periodoId=${periodo.id}`,
+              )
+            }
           >
             Libro Mayor
           </button>
           <button
             type="button"
-            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-600 opacity-60 cursor-not-allowed"
-            disabled
-            title="Disponible próximamente"
+            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 hover:bg-gray-50 hover:border-blue-300"
+            onClick={() =>
+              navigate(
+                `/junta/contabilidad/reportes/balance-comprobacion?periodoId=${periodo.id}`,
+              )
+            }
           >
             Balance de comprobación
+          </button>
+          <button
+            type="button"
+            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 hover:bg-gray-50 hover:border-blue-300"
+            onClick={() =>
+              navigate(
+                `/junta/contabilidad/reportes/balance-general?periodoId=${periodo.id}`,
+              )
+            }
+          >
+            Balance General
+          </button>
+          <button
+            type="button"
+            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 hover:bg-gray-50 hover:border-blue-300"
+            onClick={() =>
+              navigate(
+                `/junta/contabilidad/reportes/estado-resultados?periodoId=${periodo.id}`,
+              )
+            }
+          >
+            Estado de Resultados
+          </button>
+          <button
+            type="button"
+            className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 hover:bg-gray-50 hover:border-blue-300"
+            onClick={() =>
+              navigate(`/junta/contabilidad/reportes/cartera-clientes`)
+            }
+          >
+            Cartera de Clientes
           </button>
         </div>
       </div>

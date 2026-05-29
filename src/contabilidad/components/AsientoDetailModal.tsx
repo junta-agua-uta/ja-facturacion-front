@@ -1,9 +1,12 @@
+import { useEffect, useState } from 'react'
 import type { AsientoDetalle } from '../types/asiento'
 import StatusBadge from './StatusBadge'
 import { codigoAsientoVisual, formatMoney, inferTipoMovimiento } from '../utils/asientoUi'
 import TipoMovimientoBadge from './TipoMovimientoBadge'
 import type { TipoMovimientoUi } from '../types/asiento'
 import { sumDetalleDebeHaber } from '../utils/asientoUi'
+import { obtenerFacturasDeAsiento } from '../services/asientos.service'
+import type { FacturaAsientoItem } from '../services/asientos.service'
 
 type Props = {
   id: string
@@ -23,6 +26,14 @@ function fechaLarga(iso: string): string {
   }
 }
 
+function fechaCorta(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('es-EC', { dateStyle: 'short' })
+  } catch {
+    return iso
+  }
+}
+
 export default function AsientoDetailModal({ id, asiento, loading, onClose }: Props) {
   const tipo = asiento
     ? (inferTipoMovimiento(asiento.modelo, asiento.comprobante) as TipoMovimientoUi)
@@ -31,6 +42,37 @@ export default function AsientoDetailModal({ id, asiento, loading, onClose }: Pr
     ? sumDetalleDebeHaber(asiento.detallesAsiento)
     : { totalDebe: 0, totalHaber: 0 }
   const desc = asiento ? Math.abs(totales.totalDebe - totales.totalHaber) : 0
+
+  // ---- Facturas vinculadas ----
+  const [facturas, setFacturas] = useState<FacturaAsientoItem[]>([])
+  const [facturasLoading, setFacturasLoading] = useState(false)
+  const [showFacturas, setShowFacturas] = useState(false)
+
+  useEffect(() => {
+    if (!asiento) {
+      setFacturas([])
+      setShowFacturas(false)
+      return
+    }
+  }, [asiento])
+
+  const toggleFacturas = async () => {
+    if (showFacturas) {
+      setShowFacturas(false)
+      return
+    }
+    if (!asiento) return
+    setFacturasLoading(true)
+    try {
+      const data = await obtenerFacturasDeAsiento(asiento.id)
+      setFacturas(data)
+    } catch {
+      setFacturas([])
+    } finally {
+      setFacturasLoading(false)
+      setShowFacturas(true)
+    }
+  }
 
   return (
     <dialog id={id} className="modal">
@@ -137,6 +179,79 @@ export default function AsientoDetailModal({ id, asiento, loading, onClose }: Pr
               <span className={desc > 0.009 ? 'text-warning' : 'text-success'}>
                 Descuadre: <strong className="tabular-nums">{formatMoney(desc)}</strong>
               </span>
+            </div>
+
+            {/* ---- Sección: Facturas vinculadas ---- */}
+            <div className="border-t pt-3">
+              <button
+                type="button"
+                className="btn btn-sm btn-outline btn-info gap-2"
+                onClick={toggleFacturas}
+              >
+                {facturasLoading ? (
+                  <span className="loading loading-spinner loading-xs" />
+                ) : showFacturas ? '▲ Ocultar facturas' : '▼ Ver facturas vinculadas'}
+              </button>
+
+              {showFacturas && !facturasLoading && (
+                <div className="mt-3">
+                  {facturas.length === 0 ? (
+                    <p className="text-sm text-base-content/50 italic">
+                      Este asiento no tiene facturas vinculadas.
+                    </p>
+                  ) : (
+                    <div className="overflow-x-auto rounded-lg border border-base-200">
+                      <table className="table table-sm table-zebra">
+                        <thead>
+                          <tr className="bg-info/10">
+                            <th>Sec.</th>
+                            <th>Cliente</th>
+                            <th>Identificación</th>
+                            <th>Fecha</th>
+                            <th className="text-right">Subtotal</th>
+                            <th className="text-right">IVA</th>
+                            <th className="text-right">Total</th>
+                            <th>Relación</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {facturas.map((f) => (
+                            <tr key={f.id}>
+                              <td className="font-mono text-xs">{f.secuencia}</td>
+                              <td className="max-w-[12rem] truncate">{f.cliente?.razonSocial ?? '—'}</td>
+                              <td className="font-mono text-xs">{f.cliente?.identificacion ?? '—'}</td>
+                              <td className="whitespace-nowrap">{fechaCorta(f.fechaEmision)}</td>
+                              <td className="text-right tabular-nums">{formatMoney(f.valorSinImpuesto)}</td>
+                              <td className="text-right tabular-nums">{formatMoney(f.iva)}</td>
+                              <td className="text-right tabular-nums font-semibold">{formatMoney(f.total)}</td>
+                              <td>
+                                <span className={`badge badge-xs ${f.tipoRelacion === 'AGRUPADO' ? 'badge-info' : 'badge-ghost'}`}>
+                                  {f.tipoRelacion}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="font-semibold bg-base-200">
+                            <td colSpan={4}>{facturas.length} factura{facturas.length !== 1 ? 's' : ''}</td>
+                            <td className="text-right tabular-nums">
+                              {formatMoney(facturas.reduce((s, f) => s + f.valorSinImpuesto, 0))}
+                            </td>
+                            <td className="text-right tabular-nums">
+                              {formatMoney(facturas.reduce((s, f) => s + f.iva, 0))}
+                            </td>
+                            <td className="text-right tabular-nums">
+                              {formatMoney(facturas.reduce((s, f) => s + f.total, 0))}
+                            </td>
+                            <td />
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {asiento.creadoPor && (

@@ -20,6 +20,13 @@ import PeriodosPage from './contabilidad/pages/PeriodosPage';
 import PeriodoDetallePage from './contabilidad/pages/PeriodoDetallePage';
 import PlanCuentasPage from './contabilidad/pages/PlanCuentasPage';
 import EmpresaPage from './empresa/pages/EmpresaPage';
+import CuentasPorCobrarPage from './contabilidad/pages/CuentasPorCobrarPage';
+import LibroDiarioPage from './contabilidad/pages/LibroDiarioPage';
+import LibroMayorPage from './contabilidad/reportes/pages/LibroMayorPage';
+import BalanceComprobacionPage from './contabilidad/reportes/pages/BalanceComprobacionPage';
+import BalanceGeneralPage from './contabilidad/reportes/pages/BalanceGeneralPage';
+import EstadoResultadosPage from './contabilidad/reportes/pages/EstadoResultadosPage';
+import CarteraClientesPage from './contabilidad/reportes/pages/CarteraClientesPage';
 
 const router = createBrowserRouter([
   {
@@ -101,7 +108,14 @@ const router = createBrowserRouter([
               { path: 'asientos', element: <AsientosPage /> },
               { path: 'periodos/:periodoId', element: <PeriodoDetallePage /> },
               { path: 'periodos', element: <PeriodosPage /> },
+              { path: 'libro-diario', element: <LibroDiarioPage /> },
+              { path: 'reportes/libro-mayor', element: <LibroMayorPage /> },
+              { path: 'reportes/balance-comprobacion', element: <BalanceComprobacionPage /> },
+              { path: 'reportes/balance-general', element: <BalanceGeneralPage /> },
+              { path: 'reportes/estado-resultados', element: <EstadoResultadosPage /> },
+              { path: 'reportes/cartera-clientes', element: <CarteraClientesPage /> },
               { path: 'plan-de-cuentas', element: <PlanCuentasPage /> },
+              { path: 'cuentas-cobrar', element: <CuentasPorCobrarPage /> },
             ],
           },
           {
