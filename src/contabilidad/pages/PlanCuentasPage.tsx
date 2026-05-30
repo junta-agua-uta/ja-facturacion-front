@@ -69,35 +69,71 @@ export default function PlanCuentasPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<PlanCuentaApiItem | null>(null);
 
-  const detectedParent = useMemo(() => {
-    const codigo = createForm.codigo.trim();
-    const lastDotIndex = codigo.lastIndexOf('.');
+  const [step, setStep] = useState<1 | 2>(1);
+  const [parentSearchTerm, setParentSearchTerm] = useState('');
+  const [selectedParentId, setSelectedParentId] = useState<number | null | 'root'>(null);
+  const [codeSuffix, setCodeSuffix] = useState('');
+  const [parentExpandedIds, setParentExpandedIds] = useState<Set<number>>(new Set());
 
-    if (lastDotIndex <= 0) {
-      return null;
+  const fullCodigo = useMemo(() => {
+    if (selectedParentId === 'root' || selectedParentId === null) {
+      return codeSuffix;
+    }
+    const p = rows.find(r => r.id === selectedParentId);
+    return p ? `${p.codigo}.${codeSuffix}` : codeSuffix;
+  }, [selectedParentId, codeSuffix, rows]);
+
+  const isCodeTaken = useMemo(() => {
+    if (!fullCodigo) return false;
+    if (isSaving || createSuccess) return false;
+    return rows.some(r => r.codigo === fullCodigo && r.id !== editingAccount?.id);
+  }, [fullCodigo, rows, editingAccount, isSaving, createSuccess]);
+
+  const generateNextSuffix = useCallback((parentId: number | 'root') => {
+    if (parentId === 'root') {
+      const rootCodes = rows
+        .filter(r => r.padreId === null)
+        .map(r => parseInt(r.codigo))
+        .filter(n => !isNaN(n));
+      const nextCode = rootCodes.length > 0 ? Math.max(...rootCodes) + 1 : 1;
+      return String(nextCode);
+    } else {
+      const parentAccount = rows.find(r => r.id === parentId);
+      if (!parentAccount) return '1';
+      const prefix = parentAccount.codigo + '.';
+      const childSuffixes = rows
+        .filter(r => r.padreId === parentId)
+        .map(r => r.codigo.replace(prefix, ''))
+        .map(s => parseInt(s))
+        .filter(n => !isNaN(n));
+      const nextCode = childSuffixes.length > 0 ? Math.max(...childSuffixes) + 1 : 1;
+      return String(nextCode);
+    }
+  }, [rows]);
+
+  const getBreadcrumb = useCallback((parentId: number | null | 'root'): string => {
+    if (parentId === 'root' || parentId === null) return 'Sin padre (cuenta raíz)';
+
+    let current = rows.find(r => r.id === parentId);
+    const parts = [];
+
+    while (current) {
+      parts.unshift(current.nombre);
+      const padreId = current.padreId; // ✅ capturado antes del find
+      current = padreId ? rows.find(r => r.id === padreId) : undefined;
     }
 
-    const parentCode = codigo.slice(0, lastDotIndex);
-    return rows.find((account) => account.codigo === parentCode) ?? null;
-  }, [createForm.codigo, rows]);
+    return parts.join(' > ');
+  }, [rows]);
 
-  const parentDisplayText = useMemo(() => {
-    const codigo = createForm.codigo.trim();
-    if (!codigo) {
-      return 'Escribe un codigo para detectar la cuenta padre automaticamente.';
-    }
-
-    const lastDotIndex = codigo.lastIndexOf('.');
-    if (lastDotIndex <= 0) {
-      return 'Cuenta principal (sin padre).';
-    }
-
-    if (detectedParent) {
-      return `Has elegido el nombre de la cuenta "${detectedParent.nombre}" como padre.`;
-    }
-
-    return 'No se encontro una cuenta padre valida con ese prefijo de codigo.';
-  }, [createForm.codigo, detectedParent]);
+  const toggleParentNode = useCallback((id: number) => {
+    setParentExpandedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   const loadPlanCuentas = useCallback(async (): Promise<void> => {
     try {
@@ -236,6 +272,45 @@ export default function PlanCuentasPage() {
     return map;
   }, [filteredRows]);
 
+  const parentTreeData = useMemo(() => {
+    const text = parentSearchTerm.trim().toLowerCase();
+
+    if (text) {
+      return rows
+        .filter(r => r.nombre.toLowerCase().includes(text) || r.codigo.toLowerCase().includes(text))
+        .map(r => ({ ...r, treeDepth: 0, hasChildrenTree: false, isExpandedTree: false }));
+    }
+
+    const allChildrenMap = new Map<number | null, PlanCuentaApiItem[]>();
+    rows.forEach(account => {
+      const key = account.padreId;
+      const bucket = allChildrenMap.get(key) ?? [];
+      bucket.push(account);
+      allChildrenMap.set(key, bucket);
+    });
+
+    allChildrenMap.forEach((bucket) => {
+      bucket.sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true }));
+    });
+
+    const list: (PlanCuentaApiItem & { treeDepth: number; hasChildrenTree: boolean; isExpandedTree: boolean })[] = [];
+
+    const walk = (parentId: number | null, depth: number) => {
+      const children = allChildrenMap.get(parentId) ?? [];
+
+      children.forEach(child => {
+        const hasChild = (allChildrenMap.get(child.id)?.length ?? 0) > 0;
+        const isExpanded = parentExpandedIds.has(child.id);
+        list.push({ ...child, treeDepth: depth, hasChildrenTree: hasChild, isExpandedTree: isExpanded });
+        if (isExpanded) {
+          walk(child.id, depth + 1);
+        }
+      });
+    };
+    walk(null, 0);
+    return list;
+  }, [rows, parentSearchTerm, parentExpandedIds]);
+
   const visibleRows = useMemo(() => {
     const list: RenderRow[] = [];
 
@@ -305,13 +380,60 @@ export default function PlanCuentasPage() {
     }));
   };
 
+  const openCreateModal = () => {
+    setStep(1);
+    setSelectedParentId(null);
+    setCodeSuffix('');
+    setParentSearchTerm('');
+    setCreateForm({
+      codigo: '',
+      nombre: '',
+      tipo: 'ACTIVO',
+      naturaleza: 'DEUDORA',
+      casillero: '',
+    });
+    setParentExpandedIds(new Set(expandedIds));
+    setIsCreateModalOpen(true);
+  };
+
+  const handleEditItem = (account: PlanCuentaApiItem) => {
+    setEditingAccount(account);
+    const pId = account.padreId === null ? 'root' : account.padreId;
+    setSelectedParentId(pId);
+    setStep(2);
+
+    let suffix = account.codigo;
+    if (pId !== 'root') {
+      const p = rows.find(r => r.id === pId);
+      if (p) {
+        suffix = account.codigo.replace(p.codigo + '.', '');
+      }
+    }
+    setCodeSuffix(suffix);
+
+    setCreateForm({
+      codigo: account.codigo,
+      nombre: account.nombre,
+      tipo: account.tipo,
+      naturaleza: account.naturaleza,
+      casillero: account.casillero ?? '',
+    });
+    setParentExpandedIds(new Set(expandedIds));
+    setIsEditModalOpen(true);
+  };
+
   const closeCreateModal = (): void => {
     setIsCreateModalOpen(false);
     setIsEditModalOpen(false);
     setEditingAccount(null);
     setCreateError(null);
     setCreateSuccess(null);
+    setStep(1);
+    setSelectedParentId(null);
+    setCodeSuffix('');
+    setParentSearchTerm('');
   };
+
   const hasChildrenEditing = useMemo(() => {
     if (!editingAccount) return false;
     return rows.some(r => r.padreId === editingAccount.id);
@@ -319,13 +441,17 @@ export default function PlanCuentasPage() {
 
   const handleSaveCuenta = async (): Promise<void> => {
     const empresaId = 1;
-    const detectedParentId = detectedParent?.id || null
-    console.log(detectedParentId)
-    const codigo = createForm.codigo.trim();
+    const finalParentId = selectedParentId === 'root' ? null : selectedParentId;
+    const saveCodigo = fullCodigo.trim();
     const nombre = createForm.nombre.trim();
 
-    if (!codigo || !nombre) {
-      setCreateError('Codigo y nombre son obligatorios.');
+    if (!saveCodigo || !nombre) {
+      setCreateError('Código y nombre son obligatorios.');
+      return;
+    }
+
+    if (isCodeTaken) {
+      setCreateError('El código ingresado ya existe.');
       return;
     }
 
@@ -335,46 +461,44 @@ export default function PlanCuentasPage() {
 
     try {
       if (editingAccount) {
-        // ✏️ EDITAR
         await api.put(`/plan-cuentas/${editingAccount.id}`, {
-          codigo,
+          codigo: saveCodigo,
           nombre,
           tipo: createForm.tipo,
           naturaleza: createForm.naturaleza,
           casillero: createForm.casillero.trim() || undefined,
-          padreId: detectedParentId
+          padreId: finalParentId
         }, {
           params: { empresaId }
         });
-
         setCreateSuccess('Cuenta actualizada correctamente.');
       } else {
-        // ➕ CREAR (tu lógica actual)
         await api.post('/plan-cuentas', {
-          codigo,
+          codigo: saveCodigo,
           nombre,
           tipo: createForm.tipo,
           naturaleza: createForm.naturaleza,
           casillero: createForm.casillero.trim() || undefined,
-          padreId: detectedParentId, 
+          padreId: finalParentId,
         }, {
           params: { empresaId }
         });
-
         setCreateSuccess('Cuenta creada correctamente.');
       }
 
       await loadPlanCuentas();
 
       setTimeout(() => {
-        setIsEditModalOpen(false);
-        setIsCreateModalOpen(false);
-        setEditingAccount(null);
-        setCreateSuccess(null);
+        closeCreateModal();
       }, 600);
 
-    } catch (error) {
-      setCreateError('Error al guardar la cuenta.');
+    } catch (error: any) {
+      const msg = error.response?.data?.message || '';
+      if (msg.includes('asientos contables') || msg.includes('transaccional')) {
+        setCreateError('No se puede crear una subcuenta aquí, ya que tiene asientos contables registrados.');
+      } else {
+        setCreateError(msg || 'Error al guardar la cuenta.');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -638,17 +762,7 @@ export default function PlanCuentasPage() {
                       <td className="border-t border-slate-200 px-4 py-3 text-sm">
                         <div className="flex items-center gap-3">
                           <button
-                            onClick={() => {
-                              setEditingAccount(account);
-                              setCreateForm({
-                                codigo: account.codigo,
-                                nombre: account.nombre,
-                                tipo: account.tipo,
-                                naturaleza: account.naturaleza,
-                                casillero: account.casillero ?? '',
-                              });
-                              setIsEditModalOpen(true);
-                            }}
+                            onClick={() => handleEditItem(account)}
                             className="text-blue-600 hover:text-blue-800 transition"
                             title="Editar cuenta"
                           >
@@ -676,7 +790,7 @@ export default function PlanCuentasPage() {
         <div className="mt-4 flex justify-end">
           <button
             type="button"
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={openCreateModal}
             className="inline-flex h-10 items-center justify-center rounded-xl bg-emerald-600 px-6 text-sm font-semibold text-white transition hover:bg-emerald-700"
           >
             Agregar
@@ -708,7 +822,7 @@ export default function PlanCuentasPage() {
             </header>
 
             <div className="px-8 pb-12 pt-8">
-              <form className="space-y-8">
+              <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
                 {createError ? (
                   <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {createError}
@@ -721,111 +835,242 @@ export default function PlanCuentasPage() {
                   </div>
                 ) : null}
 
-                <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
-                  <label className="space-y-2">
-                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
-                      Codigo
-                    </span>
-                    <input
-                      disabled={!!editingAccount && hasChildrenEditing}
-                      value={createForm.codigo}
-                      onChange={(event) => setFormField('codigo', event.target.value)}
-                      placeholder="1.1.1"
-                      className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-slate-500 outline-none placeholder:text-slate-500"
-                    />
-                    <span className="block text-xs text-slate-500">
-                      Ejemplo jerarquia: padre 100, hijo 100.1, nieto 100.1.1
-                    </span>
-                  </label>
-
-                  <label className="space-y-2">
-                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
-                      Cuenta padre detectada
-                    </span>
-                    <div className="min-h-12 w-full rounded bg-slate-100 px-4 py-3 text-sm leading-5 text-slate-600 break-words whitespace-normal">
-                      {parentDisplayText}
+                {step === 1 && (
+                  <div className="space-y-4">
+                    <div className="text-sm font-medium text-slate-700 mb-2">
+                      Paso 1: Selecciona una cuenta padre
                     </div>
-                  </label>
+                    <div className="flex h-11 items-center gap-3 rounded border border-slate-300 bg-white px-3 shadow-sm">
+                      <FiSearch className="h-5 w-5 shrink-0 text-slate-400" />
+                      <input
+                        value={parentSearchTerm}
+                        onChange={(e) => setParentSearchTerm(e.target.value)}
+                        className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                        placeholder="Buscar por código o nombre..."
+                      />
+                    </div>
 
-                  <label className="space-y-2">
-                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
-                      Nombre
-                    </span>
-                    <input
-                      disabled={!!editingAccount && hasChildrenEditing}
-                      value={createForm.nombre}
-                      onChange={(event) => setFormField('nombre', event.target.value)}
-                      placeholder="Caja"
-                      className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-slate-700 outline-none placeholder:text-slate-500"
-                    />
-                  </label>
+                    <div className="h-[300px] overflow-y-auto rounded border border-slate-200 bg-slate-50 p-2">
+                      {!parentSearchTerm && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedParentId('root');
+                            setCodeSuffix(generateNextSuffix('root'));
+                            setStep(2);
+                          }}
+                          className="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-200"
+                        >
+                          <span className="inline-block h-4 w-4" />
+                          Sin padre (cuenta raíz)
+                        </button>
+                      )}
 
-                  <label className="space-y-2">
-                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
-                      Tipo
-                    </span>
-                    <select
-                      value={createForm.tipo}
-                      onChange={(event) => setFormField('tipo', event.target.value)}
-                      className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-[#191C1D] outline-none"
-                    >
-                      <option value="ACTIVO">ACTIVO</option>
-                      <option value="PASIVO">PASIVO</option>
-                      <option value="PATRIMONIO">PATRIMONIO</option>
-                      <option value="INGRESOS">INGRESOS</option>
-                      <option value="GASTOS">GASTOS</option>
-                      <option value="COSTOS">COSTOS</option>
-                    </select>
-                  </label>
+                      {parentTreeData.map((item) => (
+                        <div key={item.id} className="flex w-full items-center">
+                          <div
+                            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-200"
+                            style={{ paddingLeft: parentSearchTerm ? '8px' : `${item.treeDepth * 20 + 8}px` }}
+                          >
+                            {!parentSearchTerm && item.hasChildrenTree ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleParentNode(item.id);
+                                }}
+                                className="rounded p-0.5 text-slate-500 hover:bg-slate-300"
+                              >
+                                {item.isExpandedTree ? <FiChevronDown className="h-4 w-4" /> : <FiChevronRight className="h-4 w-4" />}
+                              </button>
+                            ) : (
+                              <span className="inline-block h-4 w-4 shrink-0" />
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedParentId(item.id);
+                                setCodeSuffix(generateNextSuffix(item.id));
+                                setCreateForm(prev => ({
+                                  ...prev,
+                                  tipo: item.tipo,
+                                  naturaleza: item.naturaleza
+                                }));
+                                setStep(2);
+                              }}
+                              className="flex flex-1 items-center gap-2 text-left"
+                            >
+                              <span className="font-semibold">{item.codigo}</span>
+                              <span className="truncate">{item.nombre}</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
 
-                  <label className="space-y-2">
-                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
-                      Naturaleza
-                    </span>
-                    <select
-                      value={createForm.naturaleza}
-                      onChange={(event) => setFormField('naturaleza', event.target.value)}
-                      className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-[#191C1D] outline-none"
-                    >
-                      <option value="DEUDORA">DEUDORA</option>
-                      <option value="ACREEDORA">ACREEDORA</option>
-                    </select>
-                  </label>
+                      {parentTreeData.length === 0 && parentSearchTerm && (
+                        <div className="p-4 text-center text-sm text-slate-500">
+                          No se encontraron cuentas padre.
+                        </div>
+                      )}
+                    </div>
 
-                  <label className="space-y-2 sm:col-span-2">
-                    <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
-                      Casillero
-                    </span>
-                    <input
-                      disabled={!!editingAccount && hasChildrenEditing}
-                      value={createForm.casillero}
-                      onChange={(event) => setFormField('casillero', event.target.value)}
-                      placeholder="101"
-                      className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-slate-700 outline-none placeholder:text-slate-500"
-                    />
-                  </label>
-                </div>
+                    <footer className="flex justify-end gap-4 pt-2">
+                      <button
+                        type="button"
+                        onClick={closeCreateModal}
+                        className="inline-flex h-10 items-center px-6 text-xs font-bold uppercase tracking-[1.2px] text-slate-500"
+                        disabled={isSaving}
+                      >
+                        Cancelar
+                      </button>
+                    </footer>
+                  </div>
+                )}
 
-                <footer className="flex justify-end gap-4 pt-2">
-                  <button
-                    type="button"
-                    onClick={closeCreateModal}
-                    className="inline-flex h-10 items-center px-6 text-xs font-bold uppercase tracking-[1.2px] text-slate-500"
-                    disabled={isSaving}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void handleSaveCuenta();
-                    }}
-                    disabled={isSaving}
-                    className="inline-flex h-10 items-center rounded bg-gradient-to-r from-[#002944] to-[#26638A] px-10 text-xs font-bold uppercase tracking-[1.2px] text-white shadow-[0_10px_15px_-3px_rgba(0,0,0,0.10),0_4px_6px_-4px_rgba(0,0,0,0.10)]"
-                  >
-                    {isSaving ? 'Guardando...' : 'Guardar Cuenta'}
-                  </button>
-                </footer>
+                {step === 2 && (
+                  <div className="space-y-6">
+                    <div className="rounded border border-emerald-100 bg-emerald-50/50 p-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-semibold uppercase tracking-[1px] text-emerald-600">
+                          Jerarquía Seleccionada
+                        </span>
+                        {!(!!editingAccount && hasChildrenEditing) && (
+                          <button
+                            type="button"
+                            onClick={() => setStep(1)}
+                            className="text-xs font-semibold text-emerald-700 underline hover:text-emerald-900"
+                          >
+                            Cambiar Padre
+                          </button>
+                        )}
+                      </div>
+                      <div className="text-sm font-medium text-emerald-900 break-words">
+                        {getBreadcrumb(selectedParentId)}
+                      </div>
+                      {selectedParentId !== 'root' && selectedParentId !== null && (
+                        <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                          <span className="opacity-70">Padre:</span>
+                          {(() => {
+                            const p = rows.find(r => r.id === selectedParentId);
+                            return p ? `${p.codigo} - ${p.nombre}` : '';
+                          })()}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+                      <label className="space-y-2">
+                        <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
+                          Sufijo de Código
+                        </span>
+                        <div className="flex relative">
+                          {selectedParentId !== 'root' && selectedParentId !== null && (
+                            <div className="flex h-12 items-center justify-center rounded-l bg-[#d1d5db] px-3 text-sm font-medium text-slate-700 border border-[#d1d5db] border-r-0 select-none">
+                              {(() => {
+                                const p = rows.find(r => r.id === selectedParentId);
+                                return p ? `${p.codigo}.` : '';
+                              })()}
+                            </div>
+                          )}
+                          <input
+                            disabled={!!editingAccount && hasChildrenEditing}
+                            value={codeSuffix}
+                            onChange={(event) => {
+                              const val = event.target.value.replace(/[^0-9]/g, '');
+                              setCodeSuffix(val);
+                            }}
+                            placeholder="1"
+                            className={`h-12 w-full flex-1 bg-[#E7E8E9] px-4 text-base text-slate-700 outline-none placeholder:text-slate-500 ${selectedParentId !== 'root' && selectedParentId !== null ? 'rounded-r' : 'rounded'}`}
+                          />
+                        </div>
+                        {isCodeTaken ? (
+                          <span className="block text-xs font-semibold text-red-600">Este código ya existe. Ingresa un sufijo diferente.</span>
+                        ) : (
+                          <span className="block text-xs text-slate-500">
+                            Código final generado: <span className="font-semibold text-slate-700">{fullCodigo}</span>
+                          </span>
+                        )}
+                      </label>
+
+                      <label className="space-y-2">
+                        <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
+                          Nombre
+                        </span>
+                        <input
+                          value={createForm.nombre}
+                          onChange={(event) => setFormField('nombre', event.target.value)}
+                          placeholder="Caja"
+                          className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-slate-700 outline-none placeholder:text-slate-500"
+                        />
+                      </label>
+
+                      <label className="space-y-2">
+                        <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
+                          Tipo
+                        </span>
+                        <select
+                          value={createForm.tipo}
+                          onChange={(event) => setFormField('tipo', event.target.value)}
+                          className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-[#191C1D] outline-none"
+                        >
+                          <option value="ACTIVO">ACTIVO</option>
+                          <option value="PASIVO">PASIVO</option>
+                          <option value="PATRIMONIO">PATRIMONIO</option>
+                          <option value="INGRESOS">INGRESOS</option>
+                          <option value="GASTOS">GASTOS</option>
+                          <option value="COSTOS">COSTOS</option>
+                        </select>
+                      </label>
+
+                      <label className="space-y-2">
+                        <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
+                          Naturaleza
+                        </span>
+                        <select
+                          value={createForm.naturaleza}
+                          onChange={(event) => setFormField('naturaleza', event.target.value)}
+                          className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-[#191C1D] outline-none"
+                        >
+                          <option value="DEUDORA">DEUDORA</option>
+                          <option value="ACREEDORA">ACREEDORA</option>
+                        </select>
+                      </label>
+
+                      <label className="space-y-2 sm:col-span-2">
+                        <span className="block text-[10px] font-semibold uppercase tracking-[1px] text-slate-700">
+                          Casillero
+                        </span>
+                        <input
+                          value={createForm.casillero}
+                          onChange={(event) => setFormField('casillero', event.target.value)}
+                          placeholder="101"
+                          className="h-12 w-full rounded bg-[#E7E8E9] px-4 text-base text-slate-700 outline-none placeholder:text-slate-500"
+                        />
+                      </label>
+                    </div>
+
+                    <footer className="flex justify-end gap-4 pt-2">
+                      <button
+                        type="button"
+                        onClick={closeCreateModal}
+                        className="inline-flex h-10 items-center px-6 text-xs font-bold uppercase tracking-[1.2px] text-slate-500"
+                        disabled={isSaving}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void handleSaveCuenta();
+                        }}
+                        disabled={isSaving || isCodeTaken || !fullCodigo.trim()}
+                        className="inline-flex h-10 items-center rounded bg-gradient-to-r from-[#002944] to-[#26638A] px-10 text-xs font-bold uppercase tracking-[1.2px] text-white shadow-[0_10px_15px_-3px_rgba(0,0,0,0.10),0_4px_6px_-4px_rgba(0,0,0,0.10)] disabled:opacity-70 disabled:cursor-not-allowed"
+                      >
+                        {isSaving ? 'Guardando...' : 'Guardar Cuenta'}
+                      </button>
+                    </footer>
+                  </div>
+                )}
               </form>
             </div>
           </div>
