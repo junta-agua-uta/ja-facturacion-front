@@ -64,9 +64,9 @@ export default function AsientosFilters({ filters, onChange, onClear }: Props) {
           }
         >
           <option value="">Todos</option>
-          <option value="VENTA">Venta</option>
-          <option value="COMPRA">Compra</option>
-          <option value="MANUAL">Manual</option>
+          <option value="INGRESO">Ingreso</option>
+          <option value="EGRESO">Egreso</option>
+          <option value="DIARIO">Diario</option>
         </select>
       </label>
 

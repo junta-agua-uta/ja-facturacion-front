@@ -109,7 +109,7 @@ const Profile = () => {
     }
 
     try {
-      const response = await api.put('/auth/profile', updateData);
+      await api.put('/auth/profile', updateData);
 
       if (field === 'nombre') {
         setUserData(prev => ({

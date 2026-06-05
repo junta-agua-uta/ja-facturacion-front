@@ -37,17 +37,17 @@ export function toDatetimeLocalValue(iso: string): string {
 }
 
 function modeloFromTipoSelect(t: string): string | undefined {
-  if (t === 'MANUAL') return undefined
-  if (t === 'VENTA') return 'Venta'
-  if (t === 'COMPRA') return 'Compra'
-  return undefined
+  if (t === 'DIARIO' || t === 'MANUAL') return 'Diario'
+  if (t === 'INGRESO' || t === 'VENTA') return 'Ingreso'
+  if (t === 'EGRESO' || t === 'COMPRA') return 'Egreso'
+  return 'Diario'
 }
 
 function tipoSelectFromModelo(modelo?: string | null): string {
   const m = (modelo || '').toLowerCase()
-  if (m.includes('compra')) return 'COMPRA'
-  if (m.includes('venta') || m.includes('ingreso')) return 'VENTA'
-  return 'MANUAL'
+  if (m.includes('compra') || m.includes('egreso')) return 'EGRESO'
+  if (m.includes('venta') || m.includes('ingreso')) return 'INGRESO'
+  return 'DIARIO'
 }
 
 type Options = {
@@ -76,7 +76,7 @@ export function useAsientoForm({
   const [fetchingEdit, setFetchingEdit] = useState(() => mode === 'edit' && asientoId != null)
   const [fecha, setFecha] = useState(() => toDatetimeLocalValue(new Date().toISOString()))
   const [concepto, setConcepto] = useState('')
-  const [tipoMov, setTipoMov] = useState('MANUAL')
+  const [tipoMov, setTipoMov] = useState('DIARIO')
   const [comprobante, setComprobante] = useState('')
   const [lineas, setLineas] = useState<LineaAsientoForm[]>([emptyLine(), emptyLine()])
 
@@ -140,7 +140,7 @@ export function useAsientoForm({
   const resetCreate = useCallback(() => {
     setFecha(toDatetimeLocalValue(new Date().toISOString()))
     setConcepto('')
-    setTipoMov('MANUAL')
+    setTipoMov('DIARIO')
     setComprobante('')
     setLineas(aplicarCuentasPorDefecto([emptyLine(), emptyLine()]))
   }, [aplicarCuentasPorDefecto])
