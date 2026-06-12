@@ -83,4 +83,4 @@ export interface CreateAsientoPayload {
   detalles: CreateDetalleAsientoPayload[]
 }
 
-export type TipoMovimientoUi = 'VENTA' | 'COMPRA' | 'MANUAL'
+export type TipoMovimientoUi = 'VENTA' | 'COMPRA' | 'MANUAL' | 'INGRESO' | 'EGRESO' | 'DIARIO'

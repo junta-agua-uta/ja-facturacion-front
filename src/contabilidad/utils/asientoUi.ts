@@ -8,10 +8,9 @@ export function codigoAsientoVisual(item: Pick<AsientoListItem, 'numero'>): stri
 export function inferTipoMovimiento(modelo?: string | null, comprobante?: string | null): TipoMovimientoUi {
   const m = (modelo || '').toLowerCase()
   const c = (comprobante || '').toLowerCase()
-  if (m.includes('compra') || c.includes('compra')) return 'COMPRA'
-  if (m.includes('venta') || m.includes('ingreso') || c.includes('fact')) return 'VENTA'
-  if (!modelo && !comprobante) return 'MANUAL'
-  return 'MANUAL'
+  if (m.includes('compra') || m.includes('egreso') || c.includes('compra')) return 'EGRESO' as any
+  if (m.includes('venta') || m.includes('ingreso') || c.includes('fact')) return 'INGRESO' as any
+  return 'DIARIO' as any
 }
 
 export function formatMoney(value: number): string {

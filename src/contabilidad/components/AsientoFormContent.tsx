@@ -63,15 +63,15 @@ export default function AsientoFormContent({
           />
         </label>
         <label className="form-control md:col-span-2">
-          <span className="label-text font-medium">Tipo (referencia)</span>
+          <span className="label-text font-medium">Tipo de Comprobante</span>
           <select
             className="select select-bordered w-full"
             value={tipoMov}
             onChange={(e) => setTipoMov(e.target.value)}
           >
-            <option value="MANUAL">Manual</option>
-            <option value="VENTA">Venta</option>
-            <option value="COMPRA">Compra</option>
+            <option value="DIARIO">Comprobante de Diario</option>
+            <option value="INGRESO">Comprobante de Ingreso</option>
+            <option value="EGRESO">Comprobante de Egreso</option>
           </select>
         </label>
       </div>
