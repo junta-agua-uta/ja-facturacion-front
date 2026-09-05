@@ -33,7 +33,6 @@ export default function AgregarFacturas() {
     formData,
     conceptos,
     saving,
-    saveError,
     handleInputChange,
     handleConceptoSelect,
     handleConceptoChange,
@@ -123,9 +122,9 @@ export default function AgregarFacturas() {
       return;
     }
 
-    const success = await saveFactura(parseInt(selectedBranchObj.id));
-    if (!success && saveError) {
-      setErrorMessage(saveError);
+    const error = await saveFactura(parseInt(selectedBranchObj.id));
+    if (typeof error === 'string') {
+      setErrorMessage(error);
     }
   };
 

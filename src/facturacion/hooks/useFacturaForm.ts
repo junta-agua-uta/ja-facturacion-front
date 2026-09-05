@@ -146,19 +146,22 @@ export const useFacturaForm = () => {
   // Función para guardar la factura
   const saveFactura = useCallback(async (idSucursal: number) => {
     if (!clienteId) {
-      setSaveError('No se ha seleccionado un cliente válido');
-      return false;
+      const msg = 'No se ha seleccionado un cliente válido';
+      setSaveError(msg);
+      return msg;
     }
 
     if (conceptos.length === 0) {
-      setSaveError('Debe agregar al menos un concepto a la factura');
-      return false;
+      const msg = 'Debe agregar al menos un concepto a la factura';
+      setSaveError(msg);
+      return msg;
     }
 
     const currentUser = authService.getCurrentUser();
     if (!currentUser || !currentUser.id) {
-      setSaveError('No se ha iniciado sesión');
-      return false;
+      const msg = 'No se ha iniciado sesión';
+      setSaveError(msg);
+      return msg;
     }
 
     // Calcular totales
@@ -190,9 +193,17 @@ export const useFacturaForm = () => {
       };
 
       const response = await api.post('/facturas/crear', facturaData);
-      
-      if (response.data && response.data.mensaje && response.data.mensaje !== 'Factura procesada exitosamente y enviada al cliente.') {
-        alert(`Factura guardada localmente, pero hubo un problema con el SRI:\n\n${response.data.mensaje}\n\n(Revisa si la secuencia ya fue utilizada)`);
+
+      const mensaje = response.data?.mensaje;
+      const warning = response.data?.warning;
+      const esExito = mensaje === 'Factura procesada exitosamente y enviada al cliente.';
+      console.log(warning)
+      console.log(response)
+      if (!esExito || warning) {
+        const detalle = warning ? `${mensaje ? mensaje + ' - ' : ''}${warning}` : mensaje;
+        const errorMsg = detalle || 'Error al crear la factura';
+        setSaveError(errorMsg);
+        return errorMsg;
       }
 
       // Redireccionar a la lista de facturas
@@ -200,8 +211,9 @@ export const useFacturaForm = () => {
       return true;
     } catch (error: any) {
       console.error('Error al guardar factura:', error);
-      setSaveError(error.response?.data?.message || 'Error al guardar la factura');
-      return false;
+      const errorMsg = error.response?.data?.message || 'Error al guardar la factura';
+      setSaveError(errorMsg);
+      return errorMsg;
     } finally {
       setSaving(false);
     }
